@@ -1,4 +1,4 @@
-const nodemailer = require("nodemailer");
+import nodemailer from "nodemailer";
 
 // SMTP configuration
 const smtpConfig = {
@@ -22,7 +22,7 @@ const transporter = nodemailer.createTransport(smtpConfig);
  * @param {string} body - The body of the email (text content).
  * @returns {Promise} - A promise that resolves when the email is sent.
  */
-const sendEmail = async (senderEmail, receiverEmail, subject, body) => {
+export const sendEmail = async (senderEmail, receiverEmail, subject, body) => {
   try {
     // Create the email options
     const mailOptions = {
@@ -41,5 +41,3 @@ const sendEmail = async (senderEmail, receiverEmail, subject, body) => {
     throw error;
   }
 };
-
-module.exports = sendEmail;

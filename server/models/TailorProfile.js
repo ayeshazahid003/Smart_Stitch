@@ -2,8 +2,10 @@ import mongoose from 'mongoose';
 
 const TailorProfileSchema = new mongoose.Schema({
   tailorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  shopName: { type: String, required: true }, // Name of the shop
   portfolio: [
     {
+      name: { type: String, required: true }, // Name of the portfolio entry
       images: [{ type: String, required: true }], // Array of image URLs
       description: { type: String }, // Description of the portfolio entry
       date: { type: Date, required: true } // Date when the portfolio was added
@@ -29,7 +31,9 @@ const TailorProfileSchema = new mongoose.Schema({
     coordinates: [{ type: Number }] // [longitude, latitude]
   },
   shopImages: [{ type: String }], // Array of shop image URLs
+  bio: { type: String }, // Tailor's biography
   isVerified: { type: Boolean, default: false }, // Verification status of the tailor
+  verificationToken: { type: String }, // Token for email verification
   rating: { type: Number }, // Tailor's overall rating
   reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Review' }], // Reference to reviews
   createdAt: { type: Date, default: Date.now },
