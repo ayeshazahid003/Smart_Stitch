@@ -5,7 +5,9 @@ import http from "http";
 import { connectDb } from "./connection/connection.js";
 import { initSocket } from "./socket.js"; // Import socket setup
 
+
 import router from "./routes/routes.js";
+import uploadRoutes from './routes/uploadRoutes.js'
 
 dotenv.config();
 const app = express();
@@ -23,6 +25,7 @@ const httpServer = http.createServer(app);
 initSocket(httpServer);
 
 app.use('/', router);
+app.use('/', uploadRoutes)
 
 httpServer.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

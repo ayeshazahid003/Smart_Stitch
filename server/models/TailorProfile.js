@@ -28,6 +28,8 @@ const TailorProfileSchema = new mongoose.Schema({
     address: { type: String }, // Address of the shop
     coordinates: [{ type: Number }] // [longitude, latitude]
   },
+  shopImages: [{ type: String }], // Array of shop image URLs
+  isVerified: { type: Boolean, default: false }, // Verification status of the tailor
   rating: { type: Number }, // Tailor's overall rating
   reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Review' }], // Reference to reviews
   createdAt: { type: Date, default: Date.now },
