@@ -1,18 +1,28 @@
 import { Server } from "socket.io";
+import { chatSocketHandler } from "./sockets/chatSocket.js";
+import { notificationSocketHandler } from "./sockets/notificationSocket.js";
 
-let io; 
+let io;
 
 export function initSocket(server) {
   io = new Server(server, {
     cors: {
-      origin: "*", // Replace with your frontend URL
+      origin: "*",
       methods: ["GET", "POST"],
     },
   });
+
+  const connectedUsers = {};
+
+  // Initialize chat socket
+  chatSocketHandler(io, connectedUsers);
+
+  // Initialize notification socket
+  notificationSocketHandler(io, connectedUsers);
+
   return io;
 }
 
-// Export a function to retrieve the io instance
 export function getSocket() {
   if (!io) {
     throw new Error("Socket.io is not initialized!");

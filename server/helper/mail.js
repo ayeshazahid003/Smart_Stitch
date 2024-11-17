@@ -14,14 +14,7 @@ const smtpConfig = {
 // Create a transporter object
 const transporter = nodemailer.createTransport(smtpConfig);
 
-/**
- * Function to send an email using Amazon SES SMTP
- * @param {string} senderEmail - The email address of the sender.
- * @param {string} receiverEmail - The email address of the recipient.
- * @param {string} subject - The subject of the email.
- * @param {string} body - The body of the email (text content).
- * @returns {Promise} - A promise that resolves when the email is sent.
- */
+
 export const sendEmail = async (senderEmail, receiverEmail, subject, body) => {
   try {
     // Create the email options

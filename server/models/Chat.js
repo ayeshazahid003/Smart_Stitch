@@ -4,19 +4,26 @@ const ChatSchema = new mongoose.Schema({
   participants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }],
   messages: [
     {
-      senderId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Sender of the message
-      message: { type: String, required: true }, // Message content
-      timestamp: { type: Date, default: Date.now } // Timestamp of the message
+      _id: { type: mongoose.Schema.Types.ObjectId, default: mongoose.Types.ObjectId },
+      senderId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+      message: { type: String, required: true },
+      timestamp: { type: Date, default: Date.now },
+    }
+  ],
+  unreadMessages: [
+    {
+      userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+      count: { type: Number, default: 0 },
     }
   ],
   readStatus: [
     {
-      userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // User whose read status is tracked
-      lastReadMessageId: { type: mongoose.Schema.Types.ObjectId } // Reference to the last message read by this user
+      userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+      lastReadMessageId: { type: mongoose.Schema.Types.ObjectId },
     }
   ],
   createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
+  updatedAt: { type: Date, default: Date.now },
 });
 
 export default mongoose.model('Chat', ChatSchema);

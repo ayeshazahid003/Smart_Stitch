@@ -577,3 +577,209 @@ export const getListOfPortfolio = async (req, res) => {
     });
   }
 };
+
+export const getTailorProfile = async (req, res) => {
+  try {
+    const { tailorId } = req.params;
+
+    const tailorProfile = await TailorProfile.findOne(
+      { tailorId },
+      "-verificationToken" // Exclude sensitive data
+    ).populate("reviews"); // Populate reviews for detailed info
+
+    if (!tailorProfile) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Tailor profile not found." });
+    }
+
+    res.status(200).json({ success: true, tailorProfile });
+  } catch (error) {
+    console.error("Error fetching tailor profile:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+      error: error.message,
+    });
+  }
+};
+
+export const getAllTailors = async (req, res) => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+
+    const tailors = await TailorProfile.find({})
+      .skip((page - 1) * limit)
+      .limit(Number(limit))
+      .select("tailorId shopName rating");
+
+    res.status(200).json({ success: true, tailors });
+  } catch (error) {
+    console.error("Error fetching all tailors:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+      error: error.message,
+    });
+  }
+};
+
+export const updateTailorProfile = async (req, res) => {
+  try {
+    const tailorId = req.user._id; // Authenticated user
+    const { shopName, bio, shopLocation } = req.body;
+
+    const tailorProfile = await TailorProfile.findOne({ tailorId });
+    if (!tailorProfile) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Tailor profile not found." });
+    }
+
+    if (shopName) tailorProfile.shopName = shopName;
+    if (bio) tailorProfile.bio = bio;
+    if (shopLocation) tailorProfile.shopLocation = shopLocation;
+
+    const updatedProfile = await tailorProfile.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully.",
+      profile: updatedProfile,
+    });
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+      error: error.message,
+    });
+  }
+};
+
+export const searchTailors = async (req, res) => {
+  try {
+    const { query } = req.query;
+
+    const tailors = await TailorProfile.find({
+      $or: [
+        { shopName: { $regex: query, $options: "i" } },
+        { "serviceRates.type": { $regex: query, $options: "i" } },
+      ],
+    });
+
+    res.status(200).json({ success: true, tailors });
+  } catch (error) {
+    console.error("Error searching tailors:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+      error: error.message,
+    });
+  }
+};
+
+export const deleteTailorProfile = async (req, res) => {
+  try {
+    const tailorId = req.user._id;
+
+    const tailorProfile = await TailorProfile.findOneAndDelete({ tailorId });
+
+    if (!tailorProfile) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Tailor profile not found." });
+    }
+
+    res.status(200).json({ success: true, message: "Profile deleted." });
+  } catch (error) {
+    console.error("Error deleting profile:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+      error: error.message,
+    });
+  }
+};
+
+export const searchTailorsByPartialService = async (req, res) => {
+  try {
+    const { serviceName } = req.query;
+
+    // Ensure the search string exists
+    if (!serviceName || serviceName.trim() === "") {
+      return res
+        .status(400)
+        .json({ success: false, message: "Service name is required." });
+    }
+
+    const tailors = await TailorProfile.find({
+      "serviceRates.type": { $regex: serviceName, $options: "i" }, // Partial matching with regex
+    }).select("tailorId shopName serviceRates");
+
+    if (!tailors.length) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No tailors found for this service." });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Tailors offering the service found.",
+      tailors,
+    });
+  } catch (error) {
+    console.error("Error searching tailors by partial service name:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+      error: error.message,
+    });
+  }
+};
+
+export const getAllServicesBySearch = async (req, res) => {
+  try {
+    const { search } = req.query;
+
+    // Query condition based on whether search input exists
+    const query = search
+      ? { "serviceRates.type": { $regex: search, $options: "i" } } // Partial match with regex
+      : {};
+
+    const services = await TailorProfile.find(query, "shopName serviceRates")
+      .populate("tailorId", "name email") // Include tailor info if required
+      .exec();
+
+    if (!services.length) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No services found." });
+    }
+
+    // Flatten services into a list if needed
+    const allServices = services.map((tailor) => ({
+      tailorId: tailor.tailorId?._id,
+      tailorName: tailor.shopName,
+      services: tailor.serviceRates,
+    }));
+
+    res.status(200).json({
+      success: true,
+      message: search
+        ? `Services matching '${search}' retrieved successfully.`
+        : "All services retrieved successfully.",
+      services: allServices,
+    });
+  } catch (error) {
+    console.error("Error fetching services:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+      error: error.message,
+    });
+  }
+};
+
+
+
