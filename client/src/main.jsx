@@ -7,6 +7,8 @@ import AuthLayout from "./pages/auth/AuthLayout";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import UnderConstructionPage from "./pages/public/UnderConstructionPage";
+import ProtectLayout from "./pages/protected/ProtectLayout";
+import Dashboard from "./pages/protected/dashboard";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -17,7 +19,10 @@ createRoot(document.getElementById("root")).render(
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
         </Route>
-        <Route path="*" element={<UnderConstructionPage/>} />
+        <Route element={<ProtectLayout />}>
+          <Route path="dashboard" element={<Dashboard />} />
+        </Route>
+        <Route path="*" element={<UnderConstructionPage />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>

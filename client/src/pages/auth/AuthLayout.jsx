@@ -1,6 +1,5 @@
 import { Outlet } from "react-router";
-import { Scissors } from "lucide-react"; // Import the scissors icon for a tailor theme
-
+import { Scissors } from "lucide-react";
 function AuthLayout() {
   return (
     <div className="min-h-screen flex">

@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Scissors } from "lucide-react";
 import { Link } from "react-router";
+import axios from "axios";
 
 // Define the form schema
 const formSchema = z.object({
@@ -52,10 +53,23 @@ export default function RegisterForm() {
 
   function onSubmit(values) {
     setIsLoading(true);
-    setTimeout(() => {
-      console.log(values);
-      setIsLoading(false);
-    }, 1000);
+    axios
+      .post("http://localhost:5000/signup", values, {
+        withCredentials: true,
+      })
+      .then((res) => {
+        console.log(res);
+      })
+      .catch((err) => {
+        console.log(err);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+    // setTimeout(() => {
+    //   console.log(values);
+    //   setIsLoading(false);
+    // }, 1000);
   }
 
   return (
@@ -143,8 +157,8 @@ export default function RegisterForm() {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="user">User</SelectItem>
                     <SelectItem value="customer">Customer</SelectItem>
+                    <SelectItem value="tailor">Tailor</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage className="text-red-500" />

@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import generateToken from "../helper/generateToken.js";
 
 export const createUser = async (req, res) => {
   try {
@@ -30,13 +31,15 @@ export const createUser = async (req, res) => {
     });
 
     // Save the user to the database
-    await newUser.save();
+    const user = await newUser.save();
 
     // Generate a JWT token that does not expire
-    const token = jwt.sign(
-      { id: newUser._id, role: newUser.role },
-      process.env.JWT_SECRET
-    );
+    generateToken(res, user._id);
+
+    // const token = jwt.sign(
+    //   { id: newUser._id, role: newUser.role },
+    //   process.env.JWT_SECRET
+    // );
 
     // Respond with the created user and token
     res.status(201).json({
@@ -47,7 +50,6 @@ export const createUser = async (req, res) => {
         email: newUser.email,
         role: newUser.role,
       },
-      token,
     });
   } catch (error) {
     console.error(error);
@@ -79,10 +81,13 @@ export const loginUser = async (req, res) => {
     }
 
     // Generate a JWT token that does not expire
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET
-    );
+
+    generateToken(res, user._id);
+
+    // const token = jwt.sign(
+    //   { id: user._id, role: user.role },
+    //   process.env.JWT_SECRET
+    // );
 
     // Respond with user data and token
     res.status(200).json({
@@ -93,7 +98,6 @@ export const loginUser = async (req, res) => {
         email: user.email,
         role: user.role,
       },
-      token,
     });
   } catch (error) {
     console.error(error);

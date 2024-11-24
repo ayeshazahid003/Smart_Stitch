@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
+import axios from "axios";
 import {
   Form,
   FormControl,
@@ -25,7 +26,6 @@ const formSchema = z.object({
   }),
 });
 
-
 export default function SignInForm() {
   const [isLoading, setIsLoading] = useState(false);
   const form = useForm({
@@ -38,10 +38,8 @@ export default function SignInForm() {
 
   function onSubmit(values) {
     setIsLoading(true);
-    setTimeout(() => {
-      console.log(values);
-      setIsLoading(false);
-    }, 1000);
+    //  make a axios request post to this URL, (local host 5000), and console.log the response
+    console.log(values);
   }
 
   return (
