@@ -6,6 +6,7 @@ import { BrowserRouter, Route, Routes } from "react-router";
 import AuthLayout from "./pages/auth/AuthLayout";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
+import UnderConstructionPage from "./pages/public/UnderConstructionPage";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -16,7 +17,7 @@ createRoot(document.getElementById("root")).render(
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
         </Route>
-        <Route path="*" element={<div>Not Found</div>} />
+        <Route path="*" element={<UnderConstructionPage/>} />
       </Routes>
     </BrowserRouter>
   </StrictMode>
