@@ -16,11 +16,6 @@ export const createTailorProfile = async (req, res) => {
         .status(400)
         .json({ message: "Shop name is required.", success: false });
     }
-    if (!shopImages || !Array.isArray(shopImages) || shopImages.length === 0) {
-      return res
-        .status(400)
-        .json({ message: "Shop images are required.", success: false });
-    }
     if (!shopLocation || (!shopLocation.address && !shopLocation.coordinates)) {
       return res.status(400).json({
         message: "Shop location (address or coordinates) is required.",
@@ -32,10 +27,11 @@ export const createTailorProfile = async (req, res) => {
         .status(400)
         .json({ message: "Bio is required.", success: false });
     }
-
-    const uploadedImages = await uploadMultipleFiles(shopImages, "Home");
-
-    const shopImageUrls = uploadedImages.map((img) => img.secure_url);
+    let uploadedImages, shopImageUrls;
+    if (shopImages.length > 0) {
+      uploadedImages = await uploadMultipleFiles(shopImages, "Home");
+      shopImageUrls = uploadedImages.map((img) => img.secure_url);
+    }
 
     const verificationToken = crypto.randomBytes(32).toString("hex");
 
@@ -718,9 +714,10 @@ export const searchTailorsByPartialService = async (req, res) => {
     }).select("tailorId shopName serviceRates");
 
     if (!tailors.length) {
-      return res
-        .status(404)
-        .json({ success: false, message: "No tailors found for this service." });
+      return res.status(404).json({
+        success: false,
+        message: "No tailors found for this service.",
+      });
     }
 
     res.status(200).json({
@@ -780,6 +777,3 @@ export const getAllServicesBySearch = async (req, res) => {
     });
   }
 };
-
-
-
