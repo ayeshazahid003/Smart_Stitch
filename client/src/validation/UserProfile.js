@@ -13,21 +13,21 @@ const MeasurementSchema = z.object({
   title: z.string().min(1, { message: "Title is required" }),
   data: z
     .object({
-      height: z.string().optional(),
-      chest: z.string().optional(),
-      waist: z.string().optional(),
-      hips: z.string().optional(),
-      shoulder: z.string().optional(),
-      wrist: z.string().optional(),
-      sleeves: z.string().optional(),
-      neck: z.string().optional(),
+      height: z.number().optional(),
+      chest: z.number().optional(),
+      waist: z.number().optional(),
+      hips: z.number().optional(),
+      shoulder: z.number().optional(),
+      wrist: z.number().optional(),
+      sleeves: z.number().optional(),
+      neck: z.number().optional(),
       lowerBody: z
         .object({
-          length: z.string().optional(),
-          waist: z.string().optional(),
-          inseam: z.string().optional(),
-          thigh: z.string().optional(),
-          ankle: z.string().optional(),
+          length: z.number().optional(),
+          waist: z.number().optional(),
+          inseam: z.number().optional(),
+          thigh: z.number().optional(),
+          ankle: z.number().optional(),
         })
         .optional(),
     })
