@@ -9,6 +9,7 @@ import {
   Shield,
   Briefcase,
 } from "lucide-react";
+import Header from "../../components/client/Header";
 
 // Dummy data
 const platformBenefits = [
@@ -99,7 +100,10 @@ const testimonials = [
 export default function HomePage() {
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
+      {/* Hero Sectio n */}
+
+      <Header />
+
       <section className="relative bg-indigo-950 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center lg:text-left lg:w-2/3">
@@ -123,9 +127,19 @@ export default function HomePage() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="border-white text-green-900 hover:bg-black hover:text-white "
+                  className="border-white text-green-900 hover:bg-black hover:text-white"
                 >
                   Join as a Tailor
+                </Button>
+              </Link>
+              {/* Sign In Button */}
+              <Link to="/login">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-white text-green-900 hover:bg-black hover:text-white"
+                >
+                  Have An Account? Sign In
                 </Button>
               </Link>
             </div>
@@ -141,8 +155,8 @@ export default function HomePage() {
               Why Choose Our Platform
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Whether you&apos;re looking for a tailor or are one yourself, we
-              make the process simple and secure
+              Whether you're looking for a tailor or are one yourself, we make
+              the process simple and secure.
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -170,7 +184,7 @@ export default function HomePage() {
               Featured Tailors
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Discover top-rated tailors in your area
+              Discover top-rated tailors in your area.
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -228,7 +242,7 @@ export default function HomePage() {
               Platform Success Stories
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Hear from our community of tailors and satisfied customers
+              Hear from our community of tailors and satisfied customers.
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -296,7 +310,7 @@ export default function HomePage() {
                   <div className="ml-4">
                     <h4 className="text-lg font-semibold">Search Tailors</h4>
                     <p className="text-gray-600">
-                      Browse through our verified tailors and read reviews
+                      Browse through our verified tailors and read reviews.
                     </p>
                   </div>
                 </div>
@@ -307,7 +321,7 @@ export default function HomePage() {
                   <div className="ml-4">
                     <h4 className="text-lg font-semibold">Book Appointment</h4>
                     <p className="text-gray-600">
-                      Schedule a fitting at your convenience
+                      Schedule a fitting at your convenience.
                     </p>
                   </div>
                 </div>
@@ -321,9 +335,17 @@ export default function HomePage() {
                     </h4>
                     <p className="text-gray-600">
                       Work with your chosen tailor and pay securely through our
-                      platform
+                      platform.
                     </p>
                   </div>
+                </div>
+                {/* Added Get Started Button */}
+                <div className="text-center mt-8">
+                  <Link to="/register">
+                    <Button className="bg-indigo-950 text-white hover:bg-indigo-900">
+                      Get Started
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -341,7 +363,7 @@ export default function HomePage() {
                       Create Your Profile
                     </h4>
                     <p className="text-gray-600">
-                      Showcase your work and specialties
+                      Showcase your work and specialties.
                     </p>
                   </div>
                 </div>
@@ -352,7 +374,7 @@ export default function HomePage() {
                   <div className="ml-4">
                     <h4 className="text-lg font-semibold">Receive Bookings</h4>
                     <p className="text-gray-600">
-                      Accept appointments and manage your schedule
+                      Accept appointments and manage your schedule.
                     </p>
                   </div>
                 </div>
@@ -365,9 +387,17 @@ export default function HomePage() {
                       Grow Your Business
                     </h4>
                     <p className="text-gray-600">
-                      Get paid securely and build your client base
+                      Get paid securely and build your client base.
                     </p>
                   </div>
+                </div>
+                {/* Added Join Now Button */}
+                <div className="text-center mt-8">
+                  <Link to="/become-tailor">
+                    <Button className="bg-indigo-950 text-white hover:bg-indigo-900">
+                      Join Now
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -382,9 +412,9 @@ export default function HomePage() {
             <div className="text-center">
               <h2 className="text-2xl font-bold mb-4">Looking for a Tailor?</h2>
               <p className="text-indigo-200 mb-6">
-                Find the perfect tailor for your needs
+                Find the perfect tailor for your needs.
               </p>
-              <Link to="/search-tailors">
+              <Link to="/register">
                 <Button
                   size="lg"
                   className="bg-white text-indigo-950 hover:bg-indigo-100"
@@ -396,7 +426,7 @@ export default function HomePage() {
             <div className="text-center">
               <h2 className="text-2xl font-bold mb-4">Are You a Tailor?</h2>
               <p className="text-indigo-200 mb-6">
-                Join our platform and grow your business
+                Join our platform and grow your business.
               </p>
               <Link to="/become-tailor">
                 <Button

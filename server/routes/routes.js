@@ -7,6 +7,7 @@ import * as vouchersController from '../controllers/vouchersController.js'
 import * as reviewController from '../controllers/reviewsController.js';
 import * as chatController from '../controllers/chatController.js'
 import * as orderController from '../controllers/ordersController.js'
+import { protect } from '../middlewares/authMiddleware.js';
 
 
 const router = express.Router();
@@ -38,7 +39,12 @@ router.get('/tailors/:tailorId', tailorProfileController.getTailorProfile);
 router.get('/tailors', tailorProfileController.getAllTailors);
 router.get('/tailors/search', tailorProfileController.searchTailors);
 
-// User Routes
+// User Routes for user profile
+router.get("/users/profile", protect, userController.getUserProfile);
+router.put("/users/profile", protect, userController.updateUser);
+
+
+// user routes zain
 router.get('/users/:id', verifyUser, userController.getUserById); 
 router.put('/users/:id', verifyUser, userController.updateUser);
 router.delete('/users/:id', verifyUser, userController.deleteUser); 

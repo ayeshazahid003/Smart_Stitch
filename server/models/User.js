@@ -1,16 +1,17 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-const UserSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  role: { type: String, enum: ['customer', 'tailor'], required: true },
-  profilePicture: { type: String },
-  contactInfo: {
-    phone: { type: String },
-    address: { type: String }
-  },
-  measurements: {
+const AddressSchema = new mongoose.Schema({
+  line1: { type: String },
+  line2: { type: String },
+  city: { type: String },
+  state: { type: String },
+  postalCode: { type: String },
+  country: { type: String },
+});
+
+const MeasurementSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  data: {
     height: { type: Number },
     chest: { type: Number },
     waist: { type: Number },
@@ -24,11 +25,24 @@ const UserSchema = new mongoose.Schema({
       waist: { type: Number },
       inseam: { type: Number },
       thigh: { type: Number },
-      ankle: { type: Number }
-    }
+      ankle: { type: Number },
+    },
   },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
 });
 
-export default mongoose.model('User', UserSchema);
+const UserSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  role: { type: String, enum: ["customer", "tailor"], required: true },
+  profilePicture: { type: String },
+  contactInfo: {
+    phone: { type: String },
+    address: AddressSchema,
+  },
+  measurements: [MeasurementSchema],
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
+});
+
+export default mongoose.model("User", UserSchema);

@@ -14,7 +14,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Scissors } from "lucide-react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
+import { useUser } from "../../context/UserContext";
+import { toast } from "react-toastify"; // Import toast
 
 // Define the form schema
 const formSchema = z.object({
@@ -28,6 +30,9 @@ const formSchema = z.object({
 
 export default function SignInForm() {
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
+  const { login } = useUser();
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -36,10 +41,18 @@ export default function SignInForm() {
     },
   });
 
-  function onSubmit(values) {
+  async function onSubmit(values) {
     setIsLoading(true);
-    //  make a axios request post to this URL, (local host 5000), and console.log the response
-    console.log(values);
+    setError(null); // Reset error state
+    try {
+      await login(values.email, values.password);
+      toast.success("Login successful!");
+      navigate("/");
+    } catch (err) {
+      setError("Login failed. Please check your credentials and try again.");
+      toast.error("Login failed. Please check your credentials and try again."); // Show error toast
+    }
+    setIsLoading(false);
   }
 
   return (
@@ -94,7 +107,6 @@ export default function SignInForm() {
               </FormItem>
             )}
           />
-
           <div className="flex items-center justify-end">
             <Link
               to="/forgot-password"
@@ -103,7 +115,8 @@ export default function SignInForm() {
               Forgot password?
             </Link>
           </div>
-
+          {error && <p className="text-red-500">{error}</p>}{" "}
+          {/* Display error */}
           <Button
             type="submit"
             disabled={isLoading}
