@@ -22,6 +22,9 @@ import {
 import { Scissors } from "lucide-react";
 import { Link } from "react-router";
 import axios from "axios";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router";
+import { useUser } from "../../context/UserContext"; // Import useUser
 
 // Define the form schema
 const formSchema = z.object({
@@ -41,6 +44,7 @@ const formSchema = z.object({
 
 export default function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -50,26 +54,21 @@ export default function RegisterForm() {
       role: undefined,
     },
   });
+  const { register } = useUser(); // Destructure register from useUser
+  const [error, setError] = useState(null); // Add error state
 
-  function onSubmit(values) {
+  async function onSubmit(values) {
     setIsLoading(true);
-    axios
-      .post("http://localhost:5000/signup", values, {
-        withCredentials: true,
-      })
-      .then((res) => {
-        console.log(res);
-      })
-      .catch((err) => {
-        console.log(err);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-    // setTimeout(() => {
-    //   console.log(values);
-    //   setIsLoading(false);
-    // }, 1000);
+    setError(null); // Reset error state
+    try {
+      await register(values.name, values.email, values.password);
+      toast.success("Registration successful!");
+      navigate("/client-dashboard");
+    } catch (err) {
+      setError("Registration failed. Please try again.");
+      toast.error("Registration failed. Please try again."); // Show error toast
+    }
+    setIsLoading(false);
   }
 
   return (
@@ -165,6 +164,7 @@ export default function RegisterForm() {
               </FormItem>
             )}
           />
+          {error && <p className="text-red-500">{error}</p>} {/* Display error */}
           <Button
             type="submit"
             disabled={isLoading}

@@ -36,20 +36,19 @@ export const createUser = async (req, res) => {
     // Generate a JWT token that does not expire
     generateToken(res, user._id);
 
-    // const token = jwt.sign(
-    //   { id: newUser._id, role: newUser.role },
-    //   process.env.JWT_SECRET
-    // );
+    const userProfile = {
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      profilePicture: user.profilePicture,
+      contactInfo: user.contactInfo,
+      address: user.contactInfo.address,
+      measurements: user.measurements,
+    };
 
-    // Respond with the created user and token
     res.status(201).json({
       message: "User created successfully.",
-      user: {
-        id: newUser._id,
-        name: newUser.name,
-        email: newUser.email,
-        role: newUser.role,
-      },
+      user: userProfile,
     });
   } catch (error) {
     console.error(error);
@@ -84,20 +83,19 @@ export const loginUser = async (req, res) => {
 
     generateToken(res, user._id);
 
-    // const token = jwt.sign(
-    //   { id: user._id, role: user.role },
-    //   process.env.JWT_SECRET
-    // );
+    const userProfile = {
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      profilePicture: user.profilePicture,
+      contactInfo: user.contactInfo,
+      address: user.contactInfo.address,
+      measurements: user.measurements,
+    };
 
-    // Respond with user data and token
     res.status(200).json({
       message: "Login successful.",
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
+      user: userProfile,
     });
   } catch (error) {
     console.error(error);
