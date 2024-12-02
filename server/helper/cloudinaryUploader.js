@@ -9,14 +9,18 @@ import cloudinary from '../cloudinaryConfig.js';
 export const uploadSingleFile = async (filePath, folder) => {
   try {
     const result = await cloudinary.uploader.upload(filePath, {
-        public_id: folder,
+      folder: folder, // Organize files under the specified folder
+      resource_type: "auto", // Ensure it supports all file types (image/video)
+      public_id: `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, // Unique public ID
+      overwrite: false, // Prevent overwriting existing files
     });
-    return result;
+    return result; // Contains secure_url and other metadata
   } catch (error) {
-    console.error('Error uploading single file:', error);
+    console.error("Error uploading single file:", error);
     throw error;
   }
 };
+
 
 /**
  * Upload multiple files to Cloudinary.
