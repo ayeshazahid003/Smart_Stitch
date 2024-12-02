@@ -13,6 +13,11 @@ import Dashboard from "./pages/protected/dashboard";
 import MainLayout from "./pages/MainLayout";
 
 import UserRegistrationForm from "./pages/protected/client/Profile";
+import CustomerLayout from "./pages/protected/client/CustomerLayout";
+import ProfileForm from "./pages/protected/client/ProfileForm";
+import AddressForm from "./pages/protected/client/AddressForm";
+import MeasurementForm from "./pages/protected/client/MeasurementForm";
+
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -26,7 +31,11 @@ createRoot(document.getElementById("root")).render(
           </Route>
           <Route element={<ProtectLayout />}>
             <Route path="dashboard" element={<Dashboard />} />
-            <Route path="profile" element={<UserRegistrationForm />} />
+            <Route element={<CustomerLayout />}>
+              <Route path="profile" element={<ProfileForm />} />
+              <Route path="address" element={<AddressForm />} />
+              <Route path="measurements" element={<MeasurementForm />} />
+            </Route>
           </Route>
         </Route>
         <Route path="*" element={<UnderConstructionPage />} />
