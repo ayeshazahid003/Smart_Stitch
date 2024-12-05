@@ -25,12 +25,15 @@ export const UserProvider = ({ children }) => {
         },
         { withCredentials: true }
       );
+      if (response.status !== 200) {
+        throw new Error("Login failed");
+      }
       const userData = response.data.user;
-      console.log("userData", userData);
       setUser(userData);
       localStorage.setItem("user", JSON.stringify(userData));
     } catch (err) {
       console.log(err);
+      throw new Error("Login failed");
     }
   };
 
@@ -51,13 +54,14 @@ export const UserProvider = ({ children }) => {
       localStorage.setItem("user", JSON.stringify(userData));
     } catch (err) {
       console.log(err);
+      throw new Error("Registration failed");
     }
   };
 
   const logout = async () => {
     try {
       await axios.post(
-        `${BASE_URL}/api/users/logout`,
+        `${BASE_URL}/logout`,
         {},
         {
           withCredentials: true,
@@ -67,6 +71,7 @@ export const UserProvider = ({ children }) => {
       localStorage.removeItem("user");
     } catch (err) {
       console.log(err);
+      throw new Error("Logout failed");
     }
   };
 
@@ -80,6 +85,7 @@ export const UserProvider = ({ children }) => {
       setUser(userData);
     } catch (err) {
       console.log(err);
+      throw new Error("Fetching user profile failed");
     }
   };
 
@@ -94,7 +100,8 @@ export const UserProvider = ({ children }) => {
       setUser(userData);
       localStorage.setItem("user", JSON.stringify(userData));
     } catch (err) {
-      console.log(err);
+      console.log(err)
+      throw new Error("Updating user profile failed");
     }
   };
 

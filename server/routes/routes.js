@@ -15,6 +15,7 @@ const router = express.Router();
 // Authentication Routes
 router.post("/signup", authController.createUser);
 router.post("/login", authController.loginUser);
+router.post("/logout", authController.logoutUser);
 router.get('/verify-token', verifyUser, authController.verifyToken);
 
 // Tailor Profile Routes
