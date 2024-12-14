@@ -5,10 +5,10 @@ import generateToken from "../helper/generateToken.js";
 
 export const createUser = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { username, email, password, role } = req.body;
 
     // Validate the required fields
-    if (!name || !email || !password || !role) {
+    if (!username || !email || !password || !role) {
       return res.status(400).json({ message: "All fields are required." });
     }
 
@@ -24,7 +24,7 @@ export const createUser = async (req, res) => {
 
     // Create a new user
     const newUser = new User({
-      name,
+      name:username,
       email,
       password: hashedPassword,
       role,

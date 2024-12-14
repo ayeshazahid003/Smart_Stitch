@@ -37,7 +37,7 @@ const formSchema = z.object({
   password: z.string().min(8, {
     message: "Password must be at least 8 characters long.",
   }),
-  role: z.enum(["user", "customer"], {
+  role: z.enum(["tailor", "customer"], {
     required_error: "Please select a role.",
   }),
 });
@@ -61,9 +61,9 @@ export default function RegisterForm() {
     setIsLoading(true);
     setError(null); // Reset error state
     try {
-      await register(values.name, values.email, values.password);
+      await register(values.name, values.email, values.password, values.role);
       toast.success("Registration successful!");
-      navigate("/client-dashboard");
+      navigate("/profile");
     } catch (err) {
       setError("Registration failed. Please try again.");
       toast.error("Registration failed. Please try again."); // Show error toast

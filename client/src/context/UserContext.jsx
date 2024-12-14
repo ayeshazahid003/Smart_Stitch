@@ -37,7 +37,7 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  const register = async (username, email, password) => {
+  const register = async (username, email, password, role) => {
     try {
       const response = await axios.post(
         `${BASE_URL}/signup`,
@@ -45,6 +45,7 @@ export const UserProvider = ({ children }) => {
           username,
           email,
           password,
+          role
         },
         { withCredentials: true }
       );
