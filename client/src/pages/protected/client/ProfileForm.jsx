@@ -112,7 +112,7 @@ export default function ProfileForm() {
         </div>
         <Button
           type="submit"
-          className="w-full bg-blue-500 text-white py-2 rounded-md"
+          className="w-full bg-[#111827] text-white py-2 rounded-md"
         >
           Save
         </Button>
