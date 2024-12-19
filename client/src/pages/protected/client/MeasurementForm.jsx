@@ -63,7 +63,7 @@ export default function MeasurementForm() {
 
   return (
     <div className="max-w-2xl mx-auto p-6 bg-white rounded-md shadow-md">
-      <h2 className="text-lg font-semibold mb-4">Update Measurements</h2>
+      {/* <h2 className="text-lg font-semibold mb-4">Update Measurements</h2> */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Measurements</h3>

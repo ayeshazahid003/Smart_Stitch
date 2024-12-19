@@ -64,7 +64,7 @@ export default function AddressForm() {
 
   return (
     <div className="max-w-md mx-auto p-6 bg-white rounded-md shadow-md">
-      <h2 className="text-lg font-semibold mb-4">Update Address</h2>
+      <h2 className="text-lg font-semibold mb-4">Address</h2>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
           <Label htmlFor="line1">Address Line 1</Label>
