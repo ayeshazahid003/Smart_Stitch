@@ -9,6 +9,7 @@ import Register from "./pages/auth/Register";
 import UnderConstructionPage from "./pages/public/UnderConstructionPage";
 import ProtectLayout from "./pages/protected/ProtectLayout";
 import Dashboard from "./pages/protected/dashboard";
+import Browse from "./pages/public/Browse";
 
 import MainLayout from "./pages/MainLayout";
 
@@ -25,6 +26,7 @@ createRoot(document.getElementById("root")).render(
       <Routes>
         <Route path="/" element={<MainLayout />}>
           <Route index element={<HomePage />} />
+          <Route path="/browse" element={<Browse/>} />
           <Route element={<AuthLayout />}>
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
