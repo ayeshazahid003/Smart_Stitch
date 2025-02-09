@@ -1,12 +1,18 @@
 import React, { useState } from "react";
 import Header from "../../components/client/Header";
 import CartButton from "../../components/client/cartBTN";
+import TailorCard from "../../components/client/TailorCard";
+import { tailorServices } from "../../constant/data";
+import TailorFeatureSection from "../../components/client/TailorFeatureSection";
+import Footer from "../../components/client/Footer";
+
+
 
 export default function Browse() {
   const [searchTerm, setSearchTerm] = useState("");
   const [suggestions, setSuggestions] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("ALL");
 
-  // Dummy data for tailor search suggestions (replace with API fetch if needed)
   const tailorOptions = [
     "Custom Suit Tailor",
     "Wedding Dress Tailor",
@@ -17,25 +23,43 @@ export default function Browse() {
     "Quick Fix Tailors",
   ];
 
-  // Function to filter suggestions based on input
+  const categories = [
+    "ALL",
+    "Men’s Tailoring",
+    "Women’s Tailoring",
+    "Alterations & Repairs",
+    "Bespoke Suits",
+    "Traditional Wear",
+    "Wedding Attire",
+    "Leather & Denim Repairs",
+  ];
+
+
   const handleSearchChange = (event) => {
     const query = event.target.value;
     setSearchTerm(query);
-
-    if (query.length > 0) {
-      const filteredSuggestions = tailorOptions.filter((item) =>
-        item.toLowerCase().includes(query.toLowerCase())
-      );
-      setSuggestions(filteredSuggestions);
-    } else {
-      setSuggestions([]);
-    }
+    setSuggestions(
+      query.length > 0
+        ? tailorOptions.filter((item) =>
+            item.toLowerCase().includes(query.toLowerCase())
+          )
+        : []
+    );
   };
+
+  const filteredTailorServices =
+    selectedCategory === "ALL"
+      ? tailorServices
+      : tailorServices.filter((service) =>
+          service.categories.toLowerCase().includes(selectedCategory.toLowerCase())
+        );
 
   return (
     <div>
       <Header />
       <CartButton />
+
+      {/* Hero Section */}
       <div
         className="relative h-[400px] flex flex-col justify-center items-center bg-cover bg-center"
         style={{
@@ -54,7 +78,6 @@ export default function Browse() {
             value={searchTerm}
             onChange={handleSearchChange}
           />
-          {/* Suggestions Dropdown */}
           {suggestions.length > 0 && (
             <ul className="absolute left-0 w-full bg-white border border-gray-300 rounded-lg mt-2 shadow-lg">
               {suggestions.map((suggestion, index) => (
@@ -70,6 +93,43 @@ export default function Browse() {
           )}
         </div>
       </div>
+
+      <div className="px-4 py-8 flex justify-center items-center flex-col">
+        <h1 className="text-3xl font-ibarra font-semibold text-[#111827]">
+          100+ Tailors
+        </h1>
+        <h1 className="text-3xl font-ibarra font-semibold text-[#111827]">
+          One Vision, Perfection
+        </h1>
+      </div>
+
+      {/* Categories Filter */}
+      <div className="flex justify-center gap-6 py-3">
+        {categories.map((category, index) => (
+          <button
+            key={index}
+            className={`px-4 py-2 font-semibold ${
+              selectedCategory === category
+                ? "text-black border-b-2 border-black"
+                : "text-gray-600 hover:text-black"
+            }`}
+            onClick={() => setSelectedCategory(category)}
+          >
+            {category}
+          </button>
+        ))}
+      </div>
+
+      {/* Tailor Services Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+        {filteredTailorServices.map((service, index) => (
+          <TailorCard key={index} {...service} />
+        ))}
+      </div>
+
+      <TailorFeatureSection />
+
+      <Footer/>
     </div>
   );
 }
