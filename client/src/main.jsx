@@ -19,6 +19,8 @@ import ProfileForm from "./pages/protected/client/ProfileForm";
 import AddressForm from "./pages/protected/client/AddressForm";
 import MeasurementForm from "./pages/protected/client/MeasurementForm";
 import TailorProfile from "./pages/public/TailorProfile";
+import Checkout from "./pages/public/Checkout";
+import OrderPlaced from "./pages/public/OrderPlaced";
 
 
 createRoot(document.getElementById("root")).render(
@@ -29,6 +31,8 @@ createRoot(document.getElementById("root")).render(
           <Route index element={<HomePage />} />
           <Route path="/browse" element={<Browse/>} />
           <Route path="/tailor/:id" element={<TailorProfile/>} />
+          <Route path="/checkout" element={<Checkout/>} />
+          <Route path="/order-placed" element={<OrderPlaced/>} />
           <Route element={<AuthLayout />}>
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
