@@ -21,7 +21,7 @@ import MeasurementForm from "./pages/protected/client/MeasurementForm";
 import TailorProfile from "./pages/public/TailorProfile";
 import Checkout from "./pages/public/Checkout";
 import OrderPlaced from "./pages/public/OrderPlaced";
-
+import Chat from "./pages/chat/Chat";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -29,10 +29,11 @@ createRoot(document.getElementById("root")).render(
       <Routes>
         <Route path="/" element={<MainLayout />}>
           <Route index element={<HomePage />} />
-          <Route path="/browse" element={<Browse/>} />
-          <Route path="/tailor/:id" element={<TailorProfile/>} />
-          <Route path="/checkout" element={<Checkout/>} />
-          <Route path="/order-placed" element={<OrderPlaced/>} />
+          <Route path="/browse" element={<Browse />} />
+          <Route path="/chat" element={<Chat />} />
+          <Route path="/tailor/:id" element={<TailorProfile />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/order-placed" element={<OrderPlaced />} />
           <Route element={<AuthLayout />}>
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
