@@ -22,6 +22,7 @@ import TailorProfile from "./pages/public/TailorProfile";
 import Checkout from "./pages/public/Checkout";
 import OrderPlaced from "./pages/public/OrderPlaced";
 import Chat from "./pages/chat/Chat";
+import OrderDetails from "./pages/orders/OrderDetails";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -34,6 +35,8 @@ createRoot(document.getElementById("root")).render(
           <Route path="/tailor/:id" element={<TailorProfile />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/order-placed" element={<OrderPlaced />} />
+          <Route path="/order-detail/:id" element={<OrderDetails />} />
+          
           <Route element={<AuthLayout />}>
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
