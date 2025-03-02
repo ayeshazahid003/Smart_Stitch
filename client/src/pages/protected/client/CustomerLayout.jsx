@@ -21,6 +21,7 @@ const navigation = [
   { name: "Profile", href: "/profile", icon: UsersIcon },
   { name: "Address", href: "/address", icon: FolderIcon },
   { name: "Measurements", href: "/measurements", icon: CalendarIcon },
+  {name: "DashboardTailor", href: "tailor", icon: HomeIcon}
 ];
 
 function classNames(...classes) {

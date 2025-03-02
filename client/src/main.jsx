@@ -17,6 +17,7 @@ import UserRegistrationForm from "./pages/protected/client/Profile";
 import CustomerLayout from "./pages/protected/client/CustomerLayout";
 import ProfileForm from "./pages/protected/client/ProfileForm";
 import AddressForm from "./pages/protected/client/AddressForm";
+import TailorDashboard from "./pages/protected/TailorDashboard";
 import MeasurementForm from "./pages/protected/client/MeasurementForm";
 import TailorProfile from "./pages/public/TailorProfile";
 import Checkout from "./pages/public/Checkout";
@@ -47,8 +48,10 @@ createRoot(document.getElementById("root")).render(
               <Route path="profile" element={<ProfileForm />} />
               <Route path="address" element={<AddressForm />} />
               <Route path="measurements" element={<MeasurementForm />} />
+              <Route path="tailor" element={<TailorDashboard />} />
             </Route>
           </Route>
+   
         </Route>
         <Route path="*" element={<UnderConstructionPage />} />
       </Routes>
