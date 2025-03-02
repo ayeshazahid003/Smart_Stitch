@@ -17,11 +17,11 @@ import {
 import { useUser } from "../../../context/UserContext";
 
 const navigation = [
-  { name: "Dashboard", href: "profile", icon: HomeIcon },
+  { name: "Dashboard", href: "tailor", icon: HomeIcon },
   { name: "Profile", href: "/profile", icon: UsersIcon },
   { name: "Address", href: "/address", icon: FolderIcon },
   { name: "Measurements", href: "/measurements", icon: CalendarIcon },
-  {name: "DashboardTailor", href: "tailor", icon: HomeIcon}
+  // {name: "DashboardTailor", href: "tailor", icon: HomeIcon}
 ];
 
 function classNames(...classes) {

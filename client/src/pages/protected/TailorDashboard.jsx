@@ -12,7 +12,7 @@ import {
   Legend,
 } from "chart.js";
 
-// Registering chart.js components
+// Register Chart.js components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -26,7 +26,7 @@ ChartJS.register(
 const TailorDashboard = () => {
   const [timeRange, setTimeRange] = useState("weekly");
 
-  // Static data for Line (Sales Trend)
+  // Static data for Sales Trend
   const salesData = {
     weekly: [50, 75, 100, 150],
     monthly: [200, 300, 400, 500],
@@ -34,20 +34,27 @@ const TailorDashboard = () => {
   };
 
   const salesChartData = {
-    labels: ["Week 1", "Week 2", "Week 3", "Week 4"], // Labels for each week
+    labels:
+      timeRange === "weekly"
+        ? ["Week 1", "Week 2", "Week 3", "Week 4"]
+        : timeRange === "monthly"
+        ? ["Month 1", "Month 2", "Month 3", "Month 4"]
+        : ["Year 1", "Year 2", "Year 3", "Year 4"],
     datasets: [
       {
         label: "Sales",
-        data: salesData[timeRange], // Data based on selected time range
+        data: salesData[timeRange],
         borderColor: "rgb(75, 192, 192)",
         backgroundColor: "rgba(75, 192, 192, 0.2)",
         tension: 0.4,
+        fill: true,
       },
     ],
   };
 
   const salesOptions = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: "top",
@@ -60,9 +67,11 @@ const TailorDashboard = () => {
     scales: {
       x: {
         beginAtZero: true,
+        grid: { display: false },
       },
       y: {
         beginAtZero: true,
+        grid: { color: "#e5e7eb" },
       },
     },
   };
@@ -72,130 +81,161 @@ const TailorDashboard = () => {
   };
 
   return (
-    <div className="flex flex-col p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Tailor Dashboard</h1>
-        <div className="flex items-center space-x-4">
-          <button className="px-4 py-2 bg-gray-900 text-white rounded-md">All Orders</button>
-          <button className="px-4 py-2 bg-gray-900 text-white rounded-md">Payouts</button>
-        </div>
-      </div>
-
-      {/* Order Stats Section */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        <div className="bg-white p-4 rounded-lg shadow-md">
-          <div className="flex justify-between gap-2 items-center">
-            <div className="w-5"><ArchiveBoxIcon /></div>
-            <h3 className="text-lg font-bold text-gray-700">Total Orders</h3>
-          </div>
-          <p className="text-xl text-gray-900 font-bold">$150</p>
-        </div>
-
-        <div className="bg-white p-4 rounded-lg shadow-md">
-          <div className="flex justify-between gap-2 items-center">
-            <div className="w-5"><ArchiveBoxIcon /></div>
-            <h3 className="text-lg font-bold text-gray-700">Active Orders</h3>
-          </div>
-          <p className="text-xl text-gray-900 font-bold">$50</p>
-        </div>
-
-        <div className="bg-white p-4 rounded-lg shadow-md">
-          <div className="flex justify-between gap-2 items-center">
-            <div className="w-5"><ArchiveBoxIcon /></div>
-            <h3 className="text-lg font-bold text-gray-700">Completed Orders</h3>
-          </div>
-          <p className="text-xl text-gray-900 font-bold">$80</p>
-        </div>
-
-        <div className="bg-white p-4 rounded-lg shadow-md">
-          <div className="flex justify-between gap-2 items-center">
-            <div className="w-5"><ArchiveBoxIcon /></div>
-            <h3 className="text-lg font-bold text-gray-700">Refunded Orders</h3>
-          </div>
-          <p className="text-xl text-gray-900 font-bold">$20</p>
-        </div>
-      </div>
-
-      {/* Average Rating Section */}
-      <div className="bg-white p-4 rounded-lg shadow-md mb-6">
-        <h3 className="text-lg text-gray-700 font-bold">Average Rating</h3>
-        <p className="text-xl text-gray-900 font-bold">4.5</p>
-      </div>
-
-      {/* Sale Graph Section */}
-      <div className="bg-white p-4 rounded-lg shadow-md mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg text-gray-700 font-bold">Sales Trend</h3>
-          <div>
-            <button
-              className="px-3 py-1 bg-gray-900 text-white rounded-md mr-2"
-              onClick={() => handleTimeRangeChange("weekly")}
-            >
-              Weekly
+    <div className="min-h-screen p-4">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-8">
+          <h1 className="text-3xl font-extrabold text-gray-800 mb-4 sm:mb-0">
+            Your Dashboard
+          </h1>
+          <div className="flex space-x-4">
+            <button className="px-5 py-2 bg-[#111827] text-white rounded-md shadow hover:bg-gray-800 transition">
+              All Orders
             </button>
-            <button
-              className="px-3 py-1 bg-gray-900 text-white rounded-md mr-2"
-              onClick={() => handleTimeRangeChange("monthly")}
-            >
-              Monthly
-            </button>
-            <button
-              className="px-3 py-1 bg-gray-900 text-white rounded-md"
-              onClick={() => handleTimeRangeChange("yearly")}
-            >
-              Yearly
+            <button className="px-5 py-2 bg-[#111827] text-white rounded-md shadow hover:bg-gray-800 transition">
+              Payouts
             </button>
           </div>
         </div>
 
-        {/* Line Chart with Full Width and Dynamic Height */}
-        <div className="w-full h-[400px]"> {/* Set a fixed height, like 400px */}
-          <Line data={salesChartData} options={salesOptions} />
+        {/* Order Stats Section */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {[
+            { label: "Total Orders", value: "$150", icon: ArchiveBoxIcon },
+            { label: "Active Orders", value: "$50", icon: ArchiveBoxIcon },
+            { label: "Completed Orders", value: "$80", icon: ArchiveBoxIcon },
+            { label: "Refunded Orders", value: "$20", icon: ArchiveBoxIcon },
+          ].map((stat, index) => (
+            <div
+              key={index}
+              className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition"
+            >
+              <div className="flex items-center mb-4">
+                <div className="p-2 bg-gray-100 rounded-full">
+                  <stat.icon className="w-6 h-6 text-[#111827]" />
+                </div>
+                <h3 className="ml-3 text-lg font-semibold text-gray-700">
+                  {stat.label}
+                </h3>
+              </div>
+              <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+            </div>
+          ))}
         </div>
-      </div>
 
-      {/* Recent Orders Section */}
-      <div className="bg-white p-4 rounded-lg shadow-md">
-        <h3 className="text-lg text-gray-700 font-bold mb-4">Recent Orders</h3>
-        <table className="w-full table-auto text-left">
-          <thead>
-            <tr className="text-gray-700 font-bold">
-              <th className="px-4 py-2">Order</th>
-              <th className="px-4 py-2">Customer Name</th>
-              <th className="px-4 py-2">Date</th>
-              <th className="px-4 py-2">Status</th>
-              <th className="px-4 py-2">Amount</th>
-              <th className="px-4 py-2">Image</th>
-            </tr>
-          </thead>
-          <tbody>
-            {/* Static rows for recent orders */}
-            <tr className="border-t border-gray-200">
-              <td className="px-4 py-2">Product A</td>
-              <td className="px-4 py-2">Customer X</td>
-              <td className="px-4 py-2">02/25/2025</td>
-              <td className="px-4 py-2">Shipped</td>
-              <td className="px-4 py-2">$100</td>
-              <td className="px-4 py-2"><img className="w-12 h-12" src="product-image.jpg" alt="Product" /></td>
-            </tr>
-            <tr className="border-t border-gray-200">
-              <td className="px-4 py-2">Product B</td>
-              <td className="px-4 py-2">Customer Y</td>
-              <td className="px-4 py-2">02/24/2025</td>
-              <td className="px-4 py-2">Completed</td>
-              <td className="px-4 py-2">$80</td>
-              <td className="px-4 py-2"><img className="w-12 h-12" src="product-image.jpg" alt="Product" /></td>
-            </tr>
-            <tr className="border-t border-gray-200">
-              <td className="px-4 py-2">Product C</td>
-              <td className="px-4 py-2">Customer Z</td>
-              <td className="px-4 py-2">02/23/2025</td>
-              <td className="px-4 py-2">Refunded</td>
-              <td className="px-4 py-2">$20</td>
-              <td className="px-4 py-2"><img className="w-12 h-12" src="product-image.jpg" alt="Product" /></td>
-            </tr>
-          </tbody>
-        </table>
+        {/* Average Rating Section */}
+        <div className="bg-white p-6 rounded-xl shadow mb-8 hover:shadow-lg transition">
+          <h3 className="text-lg font-semibold text-gray-700 mb-2">
+            Average Rating
+          </h3>
+          <p className="text-3xl font-bold text-gray-900">4.5</p>
+        </div>
+
+        {/* Sales Graph Section */}
+        <div className="bg-white p-6 rounded-xl shadow mb-8 hover:shadow-lg transition">
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
+            <h3 className="text-lg font-semibold text-gray-700 mb-4 sm:mb-0">
+              Sales Trend
+            </h3>
+            <div className="flex space-x-2">
+              {["weekly", "monthly", "yearly"].map((range) => (
+                <button
+                  key={range}
+                  onClick={() => handleTimeRangeChange(range)}
+                  className={`px-4 py-2 rounded-md transition bg-[#111827] ${
+                    timeRange === range
+                      ? "text-white"
+                      : "text-gray-300 hover:text-white"
+                  }`}
+                >
+                  {range.charAt(0).toUpperCase() + range.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="w-full h-80">
+            <Line data={salesChartData} options={salesOptions} />
+          </div>
+        </div>
+
+        {/* Recent Orders Section */}
+        <div className="bg-white p-6 rounded-xl shadow mb-8 hover:shadow-lg transition">
+          <h3 className="text-lg font-semibold text-gray-700 mb-4">
+            Recent Orders
+          </h3>
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-left">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="px-4 py-2 text-gray-600 font-semibold">
+                    Order
+                  </th>
+                  <th className="px-4 py-2 text-gray-600 font-semibold">
+                    Customer Name
+                  </th>
+                  <th className="px-4 py-2 text-gray-600 font-semibold">
+                    Date
+                  </th>
+                  <th className="px-4 py-2 text-gray-600 font-semibold">
+                    Status
+                  </th>
+                  <th className="px-4 py-2 text-gray-600 font-semibold">
+                    Amount
+                  </th>
+                  <th className="px-4 py-2 text-gray-600 font-semibold">
+                    Image
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  {
+                    order: "Product A",
+                    customer: "Customer X",
+                    date: "02/25/2025",
+                    status: "Shipped",
+                    amount: "$100",
+                    img: "product-image.jpg",
+                  },
+                  {
+                    order: "Product B",
+                    customer: "Customer Y",
+                    date: "02/24/2025",
+                    status: "Completed",
+                    amount: "$80",
+                    img: "product-image.jpg",
+                  },
+                  {
+                    order: "Product C",
+                    customer: "Customer Z",
+                    date: "02/23/2025",
+                    status: "Refunded",
+                    amount: "$20",
+                    img: "product-image.jpg",
+                  },
+                ].map((row, index) => (
+                  <tr
+                    key={index}
+                    className="border-b border-gray-200 hover:bg-gray-50 transition"
+                  >
+                    <td className="px-4 py-2">{row.order}</td>
+                    <td className="px-4 py-2">{row.customer}</td>
+                    <td className="px-4 py-2">{row.date}</td>
+                    <td className="px-4 py-2">{row.status}</td>
+                    <td className="px-4 py-2">{row.amount}</td>
+                    <td className="px-4 py-2">
+                      <img
+                        className="w-12 h-12 rounded-md object-cover"
+                        src={row.img}
+                        alt="Product"
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   );
