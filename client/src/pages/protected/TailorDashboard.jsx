@@ -84,8 +84,8 @@ const TailorDashboard = () => {
     <div className="min-h-screen p-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-8">
-          <h1 className="text-3xl font-extrabold text-gray-800 mb-4 sm:mb-0">
+        <div className="flex flex-col sm:flex-row justify-between mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 mb-4 sm:mb-0">
             Your Dashboard
           </h1>
           <div className="flex space-x-4">
