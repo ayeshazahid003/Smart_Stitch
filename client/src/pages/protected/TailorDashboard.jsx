@@ -11,6 +11,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import { useNavigate } from "react-router";
 
 // Register Chart.js components
 ChartJS.register(
@@ -25,6 +26,7 @@ ChartJS.register(
 
 const TailorDashboard = () => {
   const [timeRange, setTimeRange] = useState("weekly");
+  const navigate = useNavigate();
 
   // Static data for Sales Trend
   const salesData = {
@@ -89,7 +91,20 @@ const TailorDashboard = () => {
             Your Dashboard
           </h1>
           <div className="flex space-x-4">
-            <button className="px-5 py-2 bg-[#111827] text-white rounded-md shadow hover:bg-gray-800 transition">
+          <button className="px-5 py-2 bg-[#111827] text-white rounded-md shadow hover:bg-gray-800 transition"
+            onClick={() => navigate("/add-shop-details")}>
+              Add Shop Details
+            </button>
+          <button className="px-5 py-2 bg-[#111827] text-white rounded-md shadow hover:bg-gray-800 transition"
+            onClick={() => navigate("/add-services")}>
+              Add Services
+            </button>
+            <button className="px-5 py-2 bg-[#111827] text-white rounded-md shadow hover:bg-gray-800 transition"
+            onClick={() => navigate("/add-extra-services")}>
+              Add Extra Services
+            </button>
+            <button className="px-5 py-2 bg-[#111827] text-white rounded-md shadow hover:bg-gray-800 transition"
+            onClick={() => navigate("/all-orders")}>
               All Orders
             </button>
             <button className="px-5 py-2 bg-[#111827] text-white rounded-md shadow hover:bg-gray-800 transition">
