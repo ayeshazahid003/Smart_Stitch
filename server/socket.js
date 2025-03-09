@@ -4,6 +4,8 @@ import { notificationSocketHandler } from "./sockets/notificationSocket.js";
 
 let io;
 
+const connectedUsers = {};
+
 export function initSocket(server) {
   io = new Server(server, {
     cors: {
@@ -12,7 +14,6 @@ export function initSocket(server) {
     },
   });
 
-  const connectedUsers = {};
 
   // Initialize chat socket
   chatSocketHandler(io, connectedUsers);
