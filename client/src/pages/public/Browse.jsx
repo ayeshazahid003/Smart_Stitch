@@ -5,6 +5,7 @@ import TailorCard from "../../components/client/TailorCard";
 import { tailorServices } from "../../constant/data";
 import TailorFeatureSection from "../../components/client/TailorFeatureSection";
 import Footer from "../../components/client/Footer";
+import { useNavigate } from "react-router";
 
 
 
@@ -12,6 +13,7 @@ export default function Browse() {
   const [searchTerm, setSearchTerm] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("ALL");
+  const navigate = useNavigate();
 
   const tailorOptions = [
     "Custom Suit Tailor",
@@ -35,17 +37,18 @@ export default function Browse() {
   ];
 
 
-  const handleSearchChange = (event) => {
-    const query = event.target.value;
-    setSearchTerm(query);
-    setSuggestions(
-      query.length > 0
-        ? tailorOptions.filter((item) =>
-            item.toLowerCase().includes(query.toLowerCase())
-          )
-        : []
-    );
-  };
+  // const handleSearchChange = (event) => {
+  //   // const query = event.target.value;
+  //   // setSearchTerm(query);
+  //   // setSuggestions(
+  //   //   query.length > 0
+  //   //     ? tailorOptions.filter((item) =>
+  //   //         item.toLowerCase().includes(query.toLowerCase())
+  //   //       )
+  //   //     : []
+  //   // );
+  //   navigate(`/search`);
+  // };
 
   const filteredTailorServices =
     selectedCategory === "ALL"
@@ -75,8 +78,9 @@ export default function Browse() {
             type="text"
             placeholder="Search for tailors, services..."
             className="p-3 w-full rounded-full border-2 border-gray-300 focus:outline-none"
-            value={searchTerm}
-            onChange={handleSearchChange}
+            // value={searchTerm}
+            // onChange={handleSearchChange}
+            onClick={() => navigate(`/search`)}
           />
           {suggestions.length > 0 && (
             <ul className="absolute left-0 w-full bg-white border border-gray-300 rounded-lg mt-2 shadow-lg">

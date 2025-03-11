@@ -1,22 +1,42 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { CameraIcon, XMarkIcon } from "@heroicons/react/24/solid";
 
 const AddServices = () => {
   const [serviceType, setServiceType] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
-  const [image, setImage] = useState(null);
+  const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  
+  const [dragActive, setDragActive] = useState(false);
+
   const handleImageChange = (e) => {
-    setImage(e.target.files[0]);
+    const files = Array.from(e.target.files);
+    setImages((prevImages) => [...prevImages, ...files]);
+  };
+
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(e.type === "dragenter" || e.type === "dragover");
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    const files = Array.from(e.dataTransfer.files);
+    setImages((prevImages) => [...prevImages, ...files]);
+  };
+
+  const removeImage = (index) => {
+    setImages((prevImages) => prevImages.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!serviceType || !description || !price || !image) {
+    if (!serviceType || !description || !price || images.length === 0) {
       setMessage("All fields are required.");
       return;
     }
@@ -26,7 +46,7 @@ const AddServices = () => {
     formData.append("type", serviceType);
     formData.append("description", description);
     formData.append("price", price);
-    formData.append("image", image);
+    images.forEach((image) => formData.append("images", image));
 
     try {
       const response = await axios.post("/tailor/add-service", formData, {
@@ -38,7 +58,7 @@ const AddServices = () => {
       setServiceType("");
       setDescription("");
       setPrice("");
-      setImage(null);
+      setImages([]);
     } catch (error) {
       console.error("Error adding service:", error);
       setMessage("Error adding the service. Please try again.");
@@ -91,19 +111,61 @@ const AddServices = () => {
         </div>
 
         <div className="mb-4">
-          <label htmlFor="image" className="block text-lg font-semibold">Service Image</label>
-          <input
-            type="file"
-            id="image"
-            className="w-full p-3 mt-2 border border-gray-300 rounded"
-            onChange={handleImageChange}
-          />
+          <label htmlFor="image" className="block text-lg font-semibold">Service Images</label>
+          <div
+            className={`w-full p-6 mt-2 border-2 border-dashed rounded-lg ${
+              dragActive ? "border-blue-500" : "border-gray-300"
+            }`}
+            onDragEnter={handleDrag}
+            onDragOver={handleDrag}
+            onDragLeave={handleDrag}
+            onDrop={handleDrop}
+          >
+            <CameraIcon className="w-8 h-8 mx-auto text-gray-400" />
+            <input
+              type="file"
+              id="image"
+              className="hidden"
+              multiple
+              accept=".jpeg, .png, .mp4"
+              onChange={handleImageChange}
+            />
+            <label htmlFor="image" className="cursor-pointer">
+              <div className="text-center">
+                <p className="text-gray-600">Drop your images and video here, or</p>
+                <p className="text-blue-600 underline">browse</p>
+                <p className="text-gray-500 text-sm">jpeg, .png, .mp4 are allowed</p>
+              </div>
+            </label>
+          </div>
+
+          {/* Preview selected images */}
+          {images.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {images.map((image, index) => (
+                <div key={index} className="relative w-24 h-24">
+                  <img
+                    src={URL.createObjectURL(image)}
+                    alt={`Preview ${index}`}
+                    className="w-full h-full object-cover rounded-lg"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(index)}
+                    className="absolute top-0 right-0 bg-black text-white rounded-full p-1"
+                  >
+                    <XMarkIcon className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="flex justify-center">
           <button
             type="submit"
-            className={`w-full p-3 bg-gray-900  text-white font-semibold rounded-md ${loading ? "bg-blue-300" : ""}`}
+            className={`w-full p-3 bg-gray-900 text-white font-semibold rounded-md ${loading ? "bg-blue-300" : ""}`}
             disabled={loading}
           >
             {loading ? "Adding..." : "Add Service"}
