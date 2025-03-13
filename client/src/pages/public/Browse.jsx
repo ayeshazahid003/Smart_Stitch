@@ -7,8 +7,6 @@ import TailorFeatureSection from "../../components/client/TailorFeatureSection";
 import Footer from "../../components/client/Footer";
 import { useNavigate } from "react-router";
 
-
-
 export default function Browse() {
   const [searchTerm, setSearchTerm] = useState("");
   const [suggestions, setSuggestions] = useState([]);
@@ -36,25 +34,32 @@ export default function Browse() {
     "Leather & Denim Repairs",
   ];
 
+  const handleSearchChange = (event) => {
+    const query = event.target.value;
+    setSearchTerm(query);
+    setSuggestions(
+      query.length > 0
+        ? tailorOptions.filter((item) =>
+            item.toLowerCase().includes(query.toLowerCase())
+          )
+        : []
+    );
+  };
 
-  // const handleSearchChange = (event) => {
-  //   // const query = event.target.value;
-  //   // setSearchTerm(query);
-  //   // setSuggestions(
-  //   //   query.length > 0
-  //   //     ? tailorOptions.filter((item) =>
-  //   //         item.toLowerCase().includes(query.toLowerCase())
-  //   //       )
-  //   //     : []
-  //   // );
-  //   navigate(`/search`);
-  // };
+  const handleKeyDown = (event) => {
+    // If the user presses Enter, navigate to the /search page
+    if (event.key === "Enter") {
+      navigate("/search");
+    }
+  };
 
   const filteredTailorServices =
     selectedCategory === "ALL"
       ? tailorServices
       : tailorServices.filter((service) =>
-          service.categories.toLowerCase().includes(selectedCategory.toLowerCase())
+          service.categories
+            .toLowerCase()
+            .includes(selectedCategory.toLowerCase())
         );
 
   return (
@@ -78,9 +83,9 @@ export default function Browse() {
             type="text"
             placeholder="Search for tailors, services..."
             className="p-3 w-full rounded-full border-2 border-gray-300 focus:outline-none"
-            // value={searchTerm}
-            // onChange={handleSearchChange}
-            onClick={() => navigate(`/search`)}
+            value={searchTerm}
+            onChange={handleSearchChange}
+            onKeyDown={handleKeyDown}
           />
           {suggestions.length > 0 && (
             <ul className="absolute left-0 w-full bg-white border border-gray-300 rounded-lg mt-2 shadow-lg">
@@ -88,7 +93,10 @@ export default function Browse() {
                 <li
                   key={index}
                   className="p-3 cursor-pointer hover:bg-gray-200"
-                  onClick={() => setSearchTerm(suggestion)}
+                  onClick={() => {
+                    setSearchTerm(suggestion);
+                    setSuggestions([]);
+                  }}
                 >
                   {suggestion}
                 </li>
@@ -133,7 +141,7 @@ export default function Browse() {
 
       <TailorFeatureSection />
 
-      <Footer/>
+      <Footer />
     </div>
   );
 }
