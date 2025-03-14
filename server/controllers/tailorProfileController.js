@@ -60,7 +60,7 @@ export const createTailorProfile = async (req, res) => {
         <p>The Team</p>
       `;
 
-    await sendEmail("info@cogentro.com", req.user.email, subject, emailBody);
+    // await sendEmail("info@cogentro.com", req.user.email, subject, emailBody);
 
     res.status(201).json({
       message:

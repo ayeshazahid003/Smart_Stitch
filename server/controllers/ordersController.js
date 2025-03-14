@@ -111,12 +111,12 @@ export const createNewOrder = async (req, res) => {
         <p>Thank you for choosing our platform. You can track your order progress in your account dashboard.</p>
         <p>Warm regards,<br>The Tailor Platform Team</p>
       `;
-    await sendEmail(
-      "no-reply@cogentro.com",
-      customerEmail,
-      "Your Order Has Been Placed",
-      customerEmailBody
-    );
+    // await sendEmail(
+    //   "no-reply@cogentro.com",
+    //   customerEmail,
+    //   "Your Order Has Been Placed",
+    //   customerEmailBody
+    // );
 
     // Send email to the tailor
     const tailorEmail = tailorProfile.email;
@@ -132,12 +132,12 @@ export const createNewOrder = async (req, res) => {
         <p>Log in to your dashboard for more details.</p>
         <p>Best regards,<br>The Tailor Platform Team</p>
       `;
-    await sendEmail(
-      "no-reply@cogentro.com",
-      tailorEmail,
-      "You Have Received a New Order",
-      tailorEmailBody
-    );
+    // await sendEmail(
+    //   "no-reply@cogentro.com",
+    //   tailorEmail,
+    //   "You Have Received a New Order",
+    //   tailorEmailBody
+    // );
 
     // Emit notifications using renamed socket events
     const io = getSocket();
@@ -309,20 +309,20 @@ export const updateOrderStatus = async (req, res) => {
     }
 
     // Send email to the customer
-    await sendEmail(
-      "no-reply@cogentro.com",
-      customer.email,
-      customerEmailSubject,
-      customerEmailBody
-    );
+    // await sendEmail(
+    //   "no-reply@cogentro.com",
+    //   customer.email,
+    //   customerEmailSubject,
+    //   customerEmailBody
+    // );
 
     // Send email to the tailor
-    await sendEmail(
-      "no-reply@cogentro.com",
-      tailor.email,
-      tailorEmailSubject,
-      tailorEmailBody
-    );
+    // await sendEmail(
+    //   "no-reply@cogentro.com",
+    //   tailor.email,
+    //   tailorEmailSubject,
+    //   tailorEmailBody
+    // );
 
     res.status(200).json({
       success: true,

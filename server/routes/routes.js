@@ -16,21 +16,21 @@ const router = express.Router();
 router.post("/signup", authController.createUser);
 router.post("/login", authController.loginUser);
 router.post("/logout", authController.logoutUser);
-router.get('/verify-token', verifyUser, authController.verifyToken);
+router.get('/verify-token', protect, authController.verifyToken);
 
 // Tailor Profile Routes
-router.post('/tailor/profile-creation', verifyUser, tailorProfileController.createTailorProfile);
-router.post('/tailor/verify-profile', verifyUser, tailorProfileController.verifyTailor);
-router.post('/tailor/add-service', verifyUser, tailorProfileController.addServiceToTailor);
-router.post('/tailor/add-portfolio', verifyUser, tailorProfileController.addPortfolioEntry);
-router.delete('/tailor/service/:serviceId', verifyUser, tailorProfileController.removeServiceFromTailor);
-router.delete('/tailor/portfolio/:portfolioId', verifyUser, tailorProfileController.removePortfolioFromTailor);
-router.put('/tailor/service/:serviceId', verifyUser, tailorProfileController.updateService);
-router.post('/tailor/extra-service', verifyUser, tailorProfileController.addExtraService);
-router.put('/tailor/extra-service/:extraServiceId', verifyUser, tailorProfileController.updateExtraService);
-router.delete('/tailor/extra-service/:extraServiceId', verifyUser, tailorProfileController.deleteExtraService);
-router.put('/tailors/profile', verifyUser, tailorProfileController.updateTailorProfile);
-router.delete('/tailors/profile', verifyUser, tailorProfileController.deleteTailorProfile);
+router.post('/tailor/profile-creation', protect, tailorProfileController.createTailorProfile);
+router.post('/tailor/verify-profile', protect, tailorProfileController.verifyTailor);
+router.post('/tailor/add-service', protect, tailorProfileController.addServiceToTailor);
+router.post('/tailor/add-portfolio', protect, tailorProfileController.addPortfolioEntry);
+router.delete('/tailor/service/:serviceId', protect, tailorProfileController.removeServiceFromTailor);
+router.delete('/tailor/portfolio/:portfolioId', protect, tailorProfileController.removePortfolioFromTailor);
+router.put('/tailor/service/:serviceId', protect, tailorProfileController.updateService);
+router.post('/tailor/extra-service', protect, tailorProfileController.addExtraService);
+router.put('/tailor/extra-service/:extraServiceId', protect, tailorProfileController.updateExtraService);
+router.delete('/tailor/extra-service/:extraServiceId', protect, tailorProfileController.deleteExtraService);
+router.put('/tailors/profile', protect, tailorProfileController.updateTailorProfile);
+router.delete('/tailors/profile', protect, tailorProfileController.deleteTailorProfile);
 router.get('/tailor/services', tailorProfileController.getListOfServices);
 router.get('/tailor/extra-services', tailorProfileController.getListOfExtraServices);
 router.get('/tailor/portfolio', tailorProfileController.getListOfPortfolio);
@@ -46,42 +46,42 @@ router.put("/users/profile", protect, userController.updateUser);
 
 
 // user routes zain
-router.get('/users/:id', verifyUser, userController.getUserById); 
-router.put('/users/:id', verifyUser, userController.updateUser);
-router.delete('/users/:id', verifyUser, userController.deleteUser); 
-router.post('/users/:id/upload-profile-picture', verifyUser, userController.uploadProfilePicture);
-router.post('/users/:id/measurements', verifyUser, userController.addMeasurements); 
-router.put('/users/:id/measurements', verifyUser, userController.updateMeasurements);
+router.get('/users/:id', protect, userController.getUserById); 
+router.put('/users/:id', protect, userController.updateUser);
+router.delete('/users/:id', protect, userController.deleteUser); 
+router.post('/users/:id/upload-profile-picture', protect, userController.uploadProfilePicture);
+router.post('/users/:id/measurements', protect, userController.addMeasurements); 
+router.put('/users/:id/measurements', protect, userController.updateMeasurements);
 
 //vouchers Routes
-router.post('/vouchers', verifyUser, vouchersController.createVoucher);
-router.put('/vouchers/:id', verifyUser, vouchersController.updateVoucher);
-router.delete('/vouchers/:id', verifyUser, vouchersController.deleteVoucher);
-router.get('/vouchers/:id/check', verifyUser, vouchersController.checkVoucherIsApplicable);
-router.get('/vouchers/:id', verifyUser, vouchersController.getSingleVoucherDetails);
+router.post('/vouchers', protect, vouchersController.createVoucher);
+router.put('/vouchers/:id', protect, vouchersController.updateVoucher);
+router.delete('/vouchers/:id', protect, vouchersController.deleteVoucher);
+router.get('/vouchers/:id/check', protect, vouchersController.checkVoucherIsApplicable);
+router.get('/vouchers/:id', protect, vouchersController.getSingleVoucherDetails);
 
 // Review Routes
-router.post('/reviews', verifyUser, reviewController.addReview);
-router.put('/reviews/:id', verifyUser, reviewController.updateReview);
-router.get('/reviews/:id', verifyUser, reviewController.getReview);
-router.get('/reviews', verifyUser, reviewController.getAllReviews);
-router.delete('/reviews/:id', verifyUser, reviewController.deleteReview); 
+router.post('/reviews', protect, reviewController.addReview);
+router.put('/reviews/:id', protect, reviewController.updateReview);
+router.get('/reviews/:id', protect, reviewController.getReview);
+router.get('/reviews', protect, reviewController.getAllReviews);
+router.delete('/reviews/:id', protect, reviewController.deleteReview); 
 
 //Chat Routes 
-router.get("/chats", verifyUser, chatController.getUserChats);
+router.get("/chats", protect, chatController.getUserChats);
 
 //Orders Routes
-router.post('/orders',verifyUser ,orderController.createNewOrder);
-router.get('/orders/:id',verifyUser, orderController.getOrderById);
-router.get('/orders',verifyUser, orderController.getAllOrders);
-router.get('/orders/customer/:customerId',verifyUser, orderController.getOrdersByCustomer);
-router.get('/orders/tailor',verifyUser, orderController.getOrdersByTailor);
-router.put('/orders/:id/status',verifyUser, orderController.updateOrderStatus);
-router.post('/orders/:id/invoice',verifyUser, orderController.generateInvoiceForOrder);
-router.get('/orders/customer/:customerId/summary',verifyUser, orderController.getOrderSummaryByCustomer);
-router.get('/orders/tailor/summary',verifyUser, orderController.getOrderSummaryByTailor);
-router.get('/orders/customer/status/:status',verifyUser, orderController.getOrderByStatusOfCustomers);
-router.get('/orders/tailor/status/:status',verifyUser, orderController.getOrderByStatusOfTailor);
+router.post('/orders',protect ,orderController.createNewOrder);
+router.get('/orders/:id',protect, orderController.getOrderById);
+router.get('/orders',protect, orderController.getAllOrders);
+router.get('/orders/customer/:customerId',protect, orderController.getOrdersByCustomer);
+router.get('/orders/tailor',protect, orderController.getOrdersByTailor);
+router.put('/orders/:id/status',protect, orderController.updateOrderStatus);
+router.post('/orders/:id/invoice',protect, orderController.generateInvoiceForOrder);
+router.get('/orders/customer/:customerId/summary',protect, orderController.getOrderSummaryByCustomer);
+router.get('/orders/tailor/summary',protect, orderController.getOrderSummaryByTailor);
+router.get('/orders/customer/status/:status',protect, orderController.getOrderByStatusOfCustomers);
+router.get('/orders/tailor/status/:status',protect, orderController.getOrderByStatusOfTailor);
 
 
 
