@@ -59,6 +59,7 @@ export default function RegisterForm() {
 
   async function onSubmit(values) {
     setIsLoading(true);
+    console.log(values);
     setError(null); // Reset error state
     try {
       await register(values.name, values.email, values.password, values.role);

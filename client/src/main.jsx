@@ -11,6 +11,7 @@ import ProtectLayout from "./pages/protected/ProtectLayout";
 import Dashboard from "./pages/protected/dashboard";
 import Browse from "./pages/public/Browse";
 import Search from "./pages/public/Search.jsx";
+import AddPortfolioOfTailor from "./pages/protected/client/AddPortfolioOfTailor.jsx";
 
 import MainLayout from "./pages/MainLayout";
 
@@ -26,6 +27,9 @@ import AddExtraServices from "./pages/protected/client/AddExtraServices.jsx";
 import AddShopDetails from "./pages/protected/client/AddShopDetails.jsx";
 import MeasurementForm from "./pages/protected/client/MeasurementForm";
 import TailorProfile from "./pages/public/TailorProfile";
+import AllExtraServices from "./pages/protected/client/AllExtraServices.jsx";
+import AllServices from "./pages/protected/client/AllServices.jsx";
+import AllPortfolio from "./pages/protected/client/AllPortfolio.jsx";
 
 import Checkout from "./pages/public/Checkout";
 import OrderPlaced from "./pages/public/OrderPlaced";
@@ -56,7 +60,7 @@ createRoot(document.getElementById("root")).render(
             <Route path="dashboard" element={<Dashboard />} />
             <Route element={<CustomerLayout />}>
               <Route path="profile" element={<ProfileForm />} />
-              <Route path="address" element={<AddressForm />} />
+              <Route path="address" element={<AddressForm />} />/
               <Route path="measurements" element={<MeasurementForm />} />
               <Route path="tailor" element={<TailorDashboard />} />
               <Route path="all-orders" element={<AllOrders/>} />
@@ -64,6 +68,10 @@ createRoot(document.getElementById("root")).render(
               <Route path="add-services" element={<AddServices />} />
               <Route path="add-extra-services" element={<AddExtraServices />} />
               <Route path="add-shop-details" element={<AddShopDetails />} />  
+              <Route path="add-Portfolio" element={<AddPortfolioOfTailor />} />  
+              <Route path="all-services" element={<AllServices />} />
+              <Route path="all-extra-services" element={<AllExtraServices />} />
+              <Route path="all-portfolio" element={<AllPortfolio />} />
 
             </Route>
           </Route>

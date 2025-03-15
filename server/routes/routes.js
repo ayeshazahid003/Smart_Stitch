@@ -20,6 +20,7 @@ router.get('/verify-token', protect, authController.verifyToken);
 
 // Tailor Profile Routes
 router.post('/tailor/profile-creation', protect, tailorProfileController.createTailorProfile);
+router.get("/tailor/get-profile", protect, tailorProfileController.getTailorShopDetails);
 router.post('/tailor/verify-profile', protect, tailorProfileController.verifyTailor);
 router.post('/tailor/add-service', protect, tailorProfileController.addServiceToTailor);
 router.post('/tailor/add-portfolio', protect, tailorProfileController.addPortfolioEntry);
@@ -31,9 +32,9 @@ router.put('/tailor/extra-service/:extraServiceId', protect, tailorProfileContro
 router.delete('/tailor/extra-service/:extraServiceId', protect, tailorProfileController.deleteExtraService);
 router.put('/tailors/profile', protect, tailorProfileController.updateTailorProfile);
 router.delete('/tailors/profile', protect, tailorProfileController.deleteTailorProfile);
-router.get('/tailor/services', tailorProfileController.getListOfServices);
-router.get('/tailor/extra-services', tailorProfileController.getListOfExtraServices);
-router.get('/tailor/portfolio', tailorProfileController.getListOfPortfolio);
+router.get('/tailor/services/:tailorId', tailorProfileController.getListOfServices);
+router.get('/tailor/extra-services/:tailorId', tailorProfileController.getListOfExtraServices);
+router.get('/tailor/portfolio/:tailorId', tailorProfileController.getListOfPortfolio);
 router.get('/tailors/search/service', tailorProfileController.searchTailorsByPartialService);
 router.get('/services', tailorProfileController.getAllServicesBySearch);
 router.get('/tailors/:tailorId', tailorProfileController.getTailorProfile);
@@ -69,6 +70,8 @@ router.delete('/reviews/:id', protect, reviewController.deleteReview);
 
 //Chat Routes 
 router.get("/chats", protect, chatController.getUserChats);
+router.get("/chat-participants", protect, chatController.getChatParticipants);
+
 
 //Orders Routes
 router.post('/orders',protect ,orderController.createNewOrder);

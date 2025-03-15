@@ -30,7 +30,7 @@ export default function ProfileForm() {
     defaultValues: {
       name: "",
       email: "",
-      role: "customer",
+      // role: "customer",
     },
   });
 

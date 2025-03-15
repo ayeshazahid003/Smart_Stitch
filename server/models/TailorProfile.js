@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 const TailorProfileSchema = new mongoose.Schema({
   tailorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   shopName: { type: String, required: true }, // Name of the shop
+  phoneNumber: { type: String, required: true }, // Phone number of the tailor
   portfolio: [
     {
       name: { type: String, required: true }, // Name of the portfolio entry
@@ -15,7 +16,8 @@ const TailorProfileSchema = new mongoose.Schema({
     {
       type: { type: String, required: true }, // Service type
       description: { type: String, required: true }, // Description of the service
-      price: { type: Number, required: true }, // Price of the service
+      minPrice: { type: Number, required: true },
+      maxPrice: { type: Number, required: true},
       image: { type: String, required: true } // Image URL for the service
     }
   ],
@@ -23,7 +25,8 @@ const TailorProfileSchema = new mongoose.Schema({
     {
       serviceName: { type: String, required: true }, // Name of the extra service
       description: { type: String, required: true }, // Description of the extra service
-      price: { type: Number, required: true } // Price of the extra service
+      minPrice: { type: Number, required: true },
+      maxPrice: { type: Number, required: true}
     }
   ],
   shopLocation: {

@@ -8,9 +8,10 @@ import crypto from "crypto";
 
 export const createTailorProfile = async (req, res) => {
   try {
-    const { shopName, shopImages, shopLocation, bio } = req.body;
+    const { shopName, shopImages, shopLocation, bio, phoneNumber } = req.body;
     const tailorId = req.user._id;
 
+    // 1. Validate required fields
     if (!shopName || shopName.trim() === "") {
       return res
         .status(400)
@@ -27,29 +28,60 @@ export const createTailorProfile = async (req, res) => {
         .status(400)
         .json({ message: "Bio is required.", success: false });
     }
-    let uploadedImages, shopImageUrls;
-    if (shopImages.length > 0) {
-      uploadedImages = await uploadMultipleFiles(shopImages, "Home");
+
+    // 2. Convert shopLocation.coordinates to array [latitude, longitude]
+    if (shopLocation?.coordinates) {
+      const { latitude, longitude } = shopLocation.coordinates;
+      shopLocation.coordinates = [Number(latitude), Number(longitude)];
+    }
+
+    // 3. Check if tailor profile already exists
+    let tailorProfile = await TailorProfile.findOne({ tailorId });
+
+    // 4. Upload images if provided
+    let shopImageUrls = tailorProfile?.shopImages || []; // Keep existing images
+    if (Array.isArray(shopImages) && shopImages.length > 0) {
+      const uploadedImages = await uploadMultipleFiles(shopImages, "Home");
       shopImageUrls = uploadedImages.map((img) => img.secure_url);
     }
 
-    const verificationToken = crypto.randomBytes(32).toString("hex");
+    if (tailorProfile) {
+      // 5. Update existing profile
+      tailorProfile.shopName = shopName;
+      tailorProfile.phoneNumber = phoneNumber;
+      tailorProfile.shopImages = shopImageUrls;
+      tailorProfile.shopLocation = shopLocation;
+      tailorProfile.bio = bio;
+      tailorProfile.updatedAt = Date.now();
 
-    const tailorProfile = new TailorProfile({
-      tailorId,
-      shopName,
-      shopImages: shopImageUrls,
-      shopLocation,
-      bio,
-      isVerified: false,
-      verificationToken,
-    });
+      await tailorProfile.save();
 
-    const savedProfile = await tailorProfile.save();
+      return res.status(200).json({
+        message: "Tailor profile updated successfully.",
+        tailorProfile,
+        success: true,
+      });
+    } else {
+      // 6. Create new profile
+      const verificationToken = crypto.randomBytes(32).toString("hex");
 
-    const verificationLink = `${process.env.CLIENT_URL}/verify-email?token=${verificationToken}&tailorId=${tailorId}`;
-    const subject = "Verify Your Tailor Profile";
-    const emailBody = `
+      tailorProfile = new TailorProfile({
+        tailorId,
+        shopName,
+        phoneNumber,
+        shopImages: shopImageUrls,
+        shopLocation,
+        bio,
+        isVerified: true, // You can change this if needed
+        verificationToken,
+      });
+
+      const savedProfile = await tailorProfile.save();
+
+      // 7. Construct verification link and (optionally) send email
+      const verificationLink = `${process.env.CLIENT_URL}/verify-email?token=${verificationToken}&tailorId=${tailorId}`;
+      const subject = "Verify Your Tailor Profile";
+      const emailBody = `
         <h1>Welcome to Our Platform!</h1>
         <p>Hi there,</p>
         <p>Thank you for creating your tailor profile. To complete your registration, please verify your email by clicking the link below:</p>
@@ -60,19 +92,55 @@ export const createTailorProfile = async (req, res) => {
         <p>The Team</p>
       `;
 
-    // await sendEmail("info@cogentro.com", req.user.email, subject, emailBody);
+      // Example: await sendEmail("info@cogentro.com", req.user.email, subject, emailBody);
 
-    res.status(201).json({
-      message:
-        "Tailor profile created successfully. Please check your email for verification.",
-      tailorProfile: savedProfile,
+      return res.status(201).json({
+        message:
+          "Tailor profile created successfully. Please check your email for verification.",
+        tailorProfile: savedProfile,
+        success: true,
+      });
+    }
+  } catch (error) {
+    console.error("Error creating or updating tailor profile:", error);
+    return res.status(500).json({
+      message: "Internal server error.",
+      error,
+      success: false,
+    });
+  }
+};
+
+export const getTailorShopDetails = async (req, res) => {
+  try {
+    const tailorId = req.user._id; // Get tailor ID from authenticated user
+
+    // Find the tailor profile by tailorId, only select required fields
+    const tailorProfile = await TailorProfile.findOne({ tailorId })
+      .select("shopName shopImages shopLocation bio phoneNumber")
+      .lean(); // Convert Mongoose document to a plain object
+
+    // If no profile is found
+    if (!tailorProfile) {
+      return res.status(404).json({
+        message: "Tailor shop profile not found.",
+        success: false,
+      });
+    }
+
+    // Return the tailor shop details
+    return res.status(200).json({
+      message: "Tailor shop details retrieved successfully.",
+      shopDetails: tailorProfile,
       success: true,
     });
   } catch (error) {
-    console.error("Error creating tailor profile:", error);
-    res
-      .status(500)
-      .json({ message: "Internal server error.", error, success: false });
+    console.error("Error fetching tailor shop details:", error);
+    return res.status(500).json({
+      message: "Internal server error.",
+      error,
+      success: false,
+    });
   }
 };
 
@@ -164,58 +232,80 @@ export const addPortfolioEntry = async (req, res) => {
 
 export const addServiceToTailor = async (req, res) => {
   try {
-    const { type, description, price, image } = req.body;
+    const { type, description, minPrice, maxPrice, image } = req.body;
+    console.log(req.body);
     const tailorId = req.user._id;
+
+    // 1. Fetch tailor profile
     const tailorProfile = await TailorProfile.findOne({ tailorId });
     if (!tailorProfile) {
-      return res
-        .status(404)
-        .json({ message: "Tailor profile not found.", success: false });
+      return res.status(404).json({
+        message: "Tailor profile not found.",
+        success: false,
+      });
     }
 
+    // 2. Validate input fields
     if (!type || type.trim() === "") {
-      return res
-        .status(400)
-        .json({ message: "Service type is required.", success: false });
+      return res.status(400).json({
+        message: "Service type is required.",
+        success: false,
+      });
     }
     if (!description || description.trim() === "") {
-      return res
-        .status(400)
-        .json({ message: "Service description is required.", success: false });
-    }
-    if (!price || typeof price !== "number" || price <= 0) {
-      return res
-        .status(400)
-        .json({ message: "Valid service price is required.", success: false });
-    }
-    if (!image) {
-      return res
-        .status(400)
-        .json({ message: "Service image is required.", success: false });
+      return res.status(400).json({
+        message: "Service description is required.",
+        success: false,
+      });
     }
 
+    // Validate minPrice and maxPrice
+    //convert prices in number
+    const newMinPrice = Number(minPrice);
+    const newMaxPrice = Number(maxPrice);
+
+    if (!newMinPrice || !newMaxPrice) {
+      return res.status(400).json({
+        message: "Service price is required.",
+        success: false,
+      });
+    }
+
+    if (!image) {
+      return res.status(400).json({
+        message: "Service image is required.",
+        success: false,
+      });
+    }
+
+    // 3. Upload image to Cloudinary
     const uploadedImage = await uploadSingleFile(image, "Home");
 
+    // 4. Create service object
     const service = {
       type,
       description,
-      price,
+      minPrice: newMinPrice,
+      maxPrice: newMaxPrice,
       image: uploadedImage.secure_url,
     };
-    tailorProfile.serviceRates.push(service);
 
+    // 5. Push service into tailor profile and save
+    tailorProfile.serviceRates.push(service);
     await tailorProfile.save();
 
-    res.status(200).json({
+    return res.status(200).json({
       message: "Service added successfully.",
       service,
       success: true,
     });
   } catch (error) {
     console.error("Error adding service:", error);
-    res
-      .status(500)
-      .json({ message: "Internal server error.", error, success: false });
+    return res.status(500).json({
+      message: "Internal server error.",
+      error,
+      success: false,
+    });
   }
 };
 
@@ -309,7 +399,7 @@ export const removePortfolioFromTailor = async (req, res) => {
 export const updateService = async (req, res) => {
   try {
     const { serviceId } = req.params; // Service ID passed as a route parameter
-    const { type, description, price, image } = req.body;
+    const { type, description, image, maxPrice, minPrice } = req.body;
     const tailorId = req.user._id; // Get the tailorId from the authenticated user
 
     // Find the tailor profile
@@ -332,7 +422,8 @@ export const updateService = async (req, res) => {
 
     if (type) service.type = type;
     if (description) service.description = description;
-    if (price) service.price = price;
+    if (minPrice) service.minPrice = minPrice;
+    if (maxPrice) service.maxPrice = maxPrice;
 
     // If an image is provided, upload it to Cloudinary
     if (image) {
@@ -369,15 +460,17 @@ export const updateService = async (req, res) => {
 
 export const addExtraService = async (req, res) => {
   try {
-    const { serviceName, description, price } = req.body;
+    const { serviceName, description, minPrice, maxPrice } = req.body;
     const tailorId = req.user._id; // Get the tailorId from the authenticated user
 
-    // Validate required fields
-    if (!serviceName || !description || !price) {
+    if (!serviceName || !description || !minPrice || !maxPrice) {
       return res
         .status(400)
         .json({ success: false, message: "All fields are required." });
     }
+
+    const newMinPrice = Number(minPrice);
+    const newMaxPrice = Number(maxPrice);
 
     // Find the tailor profile
     const tailorProfile = await TailorProfile.findOne({ tailorId });
@@ -387,7 +480,12 @@ export const addExtraService = async (req, res) => {
         .json({ success: false, message: "Tailor profile not found." });
     }
 
-    const extraService = { serviceName, description, price };
+    const extraService = {
+      serviceName,
+      description,
+      minPrice: newMinPrice,
+      maxPrice: newMaxPrice,
+    };
     tailorProfile.extraServices.push(extraService);
 
     await tailorProfile.save();
@@ -410,7 +508,7 @@ export const addExtraService = async (req, res) => {
 export const updateExtraService = async (req, res) => {
   try {
     const { extraServiceId } = req.params; // Extra service ID passed as a route parameter
-    const { serviceName, description, price } = req.body;
+    const { serviceName, description, minPrice, maxPrice } = req.body;
     const tailorId = req.user._id; // Get the tailorId from the authenticated user
 
     // Find the tailor profile
@@ -433,8 +531,8 @@ export const updateExtraService = async (req, res) => {
 
     if (serviceName) extraService.serviceName = serviceName;
     if (description) extraService.description = description;
-    if (price) extraService.price = price;
-
+    if (minPrice) extraService.minPrice = minPrice;
+    if (maxPrice) extraService.maxPrice = maxPrice;
     await tailorProfile.save();
 
     res.status(200).json({
@@ -494,7 +592,7 @@ export const deleteExtraService = async (req, res) => {
 
 export const getListOfServices = async (req, res) => {
   try {
-    const tailorId = req.user._id; // Get the tailorId from the authenticated user
+    const tailorId = req.params.tailorId;
 
     // Find the tailor profile
     const tailorProfile = await TailorProfile.findOne(
@@ -522,7 +620,7 @@ export const getListOfServices = async (req, res) => {
 
 export const getListOfExtraServices = async (req, res) => {
   try {
-    const tailorId = req.user._id; // Get the tailorId from the authenticated user
+    const tailorId = req.params.tailorId;
 
     // Find the tailor profile
     const tailorProfile = await TailorProfile.findOne(
@@ -550,7 +648,7 @@ export const getListOfExtraServices = async (req, res) => {
 
 export const getListOfPortfolio = async (req, res) => {
   try {
-    const tailorId = req.user._id; // Get the tailorId from the authenticated user
+    const tailorId = req.params.tailorId;
 
     // Find the tailor profile
     const tailorProfile = await TailorProfile.findOne(

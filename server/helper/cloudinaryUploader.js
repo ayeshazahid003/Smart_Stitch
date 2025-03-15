@@ -30,15 +30,20 @@ export const uploadSingleFile = async (filePath, folder) => {
  */
 export const uploadMultipleFiles = async (filePaths, folder) => {
   try {
-    const uploadPromises = filePaths.map((path) =>
-      cloudinary.uploader.upload(path, {
-        public_id: folder,
+    const uploadPromises = filePaths.map((filePath) =>
+      cloudinary.uploader.upload(filePath, {
+        folder: folder, // Organize under a specific folder
+        resource_type: "auto", // Allow images/videos
+        public_id: `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, // Unique ID for each file
+        overwrite: false, // Avoid overwriting existing files
       })
     );
+
     const results = await Promise.all(uploadPromises);
-    return results;
+    return results.map((result) => result.secure_url); // Return only URLs
   } catch (error) {
-    console.error('Error uploading multiple files:', error);
+    console.error("Error uploading multiple files:", error);
     throw error;
   }
 };
+

@@ -5,6 +5,7 @@ import generateToken from "../helper/generateToken.js";
 
 export const createUser = async (req, res) => {
   try {
+    console.log(req.body);
     const { username, email, password, role } = req.body;
 
     // Validate required fields
@@ -64,6 +65,7 @@ export const createUser = async (req, res) => {
       address: user.contactInfo?.address || "",
       measurements: user.measurements,
       tailorProfile: user.tailorProfile || null,
+      _id: user._id,
     };
 
     res.status(200).json({
@@ -111,6 +113,7 @@ export const loginUser = async (req, res) => {
       contactInfo: user.contactInfo,
       address: user.contactInfo.address,
       measurements: user.measurements,
+      _id: user._id,
     };
 
     res.status(200).json({
