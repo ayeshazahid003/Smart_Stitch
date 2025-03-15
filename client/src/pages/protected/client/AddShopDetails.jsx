@@ -30,7 +30,7 @@ const AddShopDetails = () => {
 
   // Load Google Maps script
   const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: "AIzaSyDBCi7hOX_2lQ14oISSLHXp0JS36OANFyQ", // Replace with your API key
+    googleMapsApiKey: "", // Replace with your API key
     libraries,
   });
 
