@@ -7,9 +7,15 @@ export const createUser = async (req, res) => {
   try {
     const { username, email, password, role } = req.body;
 
-    // Validate the required fields
+    // Validate required fields
     if (!username || !email || !password || !role) {
       return res.status(400).json({ message: "All fields are required." });
+    }
+
+    // Validate role
+    const validRoles = ["user", "tailor"];
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({ message: "Invalid role selected." });
     }
 
     // Check if the email is already registered
@@ -22,18 +28,31 @@ export const createUser = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Create a new user
-    const newUser = new User({
-      name:username,
+    // Base user data
+    const newUserData = {
+      name: username,
       email,
       password: hashedPassword,
       role,
-    });
+    };
+
+    // If role is tailor, add tailor-specific fields
+    if (role === "tailor") {
+      newUserData.tailorProfile = {
+        businessName: "",
+        services: [],
+        portfolio: [],
+        verified: false,
+      };
+    }
+
+    // Create a new user
+    const newUser = new User(newUserData);
 
     // Save the user to the database
     const user = await newUser.save();
 
-    // Generate a JWT token that does not expire
+    // Generate a JWT token
     generateToken(res, user._id);
 
     const userProfile = {
@@ -42,8 +61,9 @@ export const createUser = async (req, res) => {
       role: user.role,
       profilePicture: user.profilePicture,
       contactInfo: user.contactInfo,
-      address: user.contactInfo.address,
+      address: user.contactInfo?.address || "",
       measurements: user.measurements,
+      tailorProfile: user.tailorProfile || null,
     };
 
     res.status(200).json({

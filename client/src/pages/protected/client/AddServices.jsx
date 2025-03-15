@@ -1,15 +1,17 @@
 import React, { useState } from "react";
-import axios from "axios";
 import { CameraIcon, XMarkIcon } from "@heroicons/react/24/solid";
+import { useAddServiceToTailor } from "../../../hooks";
 
 const AddServices = () => {
   const [serviceType, setServiceType] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [images, setImages] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [dragActive, setDragActive] = useState(false);
+
+  // Use the addServiceToTailor hook
+  const { addServiceToTailor, loading, error, data } = useAddServiceToTailor();
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
@@ -36,46 +38,59 @@ const AddServices = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validate required fields
     if (!serviceType || !description || !price || images.length === 0) {
       setMessage("All fields are required.");
       return;
     }
 
-    setLoading(true);
+    // Prepare form data
     const formData = new FormData();
     formData.append("type", serviceType);
     formData.append("description", description);
     formData.append("price", price);
     images.forEach((image) => formData.append("images", image));
 
-    try {
-      const response = await axios.post("/tailor/add-service", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-      setMessage(response.data.message);
+    // Call the hook to add the service
+    await addServiceToTailor(formData);
+
+    // Handle success or error
+    if (error) {
+      setMessage("Error adding the service. Please try again.");
+    } else if (data) {
+      setMessage("Service added successfully!");
       setServiceType("");
       setDescription("");
       setPrice("");
       setImages([]);
-    } catch (error) {
-      console.error("Error adding service:", error);
-      setMessage("Error adding the service. Please try again.");
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-3xl font-bold text-center mb-6">Add Services</h1>
-      
-      {message && <p className="text-center text-red-500">{message}</p>}
 
-      <form onSubmit={handleSubmit} className="max-w-lg mx-auto bg-white p-6 rounded-lg shadow-md">
+      {/* Display success or error message */}
+      {message && (
+        <p
+          className={`text-center ${
+            error ? "text-red-500" : "text-green-500"
+          }`}
+        >
+          {message}
+        </p>
+      )}
+
+      <form
+        onSubmit={handleSubmit}
+        className="max-w-lg mx-auto bg-white p-6 rounded-lg shadow-md"
+      >
+        {/* Service Type */}
         <div className="mb-4">
-          <label htmlFor="serviceType" className="block text-lg font-semibold">Service Type</label>
+          <label htmlFor="serviceType" className="block text-lg font-semibold">
+            Service Type
+          </label>
           <input
             type="text"
             id="serviceType"
@@ -86,8 +101,11 @@ const AddServices = () => {
           />
         </div>
 
+        {/* Description */}
         <div className="mb-4">
-          <label htmlFor="description" className="block text-lg font-semibold">Description</label>
+          <label htmlFor="description" className="block text-lg font-semibold">
+            Description
+          </label>
           <textarea
             id="description"
             className="w-full p-3 mt-2 border border-gray-300 rounded"
@@ -98,8 +116,11 @@ const AddServices = () => {
           ></textarea>
         </div>
 
+        {/* Price */}
         <div className="mb-4">
-          <label htmlFor="price" className="block text-lg font-semibold">Price ($)</label>
+          <label htmlFor="price" className="block text-lg font-semibold">
+            Price ($)
+          </label>
           <input
             type="number"
             id="price"
@@ -110,8 +131,11 @@ const AddServices = () => {
           />
         </div>
 
+        {/* Service Images */}
         <div className="mb-4">
-          <label htmlFor="image" className="block text-lg font-semibold">Service Images</label>
+          <label htmlFor="image" className="block text-lg font-semibold">
+            Service Images
+          </label>
           <div
             className={`w-full p-6 mt-2 border-2 border-dashed rounded-lg ${
               dragActive ? "border-blue-500" : "border-gray-300"
@@ -162,10 +186,13 @@ const AddServices = () => {
           )}
         </div>
 
+        {/* Submit Button */}
         <div className="flex justify-center">
           <button
             type="submit"
-            className={`w-full p-3 bg-gray-900 text-white font-semibold rounded-md ${loading ? "bg-blue-300" : ""}`}
+            className={`w-full p-3 bg-gray-900 text-white font-semibold rounded-md ${
+              loading ? "bg-blue-300" : ""
+            }`}
             disabled={loading}
           >
             {loading ? "Adding..." : "Add Service"}
