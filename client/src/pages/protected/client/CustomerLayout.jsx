@@ -8,21 +8,27 @@ import {
 } from "@headlessui/react";
 import {
   Bars3Icon,
-  CalendarIcon,
-  FolderIcon,
-  HomeIcon,
-  UsersIcon,
   XMarkIcon,
-} from "@heroicons/react/24/outline";
+  HomeIcon,
+  UserIcon,
+  MapIcon,
+  CalendarIcon,
+  BriefcaseIcon,
+  SparklesIcon,
+  PhotoIcon
+} from "@heroicons/react/24/outline"; // Updated icons for better clarity
 import { useUser } from "../../../context/UserContext";
 
 const navigation = [
   { name: "Dashboard", href: "tailor", icon: HomeIcon },
-  { name: "Profile", href: "/profile", icon: UsersIcon },
-  { name: "Address", href: "/address", icon: FolderIcon },
-  { name: "Measurements", href: "/measurements", icon: CalendarIcon },
-  {name: "DashboardTailor", href: "tailor", icon: HomeIcon}
+  { name: "Profile", href: "/profile", icon: UserIcon }, // Changed to UserIcon for profile
+  { name: "Address", href: "/address", icon: MapIcon }, // Changed to MapIcon for address
+  { name: "Measurements", href: "/measurements", icon:CalendarIcon  }, // Changed to RulerIcon for measurements
+  { name: "Services", href: "/all-services", icon: BriefcaseIcon }, // Changed to BriefcaseIcon for services
+  { name: "Extra Services", href: "/all-extra-services", icon: SparklesIcon }, // Changed to SparklesIcon for extra services
+  { name: "Portfolio", href: "/all-portfolio", icon: PhotoIcon }, // Changed to PhotoIcon for portfolio
 ];
+
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
