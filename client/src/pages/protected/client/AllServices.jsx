@@ -18,6 +18,7 @@ export default function AllServices() {
 
   useEffect(() => {
     const fetchServices = async () => {
+      console.log(user)
       setLoading(true);
       const response = await getListOfServices(user._id);
       if (response.success) {

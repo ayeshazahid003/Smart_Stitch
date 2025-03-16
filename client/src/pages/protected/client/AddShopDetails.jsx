@@ -41,6 +41,7 @@ export default function AddShopDetails() {
       setLoading(true);
       const response = await getTailorShop();
       if (response.success && response.shopDetails) {
+        console.log(response.shopDetails, "-------------");
         const details = response.shopDetails;
         setShopName(details.shopName || "");
         setPhoneNumber(details.phoneNumber || "");
@@ -60,8 +61,8 @@ export default function AddShopDetails() {
         }
         setBio(details.bio || "");
         if (details.shopImages && details.shopImages.length > 0) {
-          // Set images to the URL array (existing images)
-          setImages(details.shopImages);
+          // Filter out null values from the images array
+          setImages(details.shopImages.filter((img) => img !== null));
         }
       } else {
         setMessage(response.message);
@@ -94,14 +95,11 @@ export default function AddShopDetails() {
     setMapCenter({ lat: newLat, lng: newLng });
 
     const geocoder = new window.google.maps.Geocoder();
-    geocoder.geocode(
-      { location: { lat: newLat, lng: newLng } },
-      (results, status) => {
-        if (status === "OK" && results[0]) {
-          setAddress(results[0].formatted_address);
-        }
+    geocoder.geocode({ location: { lat: newLat, lng: newLng } }, (results, status) => {
+      if (status === "OK" && results[0]) {
+        setAddress(results[0].formatted_address);
       }
-    );
+    });
   };
 
   const handleImageChange = (e) => {
@@ -294,9 +292,7 @@ export default function AddShopDetails() {
             </label>
             <div
               className={`w-full p-6 border-2 border-dashed rounded-lg transition-colors flex flex-col items-center justify-center ${
-                dragActive
-                  ? "border-blue-500 bg-blue-50"
-                  : "border-gray-300 bg-gray-100"
+                dragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 bg-gray-100"
               }`}
               onDragEnter={handleDrag}
               onDragOver={handleDrag}
@@ -323,22 +319,25 @@ export default function AddShopDetails() {
             </div>
             {images.length > 0 && (
               <div className="mt-4 grid grid-cols-3 gap-4">
-                {images.map((image, index) => (
-                  <div key={index} className="relative">
-                    <img
-                      src={typeof image === "string" ? image : URL.createObjectURL(image)}
-                      alt={`Preview ${index}`}
-                      className="w-full h-32 object-contain rounded-md"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeImage(index)}
-                      className="absolute top-1 right-1 bg-gray-800 text-white rounded-full p-1"
-                    >
-                      <XMarkIcon className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
+                {images.map((image, index) => {
+                  if (!image) return null;
+                  return (
+                    <div key={index} className="relative">
+                      <img
+                        src={typeof image === "string" ? image : URL.createObjectURL(image)}
+                        alt={`Preview ${index}`}
+                        className="w-full h-32 object-contain rounded-md"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        className="absolute top-1 right-1 bg-gray-800 text-white rounded-full p-1"
+                      >
+                        <XMarkIcon className="w-4 h-4" />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -363,4 +362,3 @@ export default function AddShopDetails() {
     </div>
   );
 }
-

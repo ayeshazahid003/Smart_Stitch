@@ -38,15 +38,16 @@ export const createTailorProfile = async (req, res) => {
     // 3. Check if tailor profile already exists
     let tailorProfile = await TailorProfile.findOne({ tailorId });
 
-    // 4. Upload images if provided
-    let shopImageUrls = tailorProfile?.shopImages || []; // Keep existing images
+    // 4. Always discard existing images and upload new ones if provided.
+    let shopImageUrls = [];
     if (Array.isArray(shopImages) && shopImages.length > 0) {
       const uploadedImages = await uploadMultipleFiles(shopImages, "Home");
-      shopImageUrls = uploadedImages.map((img) => img.secure_url);
+      shopImageUrls = uploadedImages;
     }
-
+    
+    console.log(shopImageUrls)
     if (tailorProfile) {
-      // 5. Update existing profile
+      // 5. Update existing profile with new images (discard old ones)
       tailorProfile.shopName = shopName;
       tailorProfile.phoneNumber = phoneNumber;
       tailorProfile.shopImages = shopImageUrls;
@@ -72,7 +73,7 @@ export const createTailorProfile = async (req, res) => {
         shopImages: shopImageUrls,
         shopLocation,
         bio,
-        isVerified: true, // You can change this if needed
+        isVerified: true, // Adjust verification status as needed
         verificationToken,
       });
 

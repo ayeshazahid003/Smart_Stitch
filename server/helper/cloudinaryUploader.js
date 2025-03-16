@@ -40,6 +40,8 @@ export const uploadMultipleFiles = async (filePaths, folder) => {
     );
 
     const results = await Promise.all(uploadPromises);
+    let URLs = results.map((result) => result.secure_url)
+    console.log(URLs)
     return results.map((result) => result.secure_url); // Return only URLs
   } catch (error) {
     console.error("Error uploading multiple files:", error);
