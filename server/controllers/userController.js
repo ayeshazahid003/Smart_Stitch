@@ -6,7 +6,6 @@ export const getUserProfile = async (req, res) => {
     const user = await User.findById(req.user._id)
       .select("-password")
       .populate("contactInfo.address")
-      .populate("measurements");
     if (!user) {
       return res
         .status(404)
@@ -211,6 +210,52 @@ export const updateMeasurements = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Server error. Please try again later.",
+      error,
+    });
+  }
+};
+
+
+export const updateUserProfile = async (req, res) => {
+  try {
+    const id = req.user._id; // Get user ID from auth middleware
+    const { name, contactInfo, address, role, profilePicture } = req.body;
+
+    // Find the user
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found." });
+    }
+
+    // Handle base64 image upload
+    let uploadedImageUrl = user.profilePicture; // Retain existing profile picture if no new one is provided
+
+    if (profilePicture) {
+      // Upload base64 image directly to Cloudinary
+      const uploadedImage = await uploadSingleFile(profilePicture, "UserProfile");
+      uploadedImageUrl = uploadedImage.secure_url;
+    }
+
+    // Update user fields
+    user.name = name || user.name;
+    user.role = role || user.role;
+    user.contactInfo = contactInfo || user.contactInfo;
+    user.contactInfo.address = address || user.contactInfo.address;
+    user.profilePicture = uploadedImageUrl;
+
+    // Save updated user
+    const updatedUser = await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully.",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error updating profile:", error);
     res.status(500).json({
       success: false,
       message: "Server error. Please try again later.",

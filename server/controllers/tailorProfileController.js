@@ -206,7 +206,7 @@ export const addPortfolioEntry = async (req, res) => {
 
     const uploadedImages = await uploadMultipleFiles(images, "Home");
 
-    const portfolioImages = uploadedImages.map((img) => img.secure_url);
+    const portfolioImages = uploadedImages;
 
     const portfolioEntry = {
       name,

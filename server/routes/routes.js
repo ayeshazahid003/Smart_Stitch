@@ -44,6 +44,7 @@ router.get('/tailors/search', tailorProfileController.searchTailors);
 // User Routes for user profile
 router.get("/users/profile", protect, userController.getUserProfile);
 router.put("/users/profile", protect, userController.updateUser);
+router.put("/users/update-profile", protect, userController.updateUserProfile);
 
 
 // user routes zain

@@ -21,8 +21,7 @@ import { useUser } from "../../../context/UserContext";
 
 const navigation = [
   { name: "Dashboard", href: "tailor", icon: HomeIcon },
-  { name: "Profile", href: "/profile", icon: UserIcon }, // Changed to UserIcon for profile
-  { name: "Address", href: "/address", icon: MapIcon }, // Changed to MapIcon for address
+  { name: "Profile", href: "/user-profile", icon: UserIcon }, // Changed to UserIcon for profile
   { name: "Measurements", href: "/measurements", icon:CalendarIcon  }, // Changed to RulerIcon for measurements
   { name: "Services", href: "/all-services", icon: BriefcaseIcon }, // Changed to BriefcaseIcon for services
   { name: "Extra Services", href: "/all-extra-services", icon: SparklesIcon }, // Changed to SparklesIcon for extra services

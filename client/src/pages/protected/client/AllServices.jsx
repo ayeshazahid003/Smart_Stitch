@@ -4,6 +4,7 @@ import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/solid";
 import EditServiceModal from "../../../components/Modals/EditServiceModal";
 import Modal from "react-modal";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router";
 
 Modal.setAppElement("#root");
 
@@ -14,15 +15,18 @@ export default function AllServices() {
   const [editModalIsOpen, setEditModalIsOpen] = useState(false);
   const [deleteModalIsOpen, setDeleteModalIsOpen] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
-  const user = JSON.parse(localStorage.getItem("user"));
+
+  const user = JSON.parse(localStorage.getItem("user")) || null;
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchServices = async () => {
-      console.log(user)
+      if (!user || !user._id) return;
+
       setLoading(true);
       const response = await getListOfServices(user._id);
       if (response.success) {
-        // Reverse the array so the newest services appear first
         setServices(response.services.slice().reverse());
       } else {
         setMessage(response.message);
@@ -31,7 +35,7 @@ export default function AllServices() {
     };
 
     fetchServices();
-  }, [user._id]);
+  }, []);
 
   const openEditModal = (service) => {
     setSelectedService(service);
@@ -53,7 +57,6 @@ export default function AllServices() {
     setDeleteModalIsOpen(false);
   };
 
-  // Handle update the selected service with real-time image update
   const handleUpdate = async () => {
     let image64 = selectedService.image;
 
@@ -61,14 +64,14 @@ export default function AllServices() {
       const reader = new FileReader();
       reader.readAsDataURL(selectedService.image);
       reader.onloadend = async () => {
-        image64 = reader.result; // Convert image to base64
+        image64 = reader.result;
 
         const payload = {
           type: selectedService.type,
           description: selectedService.description,
           minPrice: selectedService.minPrice,
           maxPrice: selectedService.maxPrice,
-          image: image64, // Pass base64 image to payload
+          image: image64,
         };
 
         const response = await updateService(selectedService._id, payload);
@@ -78,15 +81,12 @@ export default function AllServices() {
           return;
         }
         toast.success("Service updated successfully!");
-        setServices((prevServices) =>
-          prevServices.map((s) =>
-            s._id === selectedService._id ? response.service : s
-          )
+        setServices((prev) =>
+          prev.map((s) => (s._id === selectedService._id ? response.service : s))
         );
         closeEditModal();
       };
     } else {
-      // If no new image is uploaded, send the existing image as is
       const payload = {
         type: selectedService.type,
         description: selectedService.description,
@@ -96,22 +96,18 @@ export default function AllServices() {
       };
 
       const response = await updateService(selectedService._id, payload);
-
       if (!response.success) {
         toast.error("Failed to update service");
         return;
       }
       toast.success("Service updated successfully!");
-      setServices((prevServices) =>
-        prevServices.map((s) =>
-          s._id === selectedService._id ? response.service : s
-        )
+      setServices((prev) =>
+        prev.map((s) => (s._id === selectedService._id ? response.service : s))
       );
       closeEditModal();
     }
   };
 
-  // Handle delete service
   const handleDelete = async () => {
     const response = await removeServiceFromTailor(selectedService._id);
     if (!response.success) {
@@ -119,13 +115,10 @@ export default function AllServices() {
       return;
     }
     toast.success("Service deleted successfully!");
-    setServices((prevServices) =>
-      prevServices.filter((s) => s._id !== selectedService._id)
-    );
+    setServices((prev) => prev.filter((s) => s._id !== selectedService._id));
     closeDeleteModal();
   };
 
-  // Handle changes for the selected service fields in modal
   const handleChange = (field, value) => {
     setSelectedService((prev) => ({ ...prev, [field]: value }));
   };
@@ -134,9 +127,48 @@ export default function AllServices() {
     return <div className="text-center py-8">Loading...</div>;
   }
 
+  if (message === "Tailor profile not found.") {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <p className="text-red-600 text-xl w-[400px] mb-4">
+            We couldn’t find your tailor profile. Please add your shop details to get started.
+          </p>
+          <button
+            onClick={() => navigate("/add-shop-details")}
+            className="px-4 py-2 rounded bg-gray-800 text-white hover:bg-gray-900"
+          >
+            Add Shop Details
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (services.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <p className="text-gray-600 text-xl w-[400px] mb-4">
+            It seems like you haven't added any services yet.
+          </p>
+          <button
+            onClick={() => navigate("/add-services")}
+            className="px-4 py-2 rounded bg-gray-800 text-white hover:bg-gray-900"
+          >
+            Add Services
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4">
-      {message && <p className="text-red-500 text-center mb-4">{message}</p>}
+      {message && message !== "Tailor profile not found." && (
+        <p className="text-red-500 text-center mb-4">{message}</p>
+      )}
+
       <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {services.map((service) => (
           <div
@@ -155,7 +187,11 @@ export default function AllServices() {
             <h2 className="text-xl font-bold text-gray-800 mb-2">
               {service.type}
             </h2>
-            <p className="text-gray-600 mb-2">{service.description}</p>
+            <p className="text-gray-600 text-sm mb-2">
+              {service.description.length > 100
+                ? `${service.description.substring(0, 100)}...`
+                : service.description}
+            </p>
             <p className="text-gray-500 mb-4">
               Price Range: ${service.minPrice} - ${service.maxPrice}
             </p>
@@ -177,7 +213,6 @@ export default function AllServices() {
         ))}
       </div>
 
-      {/* Edit Service Modal */}
       <EditServiceModal
         isOpen={editModalIsOpen}
         service={selectedService}
@@ -186,7 +221,6 @@ export default function AllServices() {
         onUpdate={handleUpdate}
       />
 
-      {/* Delete Confirmation Modal */}
       <Modal
         isOpen={deleteModalIsOpen}
         onRequestClose={closeDeleteModal}

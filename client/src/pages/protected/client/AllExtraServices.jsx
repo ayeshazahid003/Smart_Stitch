@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from "react";
 import Modal from "react-modal";
-import { getListOfExtraServices, updateExtraService, deleteExtraService } from "../../../hooks/TailorHooks";
+import {
+  getListOfExtraServices,
+  updateExtraService,
+  deleteExtraService,
+} from "../../../hooks/TailorHooks";
 import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { toast } from "react-toastify";
 
@@ -13,14 +17,16 @@ export default function AllExtraServices() {
   const [modalEditOpen, setModalEditOpen] = useState(false);
   const [modalDeleteOpen, setModalDeleteOpen] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
-  const user = JSON.parse(localStorage.getItem("user"));
+
+  const user = JSON.parse(localStorage.getItem("user")) || null;
 
   useEffect(() => {
     const fetchExtraServices = async () => {
+      if (!user || !user._id) return;
+
       setLoading(true);
       const response = await getListOfExtraServices(user._id);
       if (response.success) {
-        // Reverse array so newest appear first
         setExtraServices(response.extraServices.slice().reverse());
       } else {
         setMessage(response.message);
@@ -29,9 +35,8 @@ export default function AllExtraServices() {
     };
 
     fetchExtraServices();
-  }, [user._id]);
+  }, []);
 
-  // Open Edit Modal
   const openEditModal = (service) => {
     setSelectedService(service);
     setModalEditOpen(true);
@@ -42,7 +47,6 @@ export default function AllExtraServices() {
     setModalEditOpen(false);
   };
 
-  // Open Delete Confirmation Modal
   const openDeleteModal = (service) => {
     setSelectedService(service);
     setModalDeleteOpen(true);
@@ -53,17 +57,20 @@ export default function AllExtraServices() {
     setModalDeleteOpen(false);
   };
 
-  // Handle field change in edit modal
   const handleChange = (field, value) => {
     setSelectedService((prev) => ({ ...prev, [field]: value }));
   };
 
-  // Handle update extra service
   const handleUpdate = async () => {
-    if (!selectedService.serviceName || !selectedService.minPrice || !selectedService.maxPrice) {
+    if (
+      !selectedService.serviceName ||
+      !selectedService.minPrice ||
+      !selectedService.maxPrice
+    ) {
       toast.error("Service name and price range are required.");
       return;
     }
+
     const payload = {
       serviceName: selectedService.serviceName,
       description: selectedService.description,
@@ -76,6 +83,7 @@ export default function AllExtraServices() {
       toast.error("Failed to update extra service");
       return;
     }
+
     toast.success("Extra service updated successfully!");
     setExtraServices((prev) =>
       prev.map((s) => (s._id === selectedService._id ? response.extraService : s))
@@ -83,17 +91,15 @@ export default function AllExtraServices() {
     closeEditModal();
   };
 
-  // Handle delete extra service
   const handleDelete = async () => {
     const response = await deleteExtraService(selectedService._id);
     if (!response.success) {
       toast.error("Failed to delete extra service");
       return;
     }
+
     toast.success("Extra service deleted successfully!");
-    setExtraServices((prev) =>
-      prev.filter((s) => s._id !== selectedService._id)
-    );
+    setExtraServices((prev) => prev.filter((s) => s._id !== selectedService._id));
     closeDeleteModal();
   };
 
@@ -101,10 +107,50 @@ export default function AllExtraServices() {
     return <div className="text-center py-8">Loading...</div>;
   }
 
+  if (message === "Tailor profile not found.") {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <p className="text-red-600 text-xl w-[400px] mb-4">
+            We couldn’t find your tailor profile. Please add your shop details to get started.
+          </p>
+          <button
+            onClick={() => window.location.replace("/add-shop-details")}
+            className="px-4 py-2 rounded bg-gray-800 text-white hover:bg-gray-900"
+          >
+            Add Shop Details
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (extraServices.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <p className="text-gray-600 text-xl w-[400px] mb-4">
+            It seems like you haven't added any extra services yet.
+          </p>
+          <button
+            onClick={() => window.location.replace("/add-extra-services")}
+            className="px-4 py-2 rounded bg-gray-800 text-white hover:bg-gray-900"
+          >
+            Add Extra Services
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4">
-      {message && <p className="text-red-500 text-center mb-4">{message}</p>}
+      {message && message !== "Tailor profile not found." && (
+        <p className="text-red-500 text-center mb-4">{message}</p>
+      )}
+
       <h1 className="text-3xl font-bold text-center mb-6">All Extra Services</h1>
+
       <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {extraServices.map((service) => (
           <div
@@ -114,7 +160,11 @@ export default function AllExtraServices() {
             <h2 className="text-xl font-bold text-gray-800 mb-2">
               {service.serviceName}
             </h2>
-            <p className="text-gray-600 mb-2">{service.description}</p>
+            <p className="text-gray-600 mb-2">
+              {service.description.length > 100
+                ? `${service.description.substring(0, 100)}...`
+                : service.description}
+            </p>
             <p className="text-gray-500 mb-4">
               Price Range: ${service.minPrice} - ${service.maxPrice}
             </p>
@@ -136,7 +186,6 @@ export default function AllExtraServices() {
         ))}
       </div>
 
-      {/* Edit Extra Service Modal */}
       <Modal
         isOpen={modalEditOpen}
         onRequestClose={closeEditModal}
@@ -167,12 +216,10 @@ export default function AllExtraServices() {
                 </label>
                 <textarea
                   value={selectedService.description}
-                  onChange={(e) =>
-                    handleChange("description", e.target.value)
-                  }
+                  onChange={(e) => handleChange("description", e.target.value)}
                   className="w-full p-2 border border-gray-300 rounded mt-1 focus:outline-none focus:ring-2 focus:ring-gray-500"
                   rows="3"
-                ></textarea>
+                />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -217,7 +264,6 @@ export default function AllExtraServices() {
         )}
       </Modal>
 
-      {/* Delete Confirmation Modal */}
       <Modal
         isOpen={modalDeleteOpen}
         onRequestClose={closeDeleteModal}
@@ -231,7 +277,7 @@ export default function AllExtraServices() {
               Confirm Deletion
             </h2>
             <p className="text-gray-700 mb-6">
-              Are you sure you want to delete "{selectedService.serviceName}"?
+              Are you sure you want to delete &quot;{selectedService.serviceName}&quot;?
             </p>
             <div className="flex justify-end space-x-4">
               <button

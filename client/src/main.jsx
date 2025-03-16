@@ -12,6 +12,9 @@ import Dashboard from "./pages/protected/dashboard";
 import Browse from "./pages/public/Browse";
 import Search from "./pages/public/Search.jsx";
 import AddPortfolioOfTailor from "./pages/protected/client/AddPortfolioOfTailor.jsx";
+import UserProfile from "./pages/protected/client/UserProfile.jsx";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 
 import MainLayout from "./pages/MainLayout";
 
@@ -60,6 +63,7 @@ createRoot(document.getElementById("root")).render(
             <Route path="dashboard" element={<Dashboard />} />
             <Route element={<CustomerLayout />}>
               <Route path="profile" element={<ProfileForm />} />
+              <Route path="user-profile" element={<UserProfile />} />
               <Route path="address" element={<AddressForm />} />/
               <Route path="measurements" element={<MeasurementForm />} />
               <Route path="tailor" element={<TailorDashboard />} />
