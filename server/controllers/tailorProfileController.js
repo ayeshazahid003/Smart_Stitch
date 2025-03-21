@@ -44,8 +44,8 @@ export const createTailorProfile = async (req, res) => {
       const uploadedImages = await uploadMultipleFiles(shopImages, "Home");
       shopImageUrls = uploadedImages;
     }
-    
-    console.log(shopImageUrls)
+
+    console.log(shopImageUrls);
     if (tailorProfile) {
       // 5. Update existing profile with new images (discard old ones)
       tailorProfile.shopName = shopName;
@@ -874,5 +874,66 @@ export const getAllServicesBySearch = async (req, res) => {
       message: "Internal server error.",
       error: error.message,
     });
+  }
+};
+
+export const getTailorProfileById = async (req, res) => {
+  try {
+    const { tailorId } = req.params;
+
+    // Find the tailor's profile, also populate relevant fields if needed
+    const tailorProfile = await TailorProfile.findOne({ tailorId })
+      .populate("tailorId", "name profilePicture")
+      .populate({
+        path: "reviews",
+        select: "user comment rating",
+      });
+
+    if (!tailorProfile) {
+      return res.status(404).json({ message: "Tailor not found" });
+    }
+
+    // Construct your response object to match the required format
+    const tailorData = {
+      name: tailorProfile.tailorId.name,
+      shopName: tailorProfile.shopName,
+      profilePicture:
+        tailorProfile.tailorId.profilePicture ||
+        "https://source.unsplash.com/150x150/?portrait", // fallback
+      shopLocation:
+        tailorProfile.shopLocation?.address || "Location not provided",
+      bio: tailorProfile.bio || "",
+      rating: tailorProfile.rating || 0,
+      shopImages: tailorProfile.shopImages || [],
+      portfolio: (tailorProfile.portfolio || []).map((item) => ({
+        name: item.name,
+        images: item.images,
+        description: item.description,
+      })),
+      serviceRates: (tailorProfile.serviceRates || []).map((service) => ({
+        type: service.type,
+        description: service.description,
+        minPrice: service.minPrice,
+        maxPrice: service.maxPrice,
+        image: service.image,
+      })),
+      // Include extraServices in the same structured format
+      extraServices: (tailorProfile.extraServices || []).map((service) => ({
+        serviceName: service.serviceName,
+        description: service.description,
+        minPrice: service.minPrice,
+        maxPrice: service.maxPrice,
+      })),
+      reviews: (tailorProfile.reviews || []).map((review) => ({
+        user: review.user,
+        comment: review.comment,
+        rating: review.rating,
+      })),
+    };
+
+    return res.status(200).json({tailorData, success: true});
+  } catch (error) {
+    console.error("Error fetching tailor profile:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };

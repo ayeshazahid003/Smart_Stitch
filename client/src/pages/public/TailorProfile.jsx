@@ -1,93 +1,98 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { FaStar, FaMapMarkerAlt } from "react-icons/fa";
+import { MessageCircle } from "lucide-react";  // The icon for the chat button
+import { getTailorById } from "../../hooks/TailorHooks";
+import { useParams, useNavigate } from "react-router";
 
 export default function TailorProfile() {
-  // Sample tailor data (replace with real API data)
-  const tailor = {
-    name: "John Doe",
-    shopName: "Elite Tailor Studio",
-    profilePicture: "https://source.unsplash.com/150x150/?portrait", // Profile picture field
-    shopLocation: "New York, USA",
-    bio: "Expert in custom suits, bridal wear, and high-end fashion alterations.",
-    rating: 4.8,
-    shopImages: [
-      "https://source.unsplash.com/800x600/?tailor,shop",
-      "https://source.unsplash.com/800x600/?sewing,machine",
-    ],
-    portfolio: [
-      {
-        name: "Custom Suit",
-        images: ["https://source.unsplash.com/800x600/?suit,fashion"],
-        description: "Handmade premium suit with the finest materials.",
-      },
-      {
-        name: "Bridal Dress",
-        images: ["https://source.unsplash.com/800x600/?wedding,dress"],
-        description: "Elegant and personalized wedding dress designs.",
-      },
-    ],
-    serviceRates: [
-      {
-        type: "Custom Suit",
-        description: "Premium bespoke suits tailored to perfection.",
-        price: 499,
-        image: "https://source.unsplash.com/200x200/?suit,fashion",
-      },
-      {
-        type: "Alterations",
-        description: "Perfect fitting and quality adjustments.",
-        price: 99,
-        image: "https://source.unsplash.com/200x200/?tailor,alteration",
-      },
-    ],
-    reviews: [
-      {
-        user: "Michael",
-        comment: "Absolutely fantastic craftsmanship!",
-        rating: 5,
-      },
-      {
-        user: "Sarah",
-        comment: "Perfect wedding dress, great experience!",
-        rating: 4.8,
-      },
-    ],
-  };
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  // State to store tailor data fetched from API
+  const [tailor, setTailor] = useState(null);
 
   // Search state to filter items in the profile
   const [searchTerm, setSearchTerm] = useState("");
 
+  // Fetch tailor data when `id` changes
+  useEffect(() => {
+    if (!id) return;
+
+    async function fetchTailor() {
+      const response = await getTailorById(id);
+      console.log("Tailor API response:", response);
+
+      // If API returns success, store it in state
+      if (response.success && response.tailorData) {
+        setTailor(response.tailorData);
+      }
+    }
+
+    fetchTailor();
+  }, [id]);
+
+  // If data has not yet loaded, show a loading indicator
+  if (!tailor) {
+    return (
+      <div className="bg-gray-50 min-h-screen flex items-center justify-center">
+        <p className="text-gray-500">Loading tailor profile...</p>
+      </div>
+    );
+  }
+
+  // Make sure these properties exist on `tailor` or default them to empty arrays:
+  const portfolio = tailor.portfolio || [];
+  const serviceRates = tailor.serviceRates || [];
+  const reviews = tailor.reviews || [];
+
+  // ----- SEARCH FILTERS -----
   // Filter portfolio items based on name or description
-  const filteredPortfolio = tailor.portfolio.filter((item) =>
+  const filteredPortfolio = portfolio.filter((item) =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Filter services based on type or description
-  const filteredServices = tailor.serviceRates.filter((service) =>
+  const filteredServices = serviceRates.filter((service) =>
     service.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
     service.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Filter reviews based on comment or user name
-  const filteredReviews = tailor.reviews.filter((review) =>
-    review.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    review.comment.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredReviews = reviews.filter((review) =>
+    (review.user || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (review.comment || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // ----- HANDLERS -----
+  const handleChatClick = () => {
+    // Navigate to your chat route, e.g. "/messages"
+    navigate("/chat");
+  };
+
+  // ----- RENDER -----
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <motion.div
+      className="bg-gray-50 min-h-screen relative"
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
       {/* Hero Section */}
       <div
         className="relative w-full h-[400px] bg-cover bg-center flex flex-col items-center justify-center text-white"
-        style={{ backgroundImage: `url(${tailor.shopImages[0]})` }}
+        style={{ backgroundImage: `url(${tailor.shopImages?.[0] || ""})` }}
       >
         {/* Dark overlay for readability */}
         <div className="absolute inset-0 bg-black opacity-60"></div>
 
         <div className="relative z-10 text-center px-4">
           <h1 className="text-5xl font-bold">{tailor.shopName}</h1>
+          {/* Show the tailor's name in a nice subheading */}
+          <p className="mt-2 text-xl italic font-light">
+            Owned by {tailor.name}
+          </p>
           <p className="text-lg mt-2 flex items-center justify-center">
             <FaMapMarkerAlt className="mr-2" />
             {tailor.shopLocation}
@@ -99,7 +104,7 @@ export default function TailorProfile() {
         <img
           src={tailor.profilePicture}
           alt="Profile"
-          className="absolute bottom-[-50px] left-1/2 transform -translate-x-1/2 w-32 h-32 rounded-full border-4 border-white shadow-xl"
+          className="absolute bottom-[-50px] left-1/2 transform -translate-x-1/2 w-32 h-32 rounded-full border-4 border-white shadow-xl object-cover"
         />
       </div>
 
@@ -131,7 +136,7 @@ export default function TailorProfile() {
                   transition={{ duration: 0.3 }}
                 >
                   <img
-                    src={item.images[0]}
+                    src={item.images?.[0] || ""}
                     alt={item.name}
                     className="w-full h-56 object-cover"
                   />
@@ -162,15 +167,18 @@ export default function TailorProfile() {
                   transition={{ duration: 0.3 }}
                 >
                   <img
-                    src={service.image}
+                    src={service.image || ""}
                     alt={service.type}
                     className="w-full h-48 object-cover"
                   />
                   <div className="p-6">
-                    <h3 className="text-2xl font-semibold mb-2">{service.type}</h3>
+                    <h3 className="text-2xl font-semibold mb-2">
+                      {service.type}
+                    </h3>
                     <p className="text-gray-600 mb-4">{service.description}</p>
                     <p className="text-indigo-600 font-bold text-xl">
-                      ${service.price}
+                      {/* Showing the min - max in PKR */}
+                      PKR {service.minPrice} - {service.maxPrice}
                     </p>
                   </div>
                 </motion.div>
@@ -198,8 +206,12 @@ export default function TailorProfile() {
                   <p className="text-gray-700 mb-4">"{review.comment}"</p>
                   <div className="flex items-center">
                     <FaStar className="text-yellow-500 mr-1" />
-                    <span className="font-bold text-gray-800">{review.rating}</span>
-                    <span className="text-gray-500 ml-auto">- {review.user}</span>
+                    <span className="font-bold text-gray-800">
+                      {review.rating}
+                    </span>
+                    <span className="text-gray-500 ml-auto">
+                      - {review.user}
+                    </span>
                   </div>
                 </motion.div>
               ))}
@@ -209,6 +221,16 @@ export default function TailorProfile() {
           )}
         </section>
       </div>
-    </div>
+
+      {/* Floating Chat Button */}
+      <motion.button
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        onClick={handleChatClick}
+        className="fixed bottom-8 right-8 bg-indigo-600 text-white rounded-full p-4 shadow-lg hover:bg-indigo-700 transition-colors"
+      >
+        <MessageCircle className="h-6 w-6" />
+      </motion.button>
+    </motion.div>
   );
 }

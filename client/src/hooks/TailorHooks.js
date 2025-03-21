@@ -204,3 +204,12 @@ export async function searchTailors(query) {
     return error.response?.data || { success: false, message: error.message };
   }
 }
+
+export async function getTailorById(tailorId) {
+  try {
+    const response = await axios.get(`/tailor/${tailorId}`);
+    return response.data;
+  } catch (error) {
+    return error.response?.data || { success: false, message: error.message };
+  }
+}

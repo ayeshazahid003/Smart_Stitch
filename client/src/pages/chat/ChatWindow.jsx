@@ -4,6 +4,18 @@ import MessageList from "./MessageList";
 import MessageInput from "./MessageInput";
 
 function ChatWindow({ contact, messages, onSendMessage }) {
+  // If there's no contact (no user/chat selected), show a placeholder message
+  if (!contact) {
+    return (
+      <div className="w-full flex flex-col bg-gray-50 h-full shadow-md items-center justify-center">
+        <p className="text-gray-500">
+          Please select a user to view chats.
+        </p>
+      </div>
+    );
+  }
+
+  // Otherwise, show the actual chat UI
   return (
     <div className="w-full flex flex-col bg-gray-50 h-full shadow-md">
       {/* Chat Header */}
@@ -15,8 +27,12 @@ function ChatWindow({ contact, messages, onSendMessage }) {
             className="w-12 h-12 rounded-full border border-gray-200 shadow-sm"
           />
           <div>
-            <p className="font-semibold text-gray-800 text-lg">{contact.name}</p>
-            <p className="text-sm text-gray-500">Last seen {contact.lastSeen}</p>
+            <p className="font-semibold text-gray-800 text-lg">
+              {contact.name}
+            </p>
+            <p className="text-sm text-gray-500">
+              Last seen {contact.lastSeen}
+            </p>
           </div>
         </div>
         <button className="p-2 rounded-full hover:bg-gray-100 transition">

@@ -10,6 +10,8 @@ import * as orderController from '../controllers/ordersController.js'
 import { protect } from '../middlewares/authMiddleware.js';
 
 
+//user/update-profile
+
 const router = express.Router();
 
 // Authentication Routes
@@ -40,6 +42,7 @@ router.get('/services', tailorProfileController.getAllServicesBySearch);
 router.get('/tailors/:tailorId', tailorProfileController.getTailorProfile);
 router.get('/tailors', tailorProfileController.getAllTailors);
 router.get('/tailors/search', tailorProfileController.searchTailors);
+router.get('/tailor/:tailorId', tailorProfileController.getTailorProfileById);
 
 // User Routes for user profile
 router.get("/users/profile", protect, userController.getUserProfile);
