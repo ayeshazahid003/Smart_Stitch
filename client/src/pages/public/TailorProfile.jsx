@@ -65,11 +65,16 @@ export default function TailorProfile() {
     (review.comment || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // ----- HANDLERS -----
   const handleChatClick = () => {
-    // Navigate to your chat route, e.g. "/messages"
-    navigate("/chat");
-  };
+    // Navigate with state
+    navigate("/chat", {
+      state: {
+        id: id,
+        name: tailor.name,
+        avatar: tailor.profilePicture,
+      }
+    });
+  };;
 
   // ----- RENDER -----
   return (

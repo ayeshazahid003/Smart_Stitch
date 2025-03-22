@@ -5,26 +5,27 @@ export const chatSocketHandler = (io, connectedUsers) => {
   io.on("connection", (socket) => {
     console.log(`Chat Socket connected: ${socket.id}`);
 
-    // Handle user connection
+    // 1) Track user -> socket mapping
     socket.on("userConnected", (userId) => {
       connectedUsers[userId] = socket.id;
       console.log(`User ${userId} connected with socket ${socket.id}`);
     });
 
-    // Join a specific chat room
+    // 2) Join a specific chat room
     socket.on("joinChat", (chatId) => {
       console.log(`Socket ${socket.id} joined chat: ${chatId}`);
       socket.join(chatId);
     });
 
-    // Send a message
+    // 3) Send a message
     socket.on("sendMessage", async (data) => {
       try {
         const { chatId, senderId, message, participants } = data;
 
+        // Check if this chat already exists in the DB
         let chat = await Chat.findById(chatId);
 
-        // Create a new chat if it doesn't exist
+        // If no chat, create a new one with the given participants
         if (!chat) {
           if (!participants || participants.length < 2) {
             return socket.emit("error", {
@@ -33,25 +34,29 @@ export const chatSocketHandler = (io, connectedUsers) => {
           }
 
           chat = new Chat({
-            participants: participants.map((id) =>
-              mongoose.Types.ObjectId(id)
+            participants: participants.map(
+              (id) => new mongoose.Types.ObjectId(id)
             ),
             messages: [],
             readStatus: participants.map((id) => ({
-              userId: mongoose.Types.ObjectId(id),
-              lastReadMessageId: null, // No messages read yet
+              userId: new mongoose.Types.ObjectId(id),
+              lastReadMessageId: null,
             })),
           });
         }
 
+        // Build the new message
         const newMessage = {
-          senderId: mongoose.Types.ObjectId(senderId),
+          _id: new mongoose.Types.ObjectId(),
+          senderId: new mongoose.Types.ObjectId(senderId),
           message,
         };
 
+        // Add to messages array
         chat.messages.push(newMessage);
         chat.updatedAt = new Date();
 
+        // Mark unread for other participants
         chat.participants.forEach((participant) => {
           if (participant.toString() !== senderId) {
             const unreadStatus = chat.readStatus.find(
@@ -65,11 +70,14 @@ export const chatSocketHandler = (io, connectedUsers) => {
 
         await chat.save();
 
-        io.to(chat._id.toString()).emit("messageReceived", {
+        // === Send 'messageReceived' only to other sockets in this room ===
+        // This prevents the sender from receiving their own message again
+        socket.broadcast.to(chat._id.toString()).emit("messageReceived", {
           chatId: chat._id,
           message: newMessage,
         });
 
+        // === Also send a 'newMessageNotification' to other participants if they're online ===
         chat.participants.forEach((participant) => {
           if (
             participant.toString() !== senderId &&
@@ -88,7 +96,7 @@ export const chatSocketHandler = (io, connectedUsers) => {
       }
     });
 
-    // Mark messages as read
+    // 4) Mark messages as read
     socket.on("markAsRead", async (data) => {
       try {
         const { chatId, userId, lastReadMessageId } = data;
@@ -103,13 +111,13 @@ export const chatSocketHandler = (io, connectedUsers) => {
         );
 
         if (readStatus) {
-          readStatus.lastReadMessageId = mongoose.Types.ObjectId(
+          readStatus.lastReadMessageId = new mongoose.Types.ObjectId(
             lastReadMessageId
           );
         } else {
           chat.readStatus.push({
-            userId: mongoose.Types.ObjectId(userId),
-            lastReadMessageId: mongoose.Types.ObjectId(lastReadMessageId),
+            userId: new mongoose.Types.ObjectId(userId),
+            lastReadMessageId: new mongoose.Types.ObjectId(lastReadMessageId),
           });
         }
 
@@ -126,6 +134,7 @@ export const chatSocketHandler = (io, connectedUsers) => {
       }
     });
 
+    // 5) On disconnect
     socket.on("disconnect", () => {
       for (const userId in connectedUsers) {
         if (connectedUsers[userId] === socket.id) {

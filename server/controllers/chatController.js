@@ -7,9 +7,9 @@ export const getUserChats = async (req, res) => {
 
     // Fetch all chats where the user is a participant
     const chats = await Chat.find({ participants: userId })
-      .populate("participants", "name email") // Populate participants' details (e.g., name, email)
-      .populate("messages.senderId", "name email") // Populate sender details in messages
-      .sort({ updatedAt: -1 }); // Sort by the most recently updated chats
+      .populate("participants", "name email profilePicture") // <-- include "profilePicture" or any field you need
+      .populate("messages.senderId", "name email profilePicture")
+      .sort({ updatedAt: -1 });
 
     res.status(200).json({
       success: true,

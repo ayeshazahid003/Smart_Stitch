@@ -1,35 +1,120 @@
-// src/components/Chat.js
+// src/pages/chat/Chat.js
 
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router';
 import Sidebar from './Sidebar';
 import ChatWindow from './ChatWindow';
-
-// Import your API functions
 import { getUserChats, getChatParticipants } from '../../hooks/chatHooks';
+import { useSocket } from '../../context/SocketContext';
+
+// Minimal normalization: keep participants as objects
+function normalizeChat(chat) {
+  chat.id = chat._id || chat.id;
+  // If the server has already populated "participants", do NOT overwrite them.
+  // Just ensure there's an 'id' for the chat itself.
+  // Also, fix timestamps if needed:
+  if (Array.isArray(chat.messages)) {
+    chat.messages = chat.messages.map((m) => {
+      if (!m.timestamp && m.createdAt) {
+        m.timestamp = m.createdAt;
+      }
+      return m;
+    });
+  }
+  return chat;
+}
 
 export default function Chat() {
-  // State for storing all user chats
-  const [chats, setChats] = useState([]);
-  // State for storing participants (optional, based on your use case)
-  const [participants, setParticipants] = useState([]);
+  const location = useLocation();
+  const incomingChat = location.state; // Possibly from TailorProfile
+  const socket = useSocket();
+  const user = JSON.parse(localStorage.getItem('user')); // Logged-in user data
 
-  // State for the currently selected chat
+  const [chats, setChats] = useState([]);
+  const [participants, setParticipants] = useState([]);
   const [selectedChat, setSelectedChat] = useState(null);
-  // State for messages in the currently selected chat
   const [messages, setMessages] = useState([]);
 
-  // Fetch user chats and participants on mount
+  // 1) Fetch chats & participants on mount
   useEffect(() => {
     fetchChats();
     fetchChatParticipants();
+    console.log('Incoming chat:', incomingChat);
   }, []);
 
-  // Fetch all chats for the logged-in user
+  // 2) Join the chat room and listen for messages when selected
+  useEffect(() => {
+    if (!socket || !selectedChat) return;
+
+    socket.emit('joinChat', selectedChat.id);
+
+    socket.on('messageReceived', (data) => {
+      if (data.chatId === selectedChat.id) {
+        // Only from other participants (we used socket.broadcast on server)
+        setMessages((prev) => [...prev, data.message]);
+      }
+    });
+
+    return () => {
+      socket.off('messageReceived');
+    };
+  }, [socket, selectedChat]);
+
+  // 3) Listen for notifications
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.on('newMessageNotification', (data) => {
+      console.log('New message notification:', data);
+      // Optionally refresh chat list or show a toast
+    });
+
+    return () => {
+      socket.off('newMessageNotification');
+    };
+  }, [socket]);
+
+  // 4) Fetch chats from the API and store them
   const fetchChats = async () => {
     try {
       const response = await getUserChats();
       if (response.success) {
-        setChats(response.chats);
+        let updatedChats = response.chats.map(normalizeChat);
+
+        // If user came from tailor profile with an incomingChat
+        if (incomingChat) {
+          const normalizedIncoming = normalizeChat(incomingChat);
+
+          // If no participants, create them
+          if (!normalizedIncoming.participants) {
+            normalizedIncoming.participants = [
+              { _id: user._id },
+              { _id: normalizedIncoming.id },
+            ];
+          }
+
+          // Check if a chat exists for these participants
+          const existingChat = updatedChats.find((c) => {
+            const participantIds = c.participants.map((p) => p._id.toString());
+            return (
+              participantIds.includes(user._id) &&
+              participantIds.includes(normalizedIncoming.id)
+            );
+          });
+
+          if (!existingChat) {
+            // Prepend and select
+            updatedChats = [normalizedIncoming, ...updatedChats];
+            setSelectedChat(normalizedIncoming);
+            setMessages([]);
+          } else {
+            // Chat exists, select it
+            setSelectedChat(existingChat);
+            setMessages(existingChat.messages || []);
+          }
+        }
+
+        setChats(updatedChats);
       } else {
         console.error('Failed to fetch chats:', response.message);
       }
@@ -38,7 +123,7 @@ export default function Chat() {
     }
   };
 
-  // Fetch unique participants across all chats (if needed)
+  // 5) Fetch participants (optional, if you need a list)
   const fetchChatParticipants = async () => {
     try {
       const response = await getChatParticipants();
@@ -52,22 +137,31 @@ export default function Chat() {
     }
   };
 
-  // When a user selects a chat in the sidebar
+  // 6) When a user selects a chat in the sidebar
   const handleSelectChat = (chat) => {
     setSelectedChat(chat);
-    // Load that chat's messages
     setMessages(chat.messages || []);
   };
 
-  // Handle sending a new message (currently local-only)
+  // 7) Send a new message
   const handleSendMessage = (messageText) => {
-    // Here, you might call an API to send the message, then update state with the new message
     const newMessage = {
-      senderId: 'you', 
-      text: messageText,
-      createdAt: new Date().toISOString(),
+      senderId: user._id,
+      message: messageText,
+      timestamp: new Date().toISOString(),
     };
-    setMessages([...messages, newMessage]);
+
+    if (socket && selectedChat) {
+      socket.emit('sendMessage', {
+        chatId: selectedChat.id,
+        senderId: user._id,
+        message: messageText,
+        participants: selectedChat.participants.map((p) => p._id),
+      });
+    }
+
+    // Optimistic update
+    setMessages((prev) => [...prev, newMessage]);
   };
 
   return (
@@ -75,12 +169,14 @@ export default function Chat() {
       <Sidebar
         contacts={chats}
         onSelectContact={handleSelectChat}
+        currentUserId={user._id}
       />
       {selectedChat && (
         <ChatWindow
-          contact={selectedChat}     // For display, can rename or adapt
-          messages={messages}        // The messages in the selected chat
+          contact={selectedChat}
+          messages={messages}
           onSendMessage={handleSendMessage}
+          currentUserId={user._id}
         />
       )}
     </div>

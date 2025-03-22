@@ -1,8 +1,8 @@
-// sidebar.jsx
+// src/pages/chat/Sidebar.js
 import React, { useState } from 'react';
 import { Search, Menu } from 'lucide-react';
 
-function Sidebar({ contacts, onSelectContact }) {
+function Sidebar({ contacts, onSelectContact, currentUserId }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
@@ -28,7 +28,7 @@ function Sidebar({ contacts, onSelectContact }) {
         )}
       </div>
 
-      {/* Chats List or No Chats Message */}
+      {/* Chats List */}
       <div className="mt-4">
         {contacts.length === 0 ? (
           !isCollapsed && (
@@ -37,29 +37,36 @@ function Sidebar({ contacts, onSelectContact }) {
             </div>
           )
         ) : (
-          contacts.map((chat) => {
-            const participant = chat.participants?.[0] || {
-              _id: 'placeholder',
-              name: 'Unknown',
-            };
+          contacts.map((chat, index) => {
+            // Find the participant who is NOT the current user
+            const otherParticipant = chat.participants?.find(
+              (p) => p._id !== currentUserId
+            );
+            // If we have data, use that participant's info
+            const name = otherParticipant?.name || 'Unknown User';
+            const avatar =
+              otherParticipant?.profilePicture ||
+              'https://via.placeholder.com/40';
+
+            // Get the last message's text (note: your schema might store it in `message`)
             const lastMessage = chat.messages?.length
-              ? chat.messages[chat.messages.length - 1].text
+              ? chat.messages[chat.messages.length - 1].message
               : 'No messages yet';
 
             return (
               <div
-                key={chat._id}
+                key={chat.id || index}
                 className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg cursor-pointer"
                 onClick={() => onSelectContact(chat)}
               >
                 <img
-                  src="https://via.placeholder.com/40"
-                  alt={participant.name}
+                  src={avatar}
+                  alt={name}
                   className="w-10 h-10 rounded-full"
                 />
                 {!isCollapsed && (
                   <div>
-                    <p className="font-semibold">{participant.name}</p>
+                    <p className="font-semibold">{name}</p>
                     <p className="text-sm text-gray-500">{lastMessage}</p>
                   </div>
                 )}
