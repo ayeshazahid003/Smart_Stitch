@@ -1,113 +1,12 @@
-import React, { useState } from "react";
-import { Filter, X } from "lucide-react"; // <-- Import icons from lucide-react
+import { useState, useEffect } from "react";
+import { Filter, X } from "lucide-react";
 import Header from "../../components/client/Header";
 import CartButton from "../../components/client/cartBTN";
 import Footer from "../../components/client/Footer";
+import { useSearchTailors } from "../../hooks/TailorProfile/useSearchTailors";
+import { useSearchParams } from "react-router";
 
-const tailorServices = [
-  {
-    title: "Classic Tailor",
-    categories: "Men's Suits, Formal Wear",
-    price: 5000,
-    rating: 4.5,
-    experience: 5,
-    image: "https://res.cloudinary.com/dlhwfesiz/image/upload/v1679703977/suit4_m8icv4.jpg",
-  },
-  {
-    title: "Modern Tailor",
-    categories: "Women's Dresses, Bridal",
-    price: 8000,
-    rating: 4.2,
-    experience: 3,
-    image: "https://res.cloudinary.com/dlhwfesiz/image/upload/v1679703977/suit4_m8icv4.jpg",
-  },
-  {
-    title: "Luxury Tailors",
-    categories: "Designer Wear, Bespoke",
-    price: 15000,
-    rating: 4.8,
-    experience: 10,
-    image: "https://res.cloudinary.com/dlhwfesiz/image/upload/v1679703977/suit4_m8icv4.jpg",
-  },
-  // Repeated for demonstration...
-  {
-    title: "Classic Tailor",
-    categories: "Men's Suits, Formal Wear",
-    price: 5000,
-    rating: 4.5,
-    experience: 5,
-    image: "https://res.cloudinary.com/dlhwfesiz/image/upload/v1679703977/suit4_m8icv4.jpg",
-  },
-  {
-    title: "Modern Tailor",
-    categories: "Women's Dresses, Bridal",
-    price: 8000,
-    rating: 4.2,
-    experience: 3,
-    image: "https://res.cloudinary.com/dlhwfesiz/image/upload/v1679703977/suit4_m8icv4.jpg",
-  },
-  {
-    title: "Luxury Tailors",
-    categories: "Designer Wear, Bespoke",
-    price: 15000,
-    rating: 4.8,
-    experience: 10,
-    image: "https://res.cloudinary.com/dlhwfesiz/image/upload/v1679703977/suit4_m8icv4.jpg",
-  },
-  {
-    title: "Classic Tailor",
-    categories: "Men's Suits, Formal Wear",
-    price: 5000,
-    rating: 4.5,
-    experience: 5,
-    image: "https://res.cloudinary.com/dlhwfesiz/image/upload/v1679703977/suit4_m8icv4.jpg",
-  },
-  {
-    title: "Modern Tailor",
-    categories: "Women's Dresses, Bridal",
-    price: 8000,
-    rating: 4.2,
-    experience: 3,
-    image: "https://res.cloudinary.com/dlhwfesiz/image/upload/v1679703977/suit4_m8icv4.jpg",
-  },
-  {
-    title: "Luxury Tailors",
-    categories: "Designer Wear, Bespoke",
-    price: 15000,
-    rating: 4.8,
-    experience: 10,
-    image: "https://res.cloudinary.com/dlhwfesiz/image/upload/v1679703977/suit4_m8icv4.jpg",
-  },
-  {
-    title: "Classic Tailor",
-    categories: "Men's Suits, Formal Wear",
-    price: 5000,
-    rating: 4.5,
-    experience: 5,
-    image: "https://res.cloudinary.com/dlhwfesiz/image/upload/v1679703977/suit4_m8icv4.jpg",
-  },
-  {
-    title: "Modern Tailor",
-    categories: "Women's Dresses, Bridal",
-    price: 8000,
-    rating: 4.2,
-    experience: 3,
-    image: "https://res.cloudinary.com/dlhwfesiz/image/upload/v1679703977/suit4_m8icv4.jpg",
-  },
-  {
-    title: "Luxury Tailors",
-    categories: "Designer Wear, Bespoke",
-    price: 15000,
-    rating: 4.8,
-    experience: 10,
-    image: "https://res.cloudinary.com/dlhwfesiz/image/upload/v1679703977/suit4_m8icv4.jpg",
-  },
-];
-
-// Define filter ranges for Price, Rating, Experience
-// Each range object includes a label, plus numeric boundaries (for price or rating/experience).
-// We'll compute the "count" of matching tailors to show in parentheses (like the screenshot).
-const getPriceRanges = () => {
+const getPriceRanges = (tailorServices) => {
   const ranges = [
     { label: "Less than PKR 5,000", min: 0, max: 4999 },
     { label: "PKR 5,000 to PKR 10,000", min: 5000, max: 10000 },
@@ -115,85 +14,139 @@ const getPriceRanges = () => {
     { label: "PKR 15,000+", min: 15001, max: Infinity },
   ];
   return ranges.map((range) => {
-    const count = tailorServices.filter(
+    const count = (tailorServices || []).filter(
       (t) => t.price >= range.min && t.price <= range.max
     ).length;
     return { ...range, count };
   });
 };
 
-const getRatingRanges = () => {
+const getRatingRanges = (tailorServices) => {
   const ranges = [
     { label: "3+ Stars", min: 3 },
     { label: "4+ Stars", min: 4 },
     { label: "4.5+ Stars", min: 4.5 },
   ];
   return ranges.map((range) => {
-    const count = tailorServices.filter((t) => t.rating >= range.min).length;
+    const count = (tailorServices || []).filter(
+      (t) => t.rating >= range.min
+    ).length;
     return { ...range, count };
   });
 };
 
-const getExperienceRanges = () => {
+const getExperienceRanges = (tailorServices) => {
   const ranges = [
     { label: "1+ Years", min: 1 },
     { label: "3+ Years", min: 3 },
     { label: "5+ Years", min: 5 },
   ];
   return ranges.map((range) => {
-    const count = tailorServices.filter((t) => t.experience >= range.min).length;
+    const count = (tailorServices || []).filter(
+      (t) => t.experience >= range.min
+    ).length;
     return { ...range, count };
   });
 };
 
 export default function Search() {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
   const [suggestions, setSuggestions] = useState([]);
+  const { searchTailors, loading, error, data } = useSearchTailors();
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("query") || "");
 
   // For multiple checkbox filters, we'll store arrays of selected indexes for each category.
   const [selectedPriceIndexes, setSelectedPriceIndexes] = useState([]);
   const [selectedRatingIndexes, setSelectedRatingIndexes] = useState([]);
-  const [selectedExperienceIndexes, setSelectedExperienceIndexes] = useState([]);
+  const [selectedExperienceIndexes, setSelectedExperienceIndexes] = useState(
+    []
+  );
 
   // For mobile collapsible sidebar
   const [showFilters, setShowFilters] = useState(false);
 
-  // Precompute our filter ranges (with counts).
-  const priceRanges = getPriceRanges();
-  const ratingRanges = getRatingRanges();
-  const experienceRanges = getExperienceRanges();
+  useEffect(() => {
+    // Initial search with query parameter if it exists
+    const initialQuery = searchParams.get("query") || "";
+    if (initialQuery) {
+      searchTailors(initialQuery);
+    } else {
+      searchTailors("");
+    }
+  }, []);
+
+  useEffect(() => {
+    // Debounce search
+    const timeoutId = setTimeout(() => {
+      const params = { query: searchTerm };
+
+      // Add filter parameters
+      if (selectedPriceIndexes.length > 0) {
+        const selectedRange = priceRanges[selectedPriceIndexes[0]];
+        params.minPrice = selectedRange.min;
+        params.maxPrice = selectedRange.max;
+      }
+
+      if (selectedRatingIndexes.length > 0) {
+        const selectedRange = ratingRanges[selectedRatingIndexes[0]];
+        params.minRating = selectedRange.min;
+      }
+
+      if (selectedExperienceIndexes.length > 0) {
+        const selectedRange = experienceRanges[selectedExperienceIndexes[0]];
+        params.minExperience = selectedRange.min;
+      }
+
+      // Update search params in URL
+      setSearchParams(params);
+
+      // Call search API with filters
+      searchTailors(params);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [
+    searchTerm,
+    selectedPriceIndexes,
+    selectedRatingIndexes,
+    selectedExperienceIndexes,
+  ]);
+
+  // Precompute our filter ranges (with counts) using the fetched data
+  const priceRanges = getPriceRanges(data?.tailors);
+  const ratingRanges = getRatingRanges(data?.tailors);
+  const experienceRanges = getExperienceRanges(data?.tailors);
 
   // Handle search input & suggestions
   const handleSearchChange = (event) => {
     const query = event.target.value.toLowerCase();
     setSearchTerm(query);
 
-    setSuggestions(
-      query.length > 0
-        ? tailorServices
-            .map((service) => service.title)
-            .concat(
-              tailorServices.flatMap((service) =>
-                service.categories.split(", ")
-              )
-            )
-            .filter((item) => item.toLowerCase().includes(query))
-        : []
-    );
+    if (data?.tailors) {
+      setSuggestions(
+        query.length > 0
+          ? Array.from(
+              new Set([
+                ...data.tailors.map((service) => service.shopName),
+                ...data.tailors.flatMap((service) =>
+                  service.description ? [service.description] : []
+                ),
+              ])
+            ).filter((item) => item.toLowerCase().includes(query))
+          : []
+      );
+    }
   };
 
-  // Toggle checkbox for a specific price range
+  // Filter handlers remain the same
   const handlePriceCheck = (index) => {
     if (selectedPriceIndexes.includes(index)) {
-      setSelectedPriceIndexes(
-        selectedPriceIndexes.filter((i) => i !== index)
-      );
+      setSelectedPriceIndexes(selectedPriceIndexes.filter((i) => i !== index));
     } else {
       setSelectedPriceIndexes([...selectedPriceIndexes, index]);
     }
   };
 
-  // Toggle checkbox for a specific rating range
   const handleRatingCheck = (index) => {
     if (selectedRatingIndexes.includes(index)) {
       setSelectedRatingIndexes(
@@ -204,7 +157,6 @@ export default function Search() {
     }
   };
 
-  // Toggle checkbox for a specific experience range
   const handleExperienceCheck = (index) => {
     if (selectedExperienceIndexes.includes(index)) {
       setSelectedExperienceIndexes(
@@ -215,61 +167,47 @@ export default function Search() {
     }
   };
 
-  // Filtering logic: we do "OR" logic within each category
-  // (i.e., pass if tailor fits at least one selected range in that category).
-  // If no checkboxes selected in a category, skip that category filter.
-  const filteredTailors = tailorServices.filter((tailor) => {
-    // 1) Match search
+  // Filter the tailors based on selected filters
+  const filteredTailors = (data?.tailors || []).filter((tailor) => {
+    // Match search
     const matchSearch =
       searchTerm === "" ||
-      tailor.title.toLowerCase().includes(searchTerm) ||
-      tailor.categories.toLowerCase().includes(searchTerm);
+      tailor.shopName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (tailor.description &&
+        tailor.description.toLowerCase().includes(searchTerm.toLowerCase()));
 
-    // 2) Price filter
-    // If no price ranges are selected, pass automatically.
-    // Otherwise, pass if the tailor's price fits at least one selected range.
+    // Price filter
     let matchPrice = true;
     if (selectedPriceIndexes.length > 0) {
-      matchPrice = false; // We start false and look for an OR match
-      for (let idx of selectedPriceIndexes) {
+      matchPrice = selectedPriceIndexes.some((idx) => {
         const range = priceRanges[idx];
-        if (tailor.price >= range.min && tailor.price <= range.max) {
-          matchPrice = true;
-          break;
-        }
-      }
+        const price = tailor.price || 0;
+        return price >= range.min && price <= range.max;
+      });
     }
 
-    // 3) Rating filter
+    // Rating filter
     let matchRating = true;
     if (selectedRatingIndexes.length > 0) {
-      matchRating = false;
-      for (let idx of selectedRatingIndexes) {
+      matchRating = selectedRatingIndexes.some((idx) => {
         const range = ratingRanges[idx];
-        if (tailor.rating >= range.min) {
-          matchRating = true;
-          break;
-        }
-      }
+        return (tailor.rating || 0) >= range.min;
+      });
     }
 
-    // 4) Experience filter
+    // Experience filter
     let matchExperience = true;
     if (selectedExperienceIndexes.length > 0) {
-      matchExperience = false;
-      for (let idx of selectedExperienceIndexes) {
+      matchExperience = selectedExperienceIndexes.some((idx) => {
         const range = experienceRanges[idx];
-        if (tailor.experience >= range.min) {
-          matchExperience = true;
-          break;
-        }
-      }
+        return (tailor.experience || 0) >= range.min;
+      });
     }
 
     return matchSearch && matchPrice && matchRating && matchExperience;
   });
 
-  // Renders the checkboxes for Price, Rating, Experience
+  // ...rest of your render methods remain the same...
   const renderFilterUI = () => {
     return (
       <div className="md:w-64">
@@ -338,7 +276,6 @@ export default function Search() {
     );
   };
 
-  // Renders the main content: search bar, suggestions, and results
   const renderMainContent = () => {
     return (
       <div className="w-full">
@@ -372,7 +309,11 @@ export default function Search() {
 
         {/* Results */}
         <h2 className="text-2xl font-semibold mb-6">Tailors</h2>
-        {filteredTailors.length > 0 ? (
+        {loading ? (
+          <div className="text-center py-4">Loading...</div>
+        ) : error ? (
+          <div className="text-red-500 text-center py-4">{error}</div>
+        ) : filteredTailors.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredTailors.map((tailor, index) => (
               <div
@@ -380,28 +321,31 @@ export default function Search() {
                 className="bg-white border border-gray-200 rounded shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden"
               >
                 <img
-                  src={tailor.image}
-                  alt={tailor.title}
+                  src={tailor.image || "https://via.placeholder.com/300x200"}
+                  alt={tailor.shopName}
                   className="w-full h-48 object-cover"
                 />
                 <div className="p-4">
                   <h3 className="text-lg font-semibold mb-1">
-                    {tailor.title}
+                    {tailor.shopName}
                   </h3>
                   <p className="text-md text-gray-500 mb-2">
-                    {tailor.categories}
+                    {tailor.description}
                   </p>
                   <div className="text-md text-gray-600 space-y-1">
                     <div>⭐ {tailor.rating}</div>
-                    <div>💰 PKR {tailor.price}</div>
                     <div>🧵 {tailor.experience} Years Experience</div>
+                    <div>
+                      💰 PKR {tailor.priceRange.min.toLocaleString()} -{" "}
+                      {tailor.priceRange.max.toLocaleString()}
+                    </div>
                   </div>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-gray-500">No tailors found.</p>
+          <p className="text-gray-500 text-center py-4">No tailors found.</p>
         )}
       </div>
     );

@@ -1,32 +1,37 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "../../components/client/Header";
 import CartButton from "../../components/client/cartBTN";
 import TailorCard from "../../components/client/TailorCard";
-import { tailorServices } from "../../constant/data";
 import TailorFeatureSection from "../../components/client/TailorFeatureSection";
 import Footer from "../../components/client/Footer";
 import { useNavigate } from "react-router";
+import { useTailors } from "../../hooks/TailorProfile/useTailors";
 
 export default function Browse() {
   const [searchTerm, setSearchTerm] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("ALL");
   const navigate = useNavigate();
+  const { fetchTailors, loading, error, data } = useTailors();
 
-  const tailorOptions = [
-    "Custom Suit Tailor",
-    "Wedding Dress Tailor",
-    "Alterations & Repairs",
-    "Local Bespoke Tailors",
-    "Traditional Attire Tailor",
-    "Leather Jacket Repair",
-    "Quick Fix Tailors",
-  ];
+  useEffect(() => {
+    // Initial fetch of all tailors
+    fetchTailors({});
+  }, []);
+
+  // Update tailors when category changes
+  useEffect(() => {
+    if (selectedCategory !== "ALL") {
+      fetchTailors({ query: selectedCategory });
+    } else {
+      fetchTailors({});
+    }
+  }, [selectedCategory]);
 
   const categories = [
     "ALL",
-    "Men’s Tailoring",
-    "Women’s Tailoring",
+    "Men's Tailoring",
+    "Women's Tailoring",
     "Alterations & Repairs",
     "Bespoke Suits",
     "Traditional Wear",
@@ -37,30 +42,22 @@ export default function Browse() {
   const handleSearchChange = (event) => {
     const query = event.target.value;
     setSearchTerm(query);
-    setSuggestions(
-      query.length > 0
-        ? tailorOptions.filter((item) =>
-            item.toLowerCase().includes(query.toLowerCase())
-          )
-        : []
-    );
-  };
-
-  const handleKeyDown = (event) => {
-    // If the user presses Enter, navigate to the /search page
-    if (event.key === "Enter") {
-      navigate("/search");
+    if (query.length > 0) {
+      // Filter suggestions based on available services and tailor names
+      const tailorSuggestions = data.tailors
+        .map((tailor) => tailor.shopName)
+        .filter((name) => name.toLowerCase().includes(query.toLowerCase()));
+      setSuggestions(tailorSuggestions);
+    } else {
+      setSuggestions([]);
     }
   };
 
-  const filteredTailorServices =
-    selectedCategory === "ALL"
-      ? tailorServices
-      : tailorServices.filter((service) =>
-          service.categories
-            .toLowerCase()
-            .includes(selectedCategory.toLowerCase())
-        );
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter") {
+      navigate(`/search?query=${encodeURIComponent(searchTerm)}`);
+    }
+  };
 
   return (
     <div>
@@ -108,7 +105,7 @@ export default function Browse() {
 
       <div className="px-4 py-8 flex justify-center items-center flex-col">
         <h1 className="text-3xl font-ibarra font-semibold text-[#111827]">
-          100+ Tailors
+          {data.total || 0}+ Tailors
         </h1>
         <h1 className="text-3xl font-ibarra font-semibold text-[#111827]">
           One Vision, Perfection
@@ -116,11 +113,11 @@ export default function Browse() {
       </div>
 
       {/* Categories Filter */}
-      <div className="flex justify-center gap-6 py-3">
+      <div className="flex justify-center gap-6 py-3 overflow-x-auto">
         {categories.map((category, index) => (
           <button
             key={index}
-            className={`px-4 py-2 font-semibold ${
+            className={`px-4 py-2 font-semibold whitespace-nowrap ${
               selectedCategory === category
                 ? "text-black border-b-2 border-black"
                 : "text-gray-600 hover:text-black"
@@ -134,13 +131,30 @@ export default function Browse() {
 
       {/* Tailor Services Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-        {filteredTailorServices.map((service, index) => (
-          <TailorCard key={index} {...service} />
-        ))}
+        {loading ? (
+          <div className="col-span-full text-center py-8">Loading...</div>
+        ) : error ? (
+          <div className="col-span-full text-center py-8 text-red-500">
+            {error}
+          </div>
+        ) : data.tailors.length > 0 ? (
+          data.tailors.map((tailor, index) => (
+            <TailorCard
+              key={index}
+              shopName={tailor.shopName}
+              image={tailor.image}
+              rating={tailor.rating}
+              experience={tailor.experience}
+              priceRange={tailor.priceRange}
+              description={tailor.description}
+            />
+          ))
+        ) : (
+          <div className="col-span-full text-center py-8">No tailors found</div>
+        )}
       </div>
 
       <TailorFeatureSection />
-
       <Footer />
     </div>
   );

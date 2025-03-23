@@ -1,23 +1,13 @@
-import { useState } from "react";
-import axios from "axios";
+import { useTailors } from "./useTailors";
 
 export const useSearchTailors = () => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [data, setData] = useState(null);
+  const { fetchTailors, loading, error, data } = useTailors();
 
-  const searchTailors = async (query) => {
-    setLoading(true);
-    try {
-      const response = await axios.get("/api/tailor/search", {
-        params: { query },
-      });
-      setData(response.data);
-    } catch (err) {
-      setError(err.response?.data?.message || "Error searching tailors");
-    } finally {
-      setLoading(false);
-    }
+  const searchTailors = (params) => {
+    // If params is a string, convert it to an object with query property
+    const searchParams =
+      typeof params === "string" ? { query: params } : params;
+    return fetchTailors(searchParams);
   };
 
   return { searchTailors, loading, error, data };
