@@ -754,23 +754,84 @@ export const updateTailorProfile = async (req, res) => {
 
 export const searchTailors = async (req, res) => {
   try {
-    const { query } = req.query;
+    const { query, minPrice, maxPrice, minRating, minExperience } = req.query;
 
-    const tailors = await TailorProfile.find({
-      $or: [
+    // Build the filter query
+    let filterQuery = {};
+
+    // Text search filter
+    if (query) {
+      filterQuery.$or = [
         { shopName: { $regex: query, $options: "i" } },
+        { bio: { $regex: query, $options: "i" } },
         { "serviceRates.type": { $regex: query, $options: "i" } },
-      ],
+      ];
+    }
+
+    // Rating filter
+    if (minRating) {
+      filterQuery.rating = { $gte: parseFloat(minRating) };
+    }
+
+    // Experience filter
+    if (minExperience) {
+      filterQuery.experience = { $gte: parseInt(minExperience) };
+    }
+
+    // Get tailors matching the base criteria
+    let tailors = await TailorProfile.find(filterQuery)
+      .select("shopName shopImages rating experience bio serviceRates")
+      .lean();
+
+    // Post-query filtering for price ranges (since we need to calculate min/max from all services)
+    if (minPrice || maxPrice) {
+      tailors = tailors.filter((tailor) => {
+        const prices = tailor.serviceRates.map((service) => service.minPrice);
+        const minServicePrice = Math.min(...prices);
+        const maxServicePrice = Math.max(
+          ...tailor.serviceRates.map((service) => service.maxPrice)
+        );
+
+        return (
+          !minPrice ||
+          (minServicePrice >= parseFloat(minPrice) && !maxPrice) ||
+          maxServicePrice <= parseFloat(maxPrice)
+        );
+      });
+    }
+
+    const formattedTailors = tailors.map((tailor) => {
+      // Calculate price range from all services
+      const minServicePrice =
+        tailor.serviceRates.length > 0
+          ? Math.min(...tailor.serviceRates.map((service) => service.minPrice))
+          : 0;
+      const maxServicePrice =
+        tailor.serviceRates.length > 0
+          ? Math.max(...tailor.serviceRates.map((service) => service.maxPrice))
+          : 0;
+
+      return {
+        shopName: tailor.shopName,
+        image: tailor.shopImages[0] || "",
+        rating: tailor.rating || 0,
+        experience: tailor.experience || 0,
+        priceRange: {
+          min: minServicePrice,
+          max: maxServicePrice,
+        },
+        description: tailor.bio ? tailor.bio.substring(0, 100) : "",
+      };
     });
 
-    res.status(200).json({ success: true, tailors });
+    res.status(200).json({
+      success: true,
+      tailors: formattedTailors,
+      total: formattedTailors.length,
+    });
   } catch (error) {
     console.error("Error searching tailors:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error.",
-      error: error.message,
-    });
+    res.status(500).json({ success: false, message: "Internal server error." });
   }
 };
 
@@ -931,7 +992,7 @@ export const getTailorProfileById = async (req, res) => {
       })),
     };
 
-    return res.status(200).json({tailorData, success: true});
+    return res.status(200).json({ tailorData, success: true });
   } catch (error) {
     console.error("Error fetching tailor profile:", error);
     return res.status(500).json({ message: "Internal server error" });
