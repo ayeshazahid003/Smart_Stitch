@@ -5,6 +5,7 @@ import CartButton from "../../components/client/cartBTN";
 import Footer from "../../components/client/Footer";
 import { useSearchTailors } from "../../hooks/TailorProfile/useSearchTailors";
 import { useSearchParams } from "react-router";
+import TailorCard from "../../components/client/TailorCard";
 
 const getPriceRanges = (tailorServices) => {
   const ranges = [
@@ -316,32 +317,15 @@ export default function Search() {
         ) : filteredTailors.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredTailors.map((tailor, index) => (
-              <div
+              <TailorCard
                 key={index}
-                className="bg-white border border-gray-200 rounded shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden"
-              >
-                <img
-                  src={tailor.image || "https://via.placeholder.com/300x200"}
-                  alt={tailor.shopName}
-                  className="w-full h-48 object-cover"
-                />
-                <div className="p-4">
-                  <h3 className="text-lg font-semibold mb-1">
-                    {tailor.shopName}
-                  </h3>
-                  <p className="text-md text-gray-500 mb-2">
-                    {tailor.description}
-                  </p>
-                  <div className="text-md text-gray-600 space-y-1">
-                    <div>⭐ {tailor.rating}</div>
-                    <div>🧵 {tailor.experience} Years Experience</div>
-                    <div>
-                      💰 PKR {tailor.priceRange.min.toLocaleString()} -{" "}
-                      {tailor.priceRange.max.toLocaleString()}
-                    </div>
-                  </div>
-                </div>
-              </div>
+                shopName={tailor.shopName}
+                image={tailor.image}
+                rating={tailor.rating}
+                experience={tailor.experience}
+                priceRange={tailor.priceRange}
+                description={tailor.description}
+              />
             ))}
           </div>
         ) : (
