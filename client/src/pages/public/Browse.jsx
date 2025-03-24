@@ -141,6 +141,7 @@ export default function Browse() {
           data.tailors.map((tailor, index) => (
             <TailorCard
               key={index}
+              _id={tailor.id}
               shopName={tailor.shopName}
               image={tailor.image}
               rating={tailor.rating}

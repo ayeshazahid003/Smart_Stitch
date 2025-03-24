@@ -318,6 +318,7 @@ export default function Search() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredTailors.map((tailor, index) => (
               <TailorCard
+                _id={tailor.id}
                 key={index}
                 shopName={tailor.shopName}
                 image={tailor.image}

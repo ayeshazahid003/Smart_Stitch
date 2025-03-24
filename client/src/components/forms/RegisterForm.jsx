@@ -165,7 +165,8 @@ export default function RegisterForm() {
               </FormItem>
             )}
           />
-          {error && <p className="text-red-500">{error}</p>} {/* Display error */}
+          {error && <p className="text-red-500">{error}</p>}{" "}
+          {/* Display error */}
           <Button
             type="submit"
             disabled={isLoading}

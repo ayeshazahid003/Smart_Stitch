@@ -780,7 +780,7 @@ export const searchTailors = async (req, res) => {
 
     // Get tailors matching the base criteria
     let tailors = await TailorProfile.find(filterQuery)
-      .select("shopName shopImages rating experience bio serviceRates")
+      .select("shopName shopImages rating experience bio serviceRates tailorId")
       .lean();
 
     // Post-query filtering for price ranges (since we need to calculate min/max from all services)
@@ -812,6 +812,7 @@ export const searchTailors = async (req, res) => {
           : 0;
 
       return {
+        id: tailor.tailorId,
         shopName: tailor.shopName,
         image: tailor.shopImages[0] || "",
         rating: tailor.rating || 0,

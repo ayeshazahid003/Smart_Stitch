@@ -8,6 +8,8 @@ import * as reviewController from "../controllers/reviewsController.js";
 import * as chatController from "../controllers/chatController.js";
 import * as orderController from "../controllers/ordersController.js";
 import { protect } from "../middlewares/authMiddleware.js";
+import * as offerController from "../controllers/offerController.js";
+const { createOffer, getOffers } = offerController;
 
 //user/update-profile
 
@@ -191,5 +193,9 @@ router.get(
   protect,
   orderController.getOrderByStatusOfTailor
 );
+
+// Offer routes
+router.post("/offers", protect, createOffer);
+router.get("/offers", protect, getOffers);
 
 export default router;

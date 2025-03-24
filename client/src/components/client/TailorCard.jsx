@@ -4,6 +4,7 @@ import { Link } from "react-router";
 import PlaceOrderModal from "../Modals/PlaceOrderModal";
 
 export default function TailorCard({
+  _id,
   shopName,
   image,
   rating,
@@ -15,7 +16,7 @@ export default function TailorCard({
 
   return (
     <div className="relative group">
-      <Link to={`/tailor/${shopName}`}>
+      <Link to={`/tailor/${_id}`}>
         <motion.div
           className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
           whileHover={{ y: -5 }}
@@ -64,6 +65,7 @@ export default function TailorCard({
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         tailorName={shopName}
+        tailorId={_id}
       />
     </div>
   );

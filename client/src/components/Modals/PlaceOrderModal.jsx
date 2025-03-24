@@ -1,18 +1,45 @@
 import React, { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
+import { useUser } from "../../context/UserContext";
+import { useNavigate } from "react-router";
+import { useCreateOffer } from "../../hooks/orderHooks";
 
-const PlaceOrderModal = ({ isOpen, onClose, tailorName }) => {
+const PlaceOrderModal = ({ isOpen, onClose, tailorName, tailorId }) => {
+  console.log("Tailor ID:", tailorId);
   const [offerAmount, setOfferAmount] = useState("");
+  const [description, setDescription] = useState("");
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
+  const { user } = useUser();
+  const navigate = useNavigate();
+  const { createOffer } = useCreateOffer();
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Offer placed:", {
-      amount: offerAmount,
-      tailorName,
-      timestamp: new Date().toISOString(),
-    });
-    onClose();
+
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    if (!offerAmount || !description) {
+      setError("Please fill in all fields");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setError("");
+
+      await createOffer(tailorId, parseInt(offerAmount), description);
+      onClose();
+    } catch (err) {
+      setError(err.message || "Failed to place offer");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -24,6 +51,12 @@ const PlaceOrderModal = ({ isOpen, onClose, tailorName }) => {
             Place an Offer to {tailorName}
           </Dialog.Title>
 
+          {error && (
+            <div className="mb-4 p-2 bg-red-50 border border-red-200 rounded text-red-600 text-sm">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label
@@ -33,7 +66,7 @@ const PlaceOrderModal = ({ isOpen, onClose, tailorName }) => {
                 Your Offer Amount (PKR)
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none mr-2">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
                   ₨
                 </span>
                 <input
@@ -49,19 +82,39 @@ const PlaceOrderModal = ({ isOpen, onClose, tailorName }) => {
               </div>
             </div>
 
+            <div>
+              <label
+                htmlFor="description"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Description of Your Requirements
+              </label>
+              <textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                placeholder="Describe what you need (e.g., style, fabric preferences, timeline)"
+                rows={4}
+                required
+              />
+            </div>
+
             <div className="flex justify-end gap-3 mt-8">
               <button
                 type="button"
                 onClick={onClose}
                 className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400 transition-colors duration-200"
+                disabled={isSubmitting}
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
+                className="px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200 disabled:bg-blue-400"
+                disabled={isSubmitting}
               >
-                Place Offer
+                {isSubmitting ? "Placing Offer..." : "Place Offer"}
               </button>
             </div>
           </form>

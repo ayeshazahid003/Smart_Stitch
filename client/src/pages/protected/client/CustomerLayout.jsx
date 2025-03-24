@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, Outlet, useLocation } from "react-router"; // Added useLocation
+import { Link, Outlet, useLocation, Navigate } from "react-router";
 import {
   Dialog,
   DialogBackdrop,
@@ -11,23 +11,38 @@ import {
   XMarkIcon,
   HomeIcon,
   UserIcon,
-  MapIcon,
   CalendarIcon,
   BriefcaseIcon,
   SparklesIcon,
-  PhotoIcon
-} from "@heroicons/react/24/outline"; // Updated icons for better clarity
+  PhotoIcon,
+  ChatBubbleLeftRightIcon,
+  ClipboardDocumentListIcon,
+  GiftIcon,
+} from "@heroicons/react/24/outline";
 import { useUser } from "../../../context/UserContext";
 
-const navigation = [
-  { name: "Dashboard", href: "tailor", icon: HomeIcon },
-  { name: "Profile", href: "/user-profile", icon: UserIcon }, // Changed to UserIcon for profile
-  { name: "Measurements", href: "/measurements", icon:CalendarIcon  }, // Changed to RulerIcon for measurements
-  { name: "Services", href: "/all-services", icon: BriefcaseIcon }, // Changed to BriefcaseIcon for services
-  { name: "Extra Services", href: "/all-extra-services", icon: SparklesIcon }, // Changed to SparklesIcon for extra services
-  { name: "Portfolio", href: "/all-portfolio", icon: PhotoIcon }, // Changed to PhotoIcon for portfolio
-];
+const getNavigation = (role) => {
+  const customerNav = [
+    { name: "Profile", href: "/user-profile", icon: UserIcon },
+    { name: "Measurements", href: "/measurements", icon: CalendarIcon },
+    { name: "Chats", href: "/chats", icon: ChatBubbleLeftRightIcon },
+    { name: "Requests", href: "/requests", icon: ClipboardDocumentListIcon },
+    { name: "Orders", href: "/orders", icon: ClipboardDocumentListIcon },
+  ];
 
+  const tailorNav = [
+    { name: "Dashboard", href: "/tailor", icon: HomeIcon },
+    { name: "Profile", href: "/user-profile", icon: UserIcon },
+    { name: "Measurements", href: "/measurements", icon: CalendarIcon },
+    { name: "Services", href: "/all-services", icon: BriefcaseIcon },
+    { name: "Extra Services", href: "/all-extra-services", icon: SparklesIcon },
+    { name: "Portfolio", href: "/all-portfolio", icon: PhotoIcon },
+    { name: "Offers", href: "/offers", icon: GiftIcon },
+    { name: "Chats", href: "/chats", icon: ChatBubbleLeftRightIcon },
+  ];
+
+  return role === "tailor" ? tailorNav : customerNav;
+};
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -40,7 +55,7 @@ export default function CustomerLayout() {
 
   useEffect(() => {
     getUserProfile();
-  }, []);
+  }, [getUserProfile]);
 
   return (
     <>
@@ -88,7 +103,7 @@ export default function CustomerLayout() {
                   <ul role="list" className="flex flex-1 flex-col gap-y-7">
                     <li>
                       <ul role="list" className="-mx-2 space-y-1">
-                        {navigation.map((item) => (
+                        {getNavigation(user?.role).map((item) => (
                           <li key={item.name}>
                             <Link
                               to={item.href}
@@ -131,10 +146,10 @@ export default function CustomerLayout() {
               <ul role="list" className="flex flex-1 flex-col gap-y-7">
                 <li>
                   <ul role="list" className="-mx-2 space-y-1">
-                    {navigation.map((item) => (
+                    {getNavigation(user?.role).map((item) => (
                       <li key={item.name}>
-                        <a
-                          href={item.href}
+                        <Link
+                          to={item.href}
                           className={classNames(
                             location.pathname === item.href
                               ? "bg-gray-800 text-white"
@@ -147,15 +162,15 @@ export default function CustomerLayout() {
                             className="size-6 shrink-0"
                           />
                           {item.name}
-                        </a>
+                        </Link>
                       </li>
                     ))}
                   </ul>
                 </li>
 
                 <li className="-mx-6 mt-auto">
-                  <a
-                    href="#"
+                  <Link
+                    to="/user-profile"
                     className="flex items-center gap-x-4 px-6 py-3 text-sm/6 font-semibold text-white hover:bg-gray-800"
                   >
                     <img
@@ -165,7 +180,7 @@ export default function CustomerLayout() {
                     />
                     <span className="sr-only">Your profile</span>
                     <span aria-hidden="true">{user?.name || "Najam"}</span>
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </nav>
@@ -184,14 +199,14 @@ export default function CustomerLayout() {
           <div className="flex-1 text-sm/6 font-semibold text-white">
             Dashboard
           </div>
-          <a href="#">
+          <Link to="/user-profile">
             <span className="sr-only">Your profile</span>
             <img
               alt=""
               src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
               className="size-8 rounded-full bg-gray-800"
             />
-          </a>
+          </Link>
         </div>
 
         <main className="py-10 lg:pl-72">
