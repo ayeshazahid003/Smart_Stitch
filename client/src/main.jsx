@@ -15,7 +15,7 @@ import ProtectLayout from "./pages/protected/ProtectLayout";
 // Public Pages
 import HomePage from "./pages/public/HomePage";
 import Browse from "./pages/public/Browse";
-import Search from "./pages/public/Search.jsx";
+import Search from "./pages/public/Search";
 import TailorProfile from "./pages/public/TailorProfile";
 import Checkout from "./pages/public/Checkout";
 import OrderPlaced from "./pages/public/OrderPlaced";
@@ -26,21 +26,22 @@ import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 
 // Protected Pages
-import UserProfile from "./pages/protected/client/UserProfile.jsx";
+import UserProfile from "./pages/protected/client/UserProfile";
 import MeasurementForm from "./pages/protected/client/MeasurementForm";
 import Chat from "./pages/chat/Chat";
-import AllOrders from "./pages/protected/AllOrders.jsx";
+import AllOrders from "./pages/protected/AllOrders";
 import OrderDetails from "./pages/orders/OrderDetails";
 import TailorDashboard from "./pages/protected/TailorDashboard";
-import AddPortfolioOfTailor from "./pages/protected/client/AddPortfolioOfTailor.jsx";
-import AddServices from "./pages/protected/client/AddServices.jsx";
-import AddExtraServices from "./pages/protected/client/AddExtraServices.jsx";
-import AddShopDetails from "./pages/protected/client/AddShopDetails.jsx";
-import AllExtraServices from "./pages/protected/client/AllExtraServices.jsx";
-import AllServices from "./pages/protected/client/AllServices.jsx";
-import AllPortfolio from "./pages/protected/client/AllPortfolio.jsx";
-import OrderDetail from "./pages/protected/OrderDetail.jsx";
+import AddPortfolioOfTailor from "./pages/protected/client/AddPortfolioOfTailor";
+import AddServices from "./pages/protected/client/AddServices";
+import AddExtraServices from "./pages/protected/client/AddExtraServices";
+import AddShopDetails from "./pages/protected/client/AddShopDetails";
+import AllExtraServices from "./pages/protected/client/AllExtraServices";
+import AllServices from "./pages/protected/client/AllServices";
+import AllPortfolio from "./pages/protected/client/AllPortfolio";
+import OrderDetail from "./pages/protected/OrderDetail";
 import AddressForm from "./pages/protected/client/AddressForm";
+import Offers from "./pages/protected/Offers";
 
 // Context
 import { SocketProvider } from "./context/SocketContext";
@@ -71,6 +72,7 @@ createRoot(document.getElementById("root")).render(
                 {/* Customer Routes */}
                 <Route path="user-profile" element={<UserProfile />} />
                 <Route path="measurements" element={<MeasurementForm />} />
+                <Route path="offers" element={<Offers />} />
                 <Route path="chats" element={<Chat />} />
                 <Route path="requests" element={<AllOrders />} />
                 <Route path="orders" element={<OrderDetails />} />
@@ -92,7 +94,6 @@ createRoot(document.getElementById("root")).render(
                   path="add-Portfolio"
                   element={<AddPortfolioOfTailor />}
                 />
-                <Route path="offers" element={<UnderConstructionPage />} />
 
                 {/* Shared Routes */}
                 <Route path="address" element={<AddressForm />} />

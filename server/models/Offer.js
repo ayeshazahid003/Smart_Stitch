@@ -22,8 +22,19 @@ const offerSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "accepted", "rejected", "negotiating"],
+      enum: [
+        "pending",
+        "negotiating",
+        "accepted_by_tailor",
+        "accepted_by_customer",
+        "accepted",
+        "rejected",
+        "cancelled",
+      ],
       default: "pending",
+    },
+    finalAmount: {
+      type: Number,
     },
     negotiationHistory: [
       {
@@ -33,12 +44,24 @@ const offerSchema = new mongoose.Schema(
           type: mongoose.Schema.Types.ObjectId,
           ref: "User",
         },
+        accepted: {
+          type: Boolean,
+          default: false,
+        },
         createdAt: {
           type: Date,
           default: Date.now,
         },
       },
     ],
+    convertedToOrder: {
+      type: Boolean,
+      default: false,
+    },
+    orderId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Order",
+    },
   },
   {
     timestamps: true,

@@ -7,11 +7,8 @@ import * as vouchersController from "../controllers/vouchersController.js";
 import * as reviewController from "../controllers/reviewsController.js";
 import * as chatController from "../controllers/chatController.js";
 import * as orderController from "../controllers/ordersController.js";
-import { protect } from "../middlewares/authMiddleware.js";
 import * as offerController from "../controllers/offerController.js";
-const { createOffer, getOffers } = offerController;
-
-//user/update-profile
+import { protect } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
@@ -195,7 +192,17 @@ router.get(
 );
 
 // Offer routes
-router.post("/offers", protect, createOffer);
-router.get("/offers", protect, getOffers);
+router.post("/offers", protect, offerController.createOffer);
+router.get("/offers", protect, offerController.getOffers);
+router.post(
+  "/offers/:offerId/negotiate",
+  protect,
+  offerController.negotiateOffer
+);
+router.patch(
+  "/offers/:offerId/status",
+  protect,
+  offerController.updateOfferStatus
+);
 
 export default router;

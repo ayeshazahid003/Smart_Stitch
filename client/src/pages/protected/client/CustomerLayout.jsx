@@ -25,6 +25,7 @@ const getNavigation = (role) => {
   const customerNav = [
     { name: "Profile", href: "/user-profile", icon: UserIcon },
     { name: "Measurements", href: "/measurements", icon: CalendarIcon },
+    { name: "Offers", href: "/offers", icon: GiftIcon },
     { name: "Chats", href: "/chats", icon: ChatBubbleLeftRightIcon },
     { name: "Requests", href: "/requests", icon: ClipboardDocumentListIcon },
     { name: "Orders", href: "/orders", icon: ClipboardDocumentListIcon },

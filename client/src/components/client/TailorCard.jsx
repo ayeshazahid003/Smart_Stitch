@@ -28,8 +28,6 @@ export default function TailorCard({
             className="w-full h-48 object-cover"
           />
           <div className="p-4 pb-16">
-            {" "}
-            {/* Added padding bottom to accommodate button */}
             <h3 className="text-lg font-semibold mb-1">{shopName}</h3>
             <p className="text-md text-gray-500 mb-2 line-clamp-2">
               {description}
@@ -50,7 +48,6 @@ export default function TailorCard({
         </motion.div>
       </Link>
 
-      {/* Place Order Button with improved positioning and styling */}
       <button
         onClick={(e) => {
           e.preventDefault();
