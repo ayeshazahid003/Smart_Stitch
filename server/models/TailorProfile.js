@@ -4,49 +4,49 @@ const TailorProfileSchema = new mongoose.Schema({
   tailorId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-    required: true,
+    required: true, // Keeping this required as it seems essential
   },
-  shopName: { type: String, required: true }, // Name of the shop
-  phoneNumber: { type: String, required: true }, // Phone number of the tailor
+  shopName: { type: String }, // Optional
+  phoneNumber: { type: String }, // Optional
   portfolio: [
     {
-      name: { type: String, required: true }, // Name of the portfolio entry
-      images: [{ type: String, required: true }], // Array of image URLs
-      description: { type: String }, // Description of the portfolio entry
-      date: { type: Date, required: true }, // Date when the portfolio was added
+      name: { type: String }, // Optional
+      images: [{ type: String }], // Optional
+      description: { type: String }, // Optional
+      date: { type: Date }, // Optional
     },
   ],
   serviceRates: [
     {
-      type: { type: String, required: true }, // Service type
-      description: { type: String, required: true }, // Description of the service
-      minPrice: { type: Number, required: true },
-      maxPrice: { type: Number, required: true },
-      image: { type: String, required: true }, // Image URL for the service
+      type: { type: String }, // Optional
+      description: { type: String }, // Optional
+      minPrice: { type: Number }, // Optional
+      maxPrice: { type: Number }, // Optional
+      image: { type: String }, // Optional
     },
   ],
   extraServices: [
     {
-      serviceName: { type: String, required: true }, // Name of the extra service
-      description: { type: String, required: true }, // Description of the extra service
-      minPrice: { type: Number, required: true },
-      maxPrice: { type: Number, required: true },
+      serviceName: { type: String }, // Optional
+      description: { type: String }, // Optional
+      minPrice: { type: Number }, // Optional
+      maxPrice: { type: Number }, // Optional
     },
   ],
   shopLocation: {
-    address: { type: String, required: true },
+    address: { type: String }, // Optional
     coordinates: {
-      lat: { type: Number, required: true },
-      lng: { type: Number, required: true },
+      lat: { type: Number }, // Optional
+      lng: { type: Number }, // Optional
     },
   },
-  shopImages: [{ type: String }], // Array of shop image URLs
-  bio: { type: String }, // Tailor's biography
-  experience: { type: Number, required: true }, // Tailor's years of experience
-  isVerified: { type: Boolean, default: false }, // Verification status of the tailor
-  verificationToken: { type: String }, // Token for email verification
-  rating: { type: Number }, // Tailor's overall rating
-  reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: "Review" }], // Reference to reviews
+  shopImages: [{ type: String }], // Optional
+  bio: { type: String }, // Optional
+  experience: { type: Number }, // Optional
+  isVerified: { type: Boolean, default: false }, // Optional
+  verificationToken: { type: String }, // Optional
+  rating: { type: Number }, // Optional
+  reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: "Review" }], // Optional
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

@@ -28,6 +28,7 @@ export const useNegotiateOffer = () => {
       );
       return response.data;
     } catch (error) {
+      console.error("Negotiation error:", error);
       throw error.response?.data || { message: error.message };
     }
   };
@@ -41,6 +42,7 @@ export const useNegotiateOffer = () => {
       );
       return response.data;
     } catch (error) {
+      console.error("Status update error:", error);
       throw error.response?.data || { message: error.message };
     }
   };

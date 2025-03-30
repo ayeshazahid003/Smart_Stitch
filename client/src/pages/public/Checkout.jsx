@@ -1,122 +1,247 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { ArrowLeft, CreditCard, DollarSign, Edit3, PlusCircle } from "lucide-react"
-import MeasurementModal from "../../components/client/MeasurementModal"
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router";
+import { ArrowLeft, CreditCard, DollarSign, PlusCircle } from "lucide-react";
+import MeasurementModal from "../../components/client/MeasurementModal";
+import { useUser } from "../../context/UserContext";
 
-// Mock data and helper functions
-const existingAddresses = [
-  { id: 1, name: "John Doe", addressLine1: "123 Main St", addressLine2: "Apt 1" },
-  { id: 2, name: "Jane Doe", addressLine1: "456 Oak Ave", addressLine2: "" },
-]
-
-const existingMeasurements = [
-  { id: 1, name: "Standard", height: 175, chest: 90, waist: 80, hips: 95 },
-  { id: 2, name: "Custom", height: 180, chest: 100, waist: 85, hips: 100 },
-]
-
-const cartProducts = [
-  { id: 1, title: "Product 1", image: "/product1.jpg", price: 25, quantity: 2 },
-  { id: 2, title: "Product 2", image: "/product2.jpg", price: 50, quantity: 1 },
-]
+import { getOrderById, updateOrderStatus } from "../../hooks/orderHooks";
+import { toast } from "react-toastify";
 
 function CheckoutPage() {
-  // We start at step=2 because "Cart" (step=1) is already completed.
-  const [step, setStep] = useState(2)
+  const { id: orderId } = useParams();
+  const navigate = useNavigate();
+  const { user } = useUser();
 
-  const [selectedAddressId, setSelectedAddressId] = useState(null)
-  const [isAddingNewAddress, setIsAddingNewAddress] = useState(false)
-  const [instructions, setInstructions] = useState("")
-  const [selectedMeasurement, setSelectedMeasurement] = useState(null)
-  const [isMeasurementModalOpen, setIsMeasurementModalOpen] = useState(false)
-  const [paymentMethod, setPaymentMethod] = useState("card")
-  const [coupon, setCoupon] = useState("")
-  const [designImages, setDesignImages] = useState([])
-  const [fabric, setFabric] = useState("")
-  const [color, setColor] = useState("")
-  const [style, setStyle] = useState("")
-  const [customDescription, setCustomDescription] = useState("")
-  const [selectedAudioMethod, setSelectedAudioMethod] = useState(null)
-  const [isRecording, setIsRecording] = useState(false)
-  const [media, setMedia] = useState([])
-  const [measurementTab, setMeasurementTab] = useState("existing")
-  const [tempSelectedMeasurementId, setTempSelectedMeasurementId] = useState(null)
+  // Add addresses state
+  const [addresses, setAddresses] = useState([]);
+
+  const [orderData, setOrderData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [step, setStep] = useState(2);
+
+  // Address and delivery states
+  const [selectedAddressId, setSelectedAddressId] = useState(null);
+  const [isAddingNewAddress, setIsAddingNewAddress] = useState(false);
+  const [deliveryMethod, setDeliveryMethod] = useState("delivery");
+  const [newAddress, setNewAddress] = useState({
+    name: "",
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    state: "",
+    postalCode: "",
+    phone: "",
+  });
+  const [instructions, setInstructions] = useState("");
+  const [isMeasurementModalOpen, setIsMeasurementModalOpen] = useState(false);
+  const [selectedMeasurement, setSelectedMeasurement] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState("card");
+
+  // Design and media states
+  const [designImages, setDesignImages] = useState([]);
+  const [fabric, setFabric] = useState("");
+  const [color, setColor] = useState("");
+  const [style, setStyle] = useState("");
+  const [customDescription, setCustomDescription] = useState("");
+  const [selectedAudioMethod, setSelectedAudioMethod] = useState(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [media, setMedia] = useState([]);
+  const [measurementTab, setMeasurementTab] = useState("existing");
+  const [tempSelectedMeasurementId, setTempSelectedMeasurementId] =
+    useState(null);
+
+  // New state variables
+  const [existingMeasurements, setExistingMeasurements] = useState([]);
   const [newMeasurement, setNewMeasurement] = useState({
     name: "",
     height: "",
     chest: "",
     waist: "",
     hips: "",
-  })
+    shoulder: "",
+    neck: "",
+    sleeve: "",
+    lowerBody: {
+      length: "",
+      waist: "",
+      inseam: "",
+      thigh: "",
+      ankle: "",
+    },
+  });
+  const [coupon, setCoupon] = useState("");
 
-  const openMeasurementModal = () => setIsMeasurementModalOpen(true)
-  const closeMeasurementModal = () => setIsMeasurementModalOpen(false)
+  // Fetch order details when component mounts
+  useEffect(() => {
+    const fetchOrderDetails = async () => {
+      if (!orderId) {
+        toast.error("No order ID provided");
+        navigate("/");
+        return;
+      }
+
+      try {
+        const response = await getOrderById(orderId);
+        if (response.success) {
+          setOrderData(response.order);
+          // If user has addresses in profile, select the default one
+          if (user?.addresses?.length > 0) {
+            setSelectedAddressId(user.addresses[0]._id);
+          }
+          // Pre-fill design details if they exist
+          if (response.order.design) {
+            setFabric(response.order.design.customization?.fabric || "");
+            setColor(response.order.design.customization?.color || "");
+            setStyle(response.order.design.customization?.style || "");
+            setCustomDescription(
+              response.order.design.customization?.description || ""
+            );
+          }
+        } else {
+          toast.error(response.message || "Failed to fetch order details");
+          navigate("/");
+        }
+      } catch (error) {
+        console.error("Error fetching order:", error);
+        toast.error("Failed to load order details");
+        navigate("/");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrderDetails();
+  }, [orderId, navigate, user]);
+
+  const openMeasurementModal = () => setIsMeasurementModalOpen(true);
+  const closeMeasurementModal = () => setIsMeasurementModalOpen(false);
 
   const handleNextStep = (e) => {
-    e.preventDefault()
-    // Move from step=2 to step=3, or step=3 to step=4, etc.
-    setStep((prev) => prev + 1)
-  }
+    e.preventDefault();
+    setStep((prev) => prev + 1);
+  };
 
-  const handlePlaceOrder = (e) => {
-    e.preventDefault()
-    // Handle place order logic here
-    console.log("Place Order")
-    setStep(4) // Go to "Done" step
-  }
-
-  const handleDesignImagesChange = (e) => {
-    const files = Array.from(e.target.files)
-    setDesignImages(files)
-  }
+  const handleDesignImagesChange = async (e) => {
+    const files = Array.from(e.target.files);
+    setDesignImages(files);
+  };
 
   const handleVideoChange = (e) => {
-    const file = e.target.files[0]
-    const reader = new FileReader()
-    reader.onload = (event) => {
-      setMedia([...media, { type: "video", url: event.target.result }])
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setMedia([...media, { type: "video", url: event.target.result }]);
+      };
+      reader.readAsDataURL(file);
     }
-    reader.readAsDataURL(file)
-  }
+  };
 
   const handleAudioChange = (e) => {
-    const file = e.target.files[0]
-    const reader = new FileReader()
-    reader.onload = (event) => {
-      setMedia([...media, { type: "voicenote", url: event.target.result }])
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setMedia([...media, { type: "voicenote", url: event.target.result }]);
+      };
+      reader.readAsDataURL(file);
     }
-    reader.readAsDataURL(file)
+  };
+
+  const handlePlaceOrder = async (e) => {
+    e.preventDefault();
+
+    if (!orderData || !user || !selectedAddressId) {
+      toast.error(
+        selectedAddressId
+          ? "Missing order data or user not logged in"
+          : "Please select a shipping address"
+      );
+      return;
+    }
+
+    try {
+      const selectedAddress = addresses.find(
+        (addr) => addr._id === selectedAddressId
+      );
+
+      // First update the order with design details and shipping address
+      const orderUpdateData = {
+        design: {
+          designImage: [], // This will be handled by file upload
+          customization: {
+            fabric,
+            color,
+            style,
+            description: customDescription,
+          },
+          media: [], // This will be handled by file upload
+        },
+        shippingAddress: selectedAddress,
+        measurement: selectedMeasurement,
+        status: paymentMethod === "cod" ? "pending" : "processing",
+      };
+
+      // Update order status and move to completed step
+      const response = await updateOrderStatus(orderId, orderUpdateData);
+
+      if (response.success) {
+        toast.success("Order placed successfully!");
+        // Navigate to order placed page
+        navigate("/order-placed");
+      } else {
+        toast.error(response.message || "Failed to place order");
+      }
+    } catch (error) {
+      console.error("Error placing order:", error);
+      toast.error("Failed to place order");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-lg text-gray-600">Loading checkout details...</p>
+      </div>
+    );
   }
 
-  const handleRecordAudio = () => {
-    setIsRecording(!isRecording)
-    // Add recording logic here using the MediaRecorder API
-  }
+  // Calculate totals from order data
+  const calculateTotals = () => {
+    const subtotal = orderData.utilizedServices.reduce(
+      (sum, service) => sum + service.price,
+      0
+    );
+    const extraServicesTotal =
+      orderData.extraServices?.reduce(
+        (sum, service) => sum + service.price,
+        0
+      ) || 0;
+    const total = subtotal + extraServicesTotal;
+    return {
+      subtotal,
+      extraServicesTotal,
+      total,
+    };
+  };
 
-  const handleSaveMeasurement = () => {
-    // Handle saving measurement logic here
-    console.log("Save Measurement", newMeasurement)
-    closeMeasurementModal()
-  }
-
-  const subtotal = cartProducts.reduce((sum, product) => sum + product.price * product.quantity, 0)
-  const shippingCost = 10
-  const tax = subtotal * 0.05
-  const total = subtotal + shippingCost + tax
+  const { subtotal, extraServicesTotal, total } = calculateTotals();
 
   // Helper to determine step circle styling
   const getCircleStyle = (circleStep) => {
     if (step > circleStep) {
       // completed
-      return "w-8 h-8 rounded-full flex items-center justify-center bg-green-600 text-white"
+      return "w-8 h-8 rounded-full flex items-center justify-center bg-green-600 text-white";
     } else if (step === circleStep) {
       // active
-      return "w-8 h-8 rounded-full flex items-center justify-center bg-white border-2 border-green-600 text-green-600"
+      return "w-8 h-8 rounded-full flex items-center justify-center bg-white border-2 border-green-600 text-green-600";
     } else {
       // upcoming
-      return "w-8 h-8 rounded-full flex items-center justify-center bg-white border-2 border-gray-300 text-gray-400"
+      return "w-8 h-8 rounded-full flex items-center justify-center bg-white border-2 border-gray-300 text-gray-400";
     }
-  }
+  };
 
   // Helper to determine connector line color
   const getConnectorStyle = (connectorAfterStep) => {
@@ -124,11 +249,79 @@ function CheckoutPage() {
     // otherwise it's gray
     return step > connectorAfterStep
       ? "flex-auto border-t-2 border-green-600 mx-2"
-      : "flex-auto border-t-2 border-gray-300 mx-2"
-  }
+      : "flex-auto border-t-2 border-gray-300 mx-2";
+  };
+
+  // Constants for calculations
+  const shippingCost = 5.0;
+  const tax = total * 0.1; // 10% tax
+
+  // Function for measurement handling
+  const handleSaveMeasurement = async () => {
+    if (measurementTab === "existing" && tempSelectedMeasurementId) {
+      const selected = existingMeasurements.find(
+        (m) => m.id === tempSelectedMeasurementId
+      );
+      setSelectedMeasurement(selected);
+    } else if (measurementTab === "new" && newMeasurement.name) {
+      // Here you would typically save the new measurement to your backend
+      const newMeasurementWithId = { ...newMeasurement, id: Date.now() };
+      setSelectedMeasurement(newMeasurementWithId);
+    }
+    closeMeasurementModal();
+  };
+
+  // Audio recording handling
+  const handleRecordAudio = () => {
+    setIsRecording((prev) => !prev);
+    // Implement actual audio recording logic here
+  };
+
+  const handleAddNewAddress = async () => {
+    if (
+      !newAddress.name ||
+      !newAddress.addressLine1 ||
+      !newAddress.city ||
+      !newAddress.postalCode
+    ) {
+      toast.error("Please fill in all required address fields");
+      return;
+    }
+
+    try {
+      // Create a new address object with an _id
+      const newAddressWithId = {
+        ...newAddress,
+        _id: Date.now().toString(), // Temporary ID for demo
+      };
+
+      // Update addresses state
+      setAddresses((prev) => [...prev, newAddressWithId]);
+
+      // Update selected address
+      setSelectedAddressId(newAddressWithId._id);
+
+      // Reset form and close it
+      setIsAddingNewAddress(false);
+      setNewAddress({
+        name: "",
+        addressLine1: "",
+        addressLine2: "",
+        city: "",
+        state: "",
+        postalCode: "",
+        phone: "",
+      });
+
+      toast.success("Address added successfully");
+    } catch (error) {
+      console.error("Error adding address:", error);
+      toast.error("Failed to add address");
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-100">
       <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
@@ -154,7 +347,11 @@ function CheckoutPage() {
                     strokeWidth={3}
                     viewBox="0 0 24 24"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M5 13l4 4L19 7"
+                    />
                   </svg>
                 ) : (
                   // If active or upcoming, show step number
@@ -184,7 +381,11 @@ function CheckoutPage() {
                     strokeWidth={3}
                     viewBox="0 0 24 24"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M5 13l4 4L19 7"
+                    />
                   </svg>
                 ) : step === 2 ? (
                   2
@@ -215,7 +416,11 @@ function CheckoutPage() {
                     strokeWidth={3}
                     viewBox="0 0 24 24"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M5 13l4 4L19 7"
+                    />
                   </svg>
                 ) : step === 3 ? (
                   3
@@ -246,7 +451,11 @@ function CheckoutPage() {
                     strokeWidth={3}
                     viewBox="0 0 24 24"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M5 13l4 4L19 7"
+                    />
                   </svg>
                 ) : (
                   4
@@ -267,67 +476,206 @@ function CheckoutPage() {
         {step === 2 && (
           <form onSubmit={handleNextStep} className="p-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Left Column: Shipping Address, Instructions, Measurement & Payment */}
               <div className="lg:col-span-2 space-y-8">
-                {/* Shipping Address */}
+                {/* Delivery Method Selection */}
                 <div className="bg-white p-6 rounded-lg shadow-sm border">
-                  <h2 className="text-xl font-semibold mb-4 text-[#111827]">Shipping Address</h2>
+                  <h2 className="text-xl font-semibold mb-4 text-[#111827]">
+                    Delivery Method
+                  </h2>
                   <div className="space-y-4">
-                    {existingAddresses.map((addr) => (
-                      <label
-                        key={addr.id}
-                        className={`flex items-start p-4 border rounded-lg cursor-pointer transition-all ${
-                          selectedAddressId === addr.id
-                            ? "border-[#111827] bg-gray-50"
-                            : "border-gray-200 bg-white hover:shadow-md"
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="address"
-                          checked={selectedAddressId === addr.id}
-                          onChange={() => setSelectedAddressId(addr.id)}
-                          className="mt-1 mr-4"
-                        />
-                        <div>
-                          <p className="font-medium text-gray-800">{addr.name}</p>
-                          <p className="text-sm text-gray-600">{addr.addressLine1}</p>
-                          <p className="text-sm text-gray-600">{addr.addressLine2}</p>
-                          <div className="flex items-center space-x-3 mt-2 text-[#111827]">
-                            <button type="button" className="flex items-center space-x-1 hover:underline">
-                              <Edit3 className="w-4 h-4" />
-                              <span className="text-sm">Edit</span>
+                    <label className="flex items-center space-x-3">
+                      <input
+                        type="radio"
+                        name="deliveryMethod"
+                        value="delivery"
+                        checked={deliveryMethod === "delivery"}
+                        onChange={(e) => setDeliveryMethod(e.target.value)}
+                        className="form-radio"
+                      />
+                      <span>Home Delivery</span>
+                    </label>
+                    <label className="flex items-center space-x-3">
+                      <input
+                        type="radio"
+                        name="deliveryMethod"
+                        value="pickup"
+                        checked={deliveryMethod === "pickup"}
+                        onChange={(e) => setDeliveryMethod(e.target.value)}
+                        className="form-radio"
+                      />
+                      <span>Pickup from Store</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Shipping Address - Only show if delivery is selected */}
+                {deliveryMethod === "delivery" && (
+                  <div className="bg-white p-6 rounded-lg shadow-sm border">
+                    <h2 className="text-xl font-semibold mb-4 text-[#111827]">
+                      Shipping Address
+                    </h2>
+                    <div className="space-y-4">
+                      {user?.addresses?.map((addr) => (
+                        <label
+                          key={addr._id}
+                          className={`flex items-start p-4 border rounded-lg cursor-pointer transition-all ${
+                            selectedAddressId === addr._id
+                              ? "border-[#111827] bg-gray-50"
+                              : "border-gray-200 bg-white hover:shadow-md"
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="address"
+                            checked={selectedAddressId === addr._id}
+                            onChange={() => setSelectedAddressId(addr._id)}
+                            className="mt-1 mr-4"
+                          />
+                          <div>
+                            <p className="font-medium text-gray-800">
+                              {addr.name}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {addr.addressLine1}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {addr.addressLine2}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {addr.city}, {addr.state} {addr.postalCode}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {addr.phone}
+                            </p>
+                          </div>
+                        </label>
+                      ))}
+
+                      {!isAddingNewAddress ? (
+                        <button
+                          type="button"
+                          onClick={() => setIsAddingNewAddress(true)}
+                          className="flex items-center space-x-2 text-[#111827] hover:underline"
+                        >
+                          <PlusCircle className="w-5 h-5" />
+                          <span>Add New Address</span>
+                        </button>
+                      ) : (
+                        <div className="p-4 border rounded-lg bg-gray-50 space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <input
+                              type="text"
+                              placeholder="Full Name *"
+                              value={newAddress.name}
+                              onChange={(e) =>
+                                setNewAddress({
+                                  ...newAddress,
+                                  name: e.target.value,
+                                })
+                              }
+                              className="w-full p-2 border rounded"
+                            />
+                            <input
+                              type="text"
+                              placeholder="Phone Number *"
+                              value={newAddress.phone}
+                              onChange={(e) =>
+                                setNewAddress({
+                                  ...newAddress,
+                                  phone: e.target.value,
+                                })
+                              }
+                              className="w-full p-2 border rounded"
+                            />
+                            <input
+                              type="text"
+                              placeholder="Address Line 1 *"
+                              value={newAddress.addressLine1}
+                              onChange={(e) =>
+                                setNewAddress({
+                                  ...newAddress,
+                                  addressLine1: e.target.value,
+                                })
+                              }
+                              className="w-full p-2 border rounded md:col-span-2"
+                            />
+                            <input
+                              type="text"
+                              placeholder="Address Line 2"
+                              value={newAddress.addressLine2}
+                              onChange={(e) =>
+                                setNewAddress({
+                                  ...newAddress,
+                                  addressLine2: e.target.value,
+                                })
+                              }
+                              className="w-full p-2 border rounded md:col-span-2"
+                            />
+                            <input
+                              type="text"
+                              placeholder="City *"
+                              value={newAddress.city}
+                              onChange={(e) =>
+                                setNewAddress({
+                                  ...newAddress,
+                                  city: e.target.value,
+                                })
+                              }
+                              className="w-full p-2 border rounded"
+                            />
+                            <input
+                              type="text"
+                              placeholder="State/Province *"
+                              value={newAddress.state}
+                              onChange={(e) =>
+                                setNewAddress({
+                                  ...newAddress,
+                                  state: e.target.value,
+                                })
+                              }
+                              className="w-full p-2 border rounded"
+                            />
+                            <input
+                              type="text"
+                              placeholder="Postal Code *"
+                              value={newAddress.postalCode}
+                              onChange={(e) =>
+                                setNewAddress({
+                                  ...newAddress,
+                                  postalCode: e.target.value,
+                                })
+                              }
+                              className="w-full p-2 border rounded"
+                            />
+                          </div>
+                          <div className="flex justify-end space-x-2">
+                            <button
+                              type="button"
+                              onClick={() => setIsAddingNewAddress(false)}
+                              className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                            >
+                              Cancel
                             </button>
-                            <button type="button" className="hover:underline text-sm">
-                              Add Instructions
+                            <button
+                              type="button"
+                              onClick={handleAddNewAddress}
+                              className="px-4 py-2 bg-[#111827] text-white rounded hover:bg-[#1f2937]"
+                            >
+                              Save Address
                             </button>
                           </div>
                         </div>
-                      </label>
-                    ))}
-
-                    {!isAddingNewAddress ? (
-                      <button
-                        type="button"
-                        onClick={() => setIsAddingNewAddress(true)}
-                        className="flex items-center space-x-2 text-[#111827] hover:underline"
-                      >
-                        <PlusCircle className="w-5 h-5" />
-                        <span>Add New Address</span>
-                      </button>
-                    ) : (
-                      <div className="p-4 border rounded-lg bg-gray-50 space-y-4">
-                        {/* New address form fields remain unchanged */}
-                        <p className="text-sm text-gray-600">New address form goes here.</p>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Instructions */}
                 <div className="bg-white p-6 rounded-lg shadow-sm border">
                   <label className="block">
-                    <span className="text-sm font-medium text-gray-700">Add Instructions (optional)</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      Add Instructions (optional)
+                    </span>
                     <textarea
                       placeholder="Additional details..."
                       value={instructions}
@@ -340,18 +688,32 @@ function CheckoutPage() {
 
                 {/* Measurement Section */}
                 <div className="bg-white p-6 rounded-lg shadow-sm border">
-                  <h2 className="text-xl font-semibold mb-4 text-[#111827]">Measurement</h2>
+                  <h2 className="text-xl font-semibold mb-4 text-[#111827]">
+                    Measurement
+                  </h2>
                   <div className="space-y-4">
                     {selectedMeasurement ? (
                       <div className="p-4 border rounded-lg bg-gray-50">
-                        <p className="font-medium text-gray-800">{selectedMeasurement.name}</p>
-                        <p className="text-sm text-gray-600">Height: {selectedMeasurement.height} cm</p>
-                        <p className="text-sm text-gray-600">Chest: {selectedMeasurement.chest} cm</p>
-                        <p className="text-sm text-gray-600">Waist: {selectedMeasurement.waist} cm</p>
-                        <p className="text-sm text-gray-600">Hips: {selectedMeasurement.hips} cm</p>
+                        <p className="font-medium text-gray-800">
+                          {selectedMeasurement.name}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Height: {selectedMeasurement.height} cm
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Chest: {selectedMeasurement.chest} cm
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Waist: {selectedMeasurement.waist} cm
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Hips: {selectedMeasurement.hips} cm
+                        </p>
                       </div>
                     ) : (
-                      <p className="text-sm text-gray-600">No measurement selected.</p>
+                      <p className="text-sm text-gray-600">
+                        No measurement selected.
+                      </p>
                     )}
                     <button
                       type="button"
@@ -366,7 +728,9 @@ function CheckoutPage() {
 
                 {/* Payment Method */}
                 <div className="bg-white p-6 rounded-lg shadow-sm border">
-                  <h2 className="text-xl font-semibold mb-4 text-[#111827]">Payment Method</h2>
+                  <h2 className="text-xl font-semibold mb-4 text-[#111827]">
+                    Payment Method
+                  </h2>
                   <div className="flex flex-wrap gap-4">
                     <button
                       type="button"
@@ -395,12 +759,14 @@ function CheckoutPage() {
                   </div>
                   {paymentMethod === "card" && (
                     <div className="mt-4 p-4 border border-gray-300 rounded-md text-gray-700">
-                      You chose to pay by Card. (Demo: No card details collected.)
+                      You chose to pay by Card. (Demo: No card details
+                      collected.)
                     </div>
                   )}
                   {paymentMethod === "cod" && (
                     <div className="mt-4 p-4 border border-gray-300 rounded-md text-gray-700">
-                      You chose Cash on Delivery. Please ensure someone is available to receive the package.
+                      You chose Cash on Delivery. Please ensure someone is
+                      available to receive the package.
                     </div>
                   )}
                 </div>
@@ -408,7 +774,9 @@ function CheckoutPage() {
 
               {/* Right Column: Order Summary */}
               <div className="bg-gray-50 p-6 rounded-lg shadow-sm border">
-                <h2 className="text-xl font-semibold mb-4 text-[#111827]">Order Summary</h2>
+                <h2 className="text-xl font-semibold mb-4 text-[#111827]">
+                  Order Summary
+                </h2>
                 <div className="flex items-center space-x-2 mb-4">
                   <input
                     type="text"
@@ -425,19 +793,26 @@ function CheckoutPage() {
                   </button>
                 </div>
                 <div className="space-y-4 max-h-64 overflow-auto">
-                  {cartProducts.map((product) => (
-                    <div key={product.id} className="flex items-center space-x-4">
+                  {orderData?.utilizedServices.map((service) => (
+                    <div
+                      key={service.id}
+                      className="flex items-center space-x-4"
+                    >
                       <img
-                        src={product.image || "/placeholder.svg"}
-                        alt={product.title}
+                        src={service.image || "/placeholder.svg"}
+                        alt={service.title}
                         className="w-16 h-16 object-cover rounded"
                       />
                       <div className="flex-1">
-                        <p className="font-medium text-gray-800">{product.title}</p>
-                        <p className="text-sm text-gray-600">Qty: {product.quantity}</p>
+                        <p className="font-medium text-gray-800">
+                          {service.title}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Qty: {service.quantity}
+                        </p>
                       </div>
                       <p className="font-medium text-gray-800">
-                        ${(product.price * product.quantity).toFixed(2)}
+                        ${(service.price * service.quantity).toFixed(2)}
                       </p>
                     </div>
                   ))}
@@ -474,11 +849,15 @@ function CheckoutPage() {
         {/* STEP 3: Design, Media, and final Place Order */}
         {step === 3 && (
           <form onSubmit={handlePlaceOrder} className="p-6 space-y-8">
-            <h2 className="text-2xl font-semibold mb-6 text-[#111827]">Optional Design &amp; Media</h2>
+            <h2 className="text-2xl font-semibold mb-6 text-[#111827]">
+              Optional Design &amp; Media
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <label className="block">
-                  <span className="text-sm font-medium text-gray-700">Design Images</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    Design Images
+                  </span>
                   <input
                     type="file"
                     accept="image/*"
@@ -493,12 +872,16 @@ function CheckoutPage() {
                   />
                 </label>
                 {designImages.length > 0 && (
-                  <p className="text-sm text-green-600">{designImages.length} image(s) selected.</p>
+                  <p className="text-sm text-green-600">
+                    {designImages.length} image(s) selected.
+                  </p>
                 )}
               </div>
               <div>
                 <label className="block">
-                  <span className="text-sm font-medium text-gray-700">Fabric</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    Fabric
+                  </span>
                   <input
                     type="text"
                     value={fabric}
@@ -509,7 +892,9 @@ function CheckoutPage() {
               </div>
               <div>
                 <label className="block">
-                  <span className="text-sm font-medium text-gray-700">Color</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    Color
+                  </span>
                   <input
                     type="text"
                     value={color}
@@ -520,7 +905,9 @@ function CheckoutPage() {
               </div>
               <div>
                 <label className="block">
-                  <span className="text-sm font-medium text-gray-700">Style</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    Style
+                  </span>
                   <input
                     type="text"
                     value={style}
@@ -531,7 +918,9 @@ function CheckoutPage() {
               </div>
               <div className="md:col-span-2">
                 <label className="block">
-                  <span className="text-sm font-medium text-gray-700">Description</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    Description
+                  </span>
                   <textarea
                     value={customDescription}
                     onChange={(e) => setCustomDescription(e.target.value)}
@@ -544,11 +933,15 @@ function CheckoutPage() {
 
             {/* Media Upload */}
             <div className="space-y-6">
-              <h3 className="text-xl font-semibold text-[#111827]">Media (Video / Voice Note)</h3>
+              <h3 className="text-xl font-semibold text-[#111827]">
+                Media (Video / Voice Note)
+              </h3>
               <div className="space-y-4">
                 {/* Upload Video */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Upload Video</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Upload Video
+                  </label>
                   <input
                     type="file"
                     accept="video/*"
@@ -564,7 +957,9 @@ function CheckoutPage() {
 
                 {/* Audio Section */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Audio (Voice Note)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Audio (Voice Note)
+                  </label>
                   {selectedAudioMethod === null && (
                     <div className="flex gap-4">
                       <button
@@ -615,7 +1010,9 @@ function CheckoutPage() {
                         {isRecording ? "Stop Recording" : "Record Audio"}
                       </button>
                       {isRecording && (
-                        <p className="text-sm text-red-500 mt-1">Recording... speak into your microphone.</p>
+                        <p className="text-sm text-red-500 mt-1">
+                          Recording... speak into your microphone.
+                        </p>
                       )}
                       <button
                         type="button"
@@ -634,10 +1031,25 @@ function CheckoutPage() {
                 <div className="mt-4 space-y-2">
                   <p className="text-sm font-medium">Media Selected:</p>
                   {media.map((m, index) => (
-                    <div key={index} className="flex items-center space-x-3 p-2 border rounded-md bg-gray-50">
-                      <span className="text-sm font-medium">{m.type === "video" ? "Video:" : "Voice Note:"}</span>
-                      {m.type === "voicenote" && <audio controls src={m.url} className="w-40" />}
-                      {m.type === "video" && <video src={m.url} width={120} height={80} controls className="rounded" />}
+                    <div
+                      key={index}
+                      className="flex items-center space-x-3 p-2 border rounded-md bg-gray-50"
+                    >
+                      <span className="text-sm font-medium">
+                        {m.type === "video" ? "Video:" : "Voice Note:"}
+                      </span>
+                      {m.type === "voicenote" && (
+                        <audio controls src={m.url} className="w-40" />
+                      )}
+                      {m.type === "video" && (
+                        <video
+                          src={m.url}
+                          width={120}
+                          height={80}
+                          controls
+                          className="rounded"
+                        />
+                      )}
                     </div>
                   ))}
                 </div>
@@ -657,12 +1069,16 @@ function CheckoutPage() {
         {/* STEP 4: Done (Order Placed) */}
         {step === 4 && (
           <div className="p-6 space-y-6">
-            <h2 className="text-2xl font-semibold text-[#111827]">Order Placed!</h2>
+            <h2 className="text-2xl font-semibold text-[#111827]">
+              Order Placed!
+            </h2>
             <p className="text-gray-700">
-              Thank you for your order. You can track your order status in your account dashboard.
+              Thank you for your order. You can track your order status in your
+              account dashboard.
             </p>
             <p className="text-gray-700">
-              We appreciate your business! If you have any questions, feel free to contact us.
+              We appreciate your business! If you have any questions, feel free
+              to contact us.
             </p>
           </div>
         )}
@@ -682,9 +1098,9 @@ function CheckoutPage() {
         handleSaveMeasurement={handleSaveMeasurement}
       />
     </div>
-  )
+  );
 }
 
 export default function Checkout() {
-  return <CheckoutPage />
+  return <CheckoutPage />;
 }

@@ -591,6 +591,36 @@ export const deleteExtraService = async (req, res) => {
   }
 };
 
+export const getAllTailorServices = async (req, res) => {
+  try {
+    const { tailorId } = req.params;
+
+    const tailorProfile = await TailorProfile.findOne(
+      { tailorId },
+      "serviceRates extraServices"
+    );
+
+    if (!tailorProfile) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Tailor profile not found." });
+    }
+
+    res.status(200).json({
+      success: true,
+      services: tailorProfile.serviceRates || [],
+      extraServices: tailorProfile.extraServices || [],
+    });
+  } catch (error) {
+    console.error("Error fetching tailor services:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+      error: error.message,
+    });
+  }
+};
+
 export const getListOfServices = async (req, res) => {
   try {
     const tailorId = req.params.tailorId;

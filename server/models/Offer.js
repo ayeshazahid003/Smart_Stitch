@@ -20,6 +20,37 @@ const offerSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    selectedServices: [
+      {
+        serviceId: {
+          type: mongoose.Schema.Types.ObjectId,
+          required: true,
+        },
+        serviceName: String,
+        quantity: {
+          type: Number,
+          default: 1,
+        },
+        price: Number,
+      },
+    ],
+    extraServices: [
+      {
+        serviceId: {
+          type: mongoose.Schema.Types.ObjectId,
+        },
+        serviceName: String,
+        quantity: {
+          type: Number,
+          default: 1,
+        },
+        price: Number,
+      },
+    ],
+    totalItems: {
+      type: Number,
+      required: true,
+    },
     status: {
       type: String,
       enum: [

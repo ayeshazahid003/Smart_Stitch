@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router";
 import { useUser } from "../../context/UserContext";
 import { useOffers, useNegotiateOffer } from "../../hooks/offerHooks";
+import { toast } from "react-toastify";
 
 export default function Offers() {
   const [offers, setOffers] = useState([]);
@@ -17,11 +18,7 @@ export default function Offers() {
   const { negotiateOffer, updateOfferStatus } = useNegotiateOffer();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    loadOffers();
-  }, []);
-
-  const loadOffers = async () => {
+  const loadOffers = useCallback(async () => {
     try {
       setLoading(true);
       const response = await getOffers();
@@ -31,20 +28,44 @@ export default function Offers() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getOffers]);
+
+  useEffect(() => {
+    loadOffers();
+  }, []);
 
   const handleAcceptOffer = async (offerId, amount) => {
     try {
       setIsSubmitting(true);
-      await negotiateOffer(offerId, amount, "I accept this offer", true);
-      await loadOffers();
-      //   toast.success("Offer accepted successfully!");
+      const response = await negotiateOffer(
+        offerId,
+        amount,
+        "I accept this offer",
+        true
+      );
+
+      if (response.success) {
+        // If the offer was accepted and an order was created
+        if (response.order) {
+          toast.success(response.message);
+          // If the user is a customer, redirect to payment
+          if (user?.role === "customer") {
+            navigate(`/checkout/${response.order._id}`);
+          } else {
+            // For tailor, just reload the offers
+            await loadOffers();
+          }
+        } else {
+          // If it's just acceptance from one party
+          toast.success("Offer accepted successfully!");
+          await loadOffers();
+        }
+      }
     } catch (err) {
-      console.error(err);
-      //   toast.error(err.message || "Failed to accept offer");
+      console.error("Accept offer error:", err);
+      toast.error(err.message || "Failed to accept offer");
     } finally {
       setIsSubmitting(false);
-      setSelectedOffer(null);
     }
   };
 
@@ -116,7 +137,7 @@ export default function Offers() {
             className="bg-white rounded-lg shadow-md p-6 space-y-4"
           >
             <div className="flex justify-between items-start">
-              <div>
+              <div className="space-y-3 flex-grow">
                 <h3 className="text-lg font-semibold">
                   {user?.role === "tailor"
                     ? `From: ${offer.customer.name}`
@@ -137,14 +158,88 @@ export default function Offers() {
                 <p className="text-gray-600">
                   Created: {formatDate(offer.createdAt)}
                 </p>
-                <p className="mt-2">{offer.description}</p>
+
+                {/* Selected Services Section */}
+                {offer.selectedServices &&
+                  offer.selectedServices.length > 0 && (
+                    <div className="mt-4">
+                      <h4 className="text-md font-semibold text-gray-800 mb-2">
+                        Selected Services:
+                      </h4>
+                      <div className="space-y-2">
+                        {offer.selectedServices.map((service, index) => (
+                          <div
+                            key={index}
+                            className="flex justify-between items-center bg-gray-50 p-2 rounded"
+                          >
+                            <div>
+                              <span className="font-medium">
+                                {service.serviceName}
+                              </span>
+                              <span className="text-gray-600 text-sm ml-2">
+                                x{service.quantity}
+                              </span>
+                            </div>
+                            <span className="text-gray-700">
+                              ₨{service.price}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                {/* Extra Services Section */}
+                {offer.extraServices && offer.extraServices.length > 0 && (
+                  <div className="mt-4">
+                    <h4 className="text-md font-semibold text-gray-800 mb-2">
+                      Extra Services:
+                    </h4>
+                    <div className="space-y-2">
+                      {offer.extraServices.map((service, index) => (
+                        <div
+                          key={index}
+                          className="flex justify-between items-center bg-gray-50 p-2 rounded"
+                        >
+                          <div>
+                            <span className="font-medium">
+                              {service.serviceName}
+                            </span>
+                            <span className="text-gray-600 text-sm ml-2">
+                              x{service.quantity}
+                            </span>
+                          </div>
+                          <span className="text-gray-700">
+                            ₨{service.price}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Total Items */}
+                <div className="mt-4 py-2 border-t border-gray-100">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-gray-700">
+                      Total Items:
+                    </span>
+                    <span className="text-gray-600">{offer.totalItems}</span>
+                  </div>
+                </div>
+
+                <p className="mt-4 text-gray-700">
+                  <span className="font-medium">Additional Requirements:</span>
+                  <br />
+                  {offer.description}
+                </p>
               </div>
 
-              {/* Action buttons based on role and status */}
+              {/* Action buttons */}
               {(offer.status === "pending" ||
                 offer.status === "negotiating" ||
                 offer.status.includes("accepted_by")) && (
-                <div className="space-x-2">
+                <div className="space-x-2 ml-4">
                   {user?.role === "tailor" ? (
                     <>
                       {!offer.status.includes("accepted_by_tailor") && (
@@ -260,10 +355,28 @@ export default function Offers() {
                 <p className="text-green-700">
                   Final Amount: ₨{offer.finalAmount}
                 </p>
-                {offer.orderId && (
+                {user.role === "customer" && offer.orderId && (
+                  <div className="mt-2 space-x-2">
+                    <button
+                      onClick={() =>
+                        navigate(`/order-details/${offer.orderId}`)
+                      }
+                      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    >
+                      View Order
+                    </button>
+                    <button
+                      onClick={() => navigate(`/checkout/${offer.orderId}`)}
+                      className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                    >
+                      Proceed to Payment
+                    </button>
+                  </div>
+                )}
+                {user.role === "tailor" && offer.orderId && (
                   <button
                     onClick={() => navigate(`/order-details/${offer.orderId}`)}
-                    className="mt-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                    className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                   >
                     View Order
                   </button>

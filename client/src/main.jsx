@@ -63,7 +63,7 @@ createRoot(document.getElementById("root")).render(
             <Route path="/browse" element={<Browse />} />
             <Route path="/search" element={<Search />} />
             <Route path="/tailor/:id" element={<TailorProfile />} />
-            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/checkout/:id" element={<Checkout />} />
             <Route path="/order-placed" element={<OrderPlaced />} />
 
             {/* Auth Routes */}
@@ -83,7 +83,7 @@ createRoot(document.getElementById("root")).render(
                 <Route path="measurements" element={<MeasurementForm />} />
                 <Route path="offers" element={<Offers />} />
                 <Route path="chats" element={<Chat />} />
-                <Route path="requests" element={<AllOrders />} />
+                <Route path="orders" element={<AllOrders />} />
                 <Route path="orders" element={<OrderDetails />} />
                 <Route path="/campaigns" element={<Campaigns />} />
 

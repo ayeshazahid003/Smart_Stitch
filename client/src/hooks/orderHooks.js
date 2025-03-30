@@ -1,6 +1,6 @@
 import axios from "axios";
 
-axios.defaults.baseURL = "http://localhost:5000";
+export const BASE_URL = "http://localhost:5000";
 
 // Config for protected routes (includes credentials)
 const protectedConfig = {
@@ -60,19 +60,26 @@ export async function getOrdersByTailor() {
   }
 }
 
-// Update order status (PUT /orders/:id/status)
-export async function updateOrderStatus(orderId, status) {
+export const updateOrderStatus = async (orderId, updateData) => {
   try {
+    const { status, design, shippingAddress, measurement } = updateData;
     const response = await axios.put(
-      `/orders/${orderId}/status`,
-      { status },
-      protectedConfig
+      `${BASE_URL}/orders/${orderId}/status`,
+      {
+        status,
+        design,
+        shippingAddress,
+        measurement,
+      },
+      { withCredentials: true }
     );
+
     return response.data;
   } catch (error) {
-    return error.response?.data || { success: false, message: error.message };
+    console.error("Error updating order:", error);
+    throw new Error(error.response?.data?.message || "Failed to update order");
   }
-}
+};
 
 // Generate an invoice for an order (POST /orders/:id/invoice)
 export async function generateInvoiceForOrder(orderId) {
@@ -141,13 +148,11 @@ export async function getOrdersByStatusOfTailor(status) {
 }
 
 export const useCreateOffer = () => {
-  const createOffer = async (tailorId, amount, description) => {
+  const createOffer = async (offerData) => {
     try {
-      const response = await axios.post(
-        "/offers",
-        { tailorId, amount, description },
-        { withCredentials: true }
-      );
+      const response = await axios.post("/offers", offerData, {
+        withCredentials: true,
+      });
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: error.message };

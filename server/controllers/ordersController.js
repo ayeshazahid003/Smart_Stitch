@@ -297,92 +297,47 @@ export const getOrdersByTailor = async (req, res) => {
 
 export const updateOrderStatus = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { status } = req.body;
+    const { orderId } = req.params;
+    const { status, design, shippingAddress, measurement } = req.body;
 
-    // Find the order
-    const order = await Order.findById(id).populate("customerId tailorId");
-    if (!order) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Order not found." });
-    }
-
-    // Update the order status
-    order.status = status;
-    const updatedOrder = await order.save();
-
-    // Get customer and tailor details
-    const customer = order.customerId;
-    const tailor = order.tailorId;
-
-    const io = getSocket();
-    const notificationMessage = `Your order (ID: ${order._id}) status has been updated to ${status}.`;
-
-    // Emit notification to the client via socket
-    if (io) {
-      io.emit("sendNotification", {
-        receiverId: customer._id.toString(),
-        type: "order update",
-        message: notificationMessage,
+    // Validate orderId
+    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid order ID",
       });
     }
 
-    // Email Templates
-    let customerEmailSubject;
-    let customerEmailBody;
-    let tailorEmailSubject;
-    let tailorEmailBody;
-
-    if (status === "completed") {
-      customerEmailSubject = "Order Completed Successfully";
-      customerEmailBody = `
-        <h1>Order Completed</h1>
-        <p>Dear ${customer.name},</p>
-        <p>We are pleased to inform you that your order with ID <strong>${order._id}</strong> has been successfully completed.</p>
-        <p>Thank you for choosing our service. We hope to serve you again in the future.</p>
-        <p>Best regards,</p>
-        <p>The Tailor Platform Team</p>
-      `;
-
-      tailorEmailSubject = "Order Completion Notification";
-      tailorEmailBody = `
-        <h1>Order Completed</h1>
-        <p>Dear ${tailor.name},</p>
-        <p>Congratulations! Your order with ID <strong>${order._id}</strong> has been marked as completed.</p>
-        <p>Thank you for delivering excellent service to our valued customer.</p>
-        <p>Best regards,</p>
-        <p>The Tailor Platform Team</p>
-      `;
-
-      // Uncomment to enable email sending
-      /*
-      await sendEmail(
-        "no-reply@tailorplatform.com",
-        customer.email,
-        customerEmailSubject,
-        customerEmailBody
-      );
-
-      await sendEmail(
-        "no-reply@tailorplatform.com",
-        tailor.email,
-        tailorEmailSubject,
-        tailorEmailBody
-      );
-      */
+    // Find the order
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
     }
+
+    // Update order fields
+    if (status) order.status = status;
+    if (design) order.design = design;
+    if (measurement) order.measurement = measurement;
+    if (shippingAddress) order.shippingAddress = shippingAddress;
+
+    // Save the updated order
+    await order.save();
 
     res.status(200).json({
       success: true,
-      message: "Order status updated successfully.",
-      order: updatedOrder,
+      message: "Order updated successfully",
+      order,
     });
   } catch (error) {
-    console.error("Error updating order status:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Server error.", error: error.message });
+    console.error("Error updating order:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error updating order",
+      error: error.message,
+    });
   }
 };
 

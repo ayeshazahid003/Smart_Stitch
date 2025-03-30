@@ -1,31 +1,90 @@
-import mongoose from "mongoose";
 import Offer from "../models/Offer.js";
 import User from "../models/User.js";
 import Order from "../models/Order.js";
 
 export const createOffer = async (req, res) => {
   try {
-    const { tailorId, amount, description } = req.body;
-    const customerId = req.user._id; // From auth middleware
+    const {
+      tailorId,
+      amount,
+      description,
+      selectedServices,
+      extraServices,
+      totalItems,
+    } = req.body;
+    const customerId = req.user._id;
 
-    // Verify tailor exists and is actually a tailor
-    const tailor = await User.findOne({ _id: tailorId, role: "tailor" });
-    if (!tailor) {
-      return res.status(404).json({ message: "Tailor not found" });
+    console.log("Creating offer with data:", {
+      customerId,
+      tailorId,
+      amount,
+      description,
+      selectedServices,
+      extraServices,
+      totalItems,
+    });
+
+    // Validate required fields
+    if (
+      !tailorId ||
+      !amount ||
+      !description ||
+      !selectedServices ||
+      !totalItems
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields",
+      });
     }
 
+    // Validate services array
+    if (!Array.isArray(selectedServices) || selectedServices.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "At least one service must be selected",
+      });
+    }
+
+    // Create new offer
     const offer = new Offer({
       customer: customerId,
       tailor: tailorId,
-      amount: parseFloat(amount),
+      amount,
       description,
+      selectedServices,
+      extraServices: extraServices || [],
+      totalItems,
+      status: "pending",
+      negotiationHistory: [
+        {
+          amount,
+          message: description,
+          by: customerId,
+        },
+      ],
     });
 
     await offer.save();
 
-    res.status(201).json({ success: true, offer });
+    // Populate customer and tailor details
+    const populatedOffer = await offer.populate([
+      { path: "customer", select: "name email" },
+      { path: "tailor", select: "name email" },
+    ]);
+
+    res.status(201).json({
+      success: true,
+      message: "Offer created successfully",
+      offer: populatedOffer,
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Error creating offer:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
   }
 };
 
@@ -95,21 +154,36 @@ export const negotiateOffer = async (req, res) => {
           offer.amount;
         offer.finalAmount = finalAmount;
 
-        // Create a new order with correct field names
+        // Create a new order with correct fields
         const orderData = {
           customerId: offer.customer._id,
           tailorId: offer.tailor._id,
-          status: "pending",
+          status: "pending", // Changed from pending_payment to pending
+          pricing: {
+            subtotal: finalAmount, // Set required subtotal
+            total: finalAmount, // Set required total
+            campaignDiscount: 0,
+            voucherDiscount: 0,
+          },
           design: {
             customization: {
               description: offer.description,
             },
           },
           utilizedServices: [
-            {
-              serviceName: "Custom Order",
-              price: finalAmount,
-            },
+            ...offer.selectedServices.map((service) => ({
+              serviceId: service.serviceId,
+              serviceName: service.serviceName,
+              quantity: service.quantity,
+              price: service.price,
+            })),
+            ...offer.extraServices.map((service) => ({
+              serviceId: service.serviceId,
+              serviceName: service.serviceName,
+              quantity: service.quantity,
+              price: service.price,
+              isExtra: true,
+            })),
           ],
         };
 
@@ -137,7 +211,8 @@ export const negotiateOffer = async (req, res) => {
         success: true,
         offer,
         order,
-        message: "Negotiation completed and order created successfully!",
+        message:
+          "Negotiation completed and order created! Please proceed with payment.",
       });
     }
 

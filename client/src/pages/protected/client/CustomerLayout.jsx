@@ -59,7 +59,7 @@ export default function CustomerLayout() {
 
   useEffect(() => {
     getUserProfile();
-  }, [getUserProfile]);
+  }, []);
 
   return (
     <>

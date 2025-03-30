@@ -1,20 +1,157 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { X } from "lucide-react";
+import { X, Plus, Minus } from "lucide-react";
 import { useUser } from "../../context/UserContext";
 import { useNavigate } from "react-router";
 import { useCreateOffer } from "../../hooks/orderHooks";
+import { toast } from "react-toastify";
+import PropTypes from "prop-types";
+import axios from "axios";
 
 const PlaceOrderModal = ({ isOpen, onClose, tailorName, tailorId }) => {
-  console.log("Tailor ID:", tailorId);
-  const [offerAmount, setOfferAmount] = useState("");
   const [description, setDescription] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [services, setServices] = useState([]);
+  const [extraServices, setExtraServices] = useState([]);
+  const [selectedServices, setSelectedServices] = useState([]);
+  const [selectedExtraServices, setSelectedExtraServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [customOfferAmount, setCustomOfferAmount] = useState("");
 
   const { user } = useUser();
   const navigate = useNavigate();
   const { createOffer } = useCreateOffer();
+
+  // Fetch tailor services
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        setLoading(true);
+        const [servicesRes, extraServicesRes] = await Promise.all([
+          axios.get(`/tailor/services/${tailorId}`),
+          axios.get(`/tailor/extra-services/${tailorId}`),
+        ]);
+
+        setServices(servicesRes.data.services || []);
+        setExtraServices(extraServicesRes.data.extraServices || []);
+      } catch (err) {
+        console.error("Error fetching services:", err);
+        setError("Failed to load tailor services");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (tailorId && isOpen) {
+      fetchServices();
+    }
+  }, [tailorId, isOpen]);
+
+  const handleServiceSelection = (service, isExtra = false) => {
+    const servicesList = isExtra ? selectedExtraServices : selectedServices;
+    const setServicesList = isExtra
+      ? setSelectedExtraServices
+      : setSelectedServices;
+
+    const existingService = servicesList.find(
+      (s) => s.serviceId === service._id
+    );
+
+    if (existingService) {
+      setServicesList(servicesList.filter((s) => s.serviceId !== service._id));
+    } else {
+      setServicesList([
+        ...servicesList,
+        {
+          serviceId: service._id,
+          serviceName: isExtra ? service.serviceName : service.type,
+          quantity: 1,
+          price: service.minPrice,
+          originalPrice: service.minPrice, // Keep track of original price
+        },
+      ]);
+    }
+
+    // Update custom offer amount when services are selected/deselected
+    if (!isExtra) {
+      const updatedServices = existingService
+        ? selectedServices.filter((s) => s.serviceId !== service._id)
+        : [
+            ...selectedServices,
+            {
+              serviceId: service._id,
+              serviceName: service.type,
+              quantity: 1,
+              price: service.minPrice,
+              originalPrice: service.minPrice,
+            },
+          ];
+
+      const totalOriginalAmount = calculateServicesTotal(updatedServices);
+      setCustomOfferAmount(totalOriginalAmount.toString());
+    }
+  };
+
+  const updateQuantity = (serviceId, increment, isExtra = false) => {
+    const servicesList = isExtra ? selectedExtraServices : selectedServices;
+    const setServicesList = isExtra
+      ? setSelectedExtraServices
+      : setSelectedServices;
+
+    const updatedServices = servicesList.map((service) => {
+      if (service.serviceId === serviceId) {
+        const newQuantity = service.quantity + (increment ? 1 : -1);
+        if (newQuantity < 1) return service;
+        return {
+          ...service,
+          quantity: newQuantity,
+          price: service.originalPrice, // For extra services, keep original price
+        };
+      }
+      return service;
+    });
+
+    setServicesList(updatedServices);
+
+    // Update custom offer amount when quantities change for main services
+    if (!isExtra) {
+      const totalOriginalAmount = calculateServicesTotal(updatedServices);
+      setCustomOfferAmount(totalOriginalAmount.toString());
+    }
+  };
+
+  const calculateServicesTotal = (services) => {
+    return services.reduce(
+      (sum, service) => sum + service.originalPrice * service.quantity,
+      0
+    );
+  };
+
+  const calculateExtraServicesTotal = () => {
+    return selectedExtraServices.reduce(
+      (sum, service) => sum + service.price * service.quantity,
+      0
+    );
+  };
+
+  const calculateTotalAmount = () => {
+    const customAmount =
+      Number(customOfferAmount) || calculateServicesTotal(selectedServices);
+    return customAmount + calculateExtraServicesTotal();
+  };
+
+  const calculateTotalItems = () => {
+    const servicesCount = selectedServices.reduce(
+      (sum, service) => sum + service.quantity,
+      0
+    );
+    const extraServicesCount = selectedExtraServices.reduce(
+      (sum, service) => sum + service.quantity,
+      0
+    );
+    return servicesCount + extraServicesCount;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,8 +161,18 @@ const PlaceOrderModal = ({ isOpen, onClose, tailorName, tailorId }) => {
       return;
     }
 
-    if (!offerAmount || !description) {
-      setError("Please fill in all fields");
+    if (selectedServices.length === 0) {
+      setError("Please select at least one service");
+      return;
+    }
+
+    if (!description) {
+      setError("Please provide a description");
+      return;
+    }
+
+    if (!customOfferAmount || Number(customOfferAmount) <= 0) {
+      setError("Please enter a valid offer amount");
       return;
     }
 
@@ -33,8 +180,31 @@ const PlaceOrderModal = ({ isOpen, onClose, tailorName, tailorId }) => {
       setIsSubmitting(true);
       setError("");
 
-      await createOffer(tailorId, parseInt(offerAmount), description);
-      onClose();
+      // Calculate the custom price per service based on total custom amount
+      const totalOriginalAmount = calculateServicesTotal(selectedServices);
+      const priceRatio = Number(customOfferAmount) / totalOriginalAmount;
+
+      const servicesWithCustomPrices = selectedServices.map((service) => ({
+        ...service,
+        price: Math.round(service.originalPrice * priceRatio), // Adjust each service price proportionally
+      }));
+
+      const offerData = {
+        tailorId,
+        amount: calculateTotalAmount(),
+        description,
+        selectedServices: servicesWithCustomPrices,
+        extraServices: selectedExtraServices,
+        totalItems: calculateTotalItems(),
+      };
+
+      const result = await createOffer(offerData);
+      if (result.success) {
+        toast.success("Offer placed successfully!");
+        onClose();
+      } else {
+        setError(result.message || "Failed to place offer");
+      }
     } catch (err) {
       setError(err.message || "Failed to place offer");
     } finally {
@@ -42,11 +212,24 @@ const PlaceOrderModal = ({ isOpen, onClose, tailorName, tailorId }) => {
     }
   };
 
+  if (loading) {
+    return (
+      <Dialog.Root open={isOpen} onOpenChange={onClose}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60]" />
+          <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-md bg-white p-6 shadow-xl rounded-xl z-[70]">
+            <p className="text-center">Loading services...</p>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+    );
+  }
+
   return (
     <Dialog.Root open={isOpen} onOpenChange={onClose}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60]" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-md bg-white p-6 shadow-xl rounded-xl z-[70] animate-in fade-in-0 zoom-in-95 duration-200">
+        <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-md bg-white p-6 shadow-xl rounded-xl z-[70] max-h-[90vh] overflow-y-auto">
           <Dialog.Title className="text-2xl font-semibold mb-6 text-gray-900">
             Place an Offer to {tailorName}
           </Dialog.Title>
@@ -58,49 +241,183 @@ const PlaceOrderModal = ({ isOpen, onClose, tailorName, tailorId }) => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label
-                htmlFor="offerAmount"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Your Offer Amount (PKR)
-              </label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
-                  ₨
-                </span>
-                <input
-                  type="number"
-                  id="offerAmount"
-                  value={offerAmount}
-                  onChange={(e) => setOfferAmount(e.target.value)}
-                  className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                  placeholder="Enter amount"
-                  min="0"
-                  required
-                />
-              </div>
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium text-gray-900">
+                Available Services
+              </h3>
+              {services.map((service) => (
+                <div
+                  key={service._id}
+                  className="flex flex-col space-y-2 p-3 border rounded-lg"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={selectedServices.some(
+                          (s) => s.serviceId === service._id
+                        )}
+                        onChange={() => handleServiceSelection(service)}
+                        className="rounded border-gray-300"
+                      />
+                      <span className="font-medium">{service.type}</span>
+                    </div>
+                    <span className="text-gray-600">₨{service.minPrice}</span>
+                  </div>
+                  {selectedServices.some(
+                    (s) => s.serviceId === service._id
+                  ) && (
+                    <div className="flex items-center space-x-2 ml-6">
+                      <button
+                        type="button"
+                        onClick={() => updateQuantity(service._id, false)}
+                        className="p-1 rounded-full hover:bg-gray-100"
+                      >
+                        <Minus className="h-4 w-4" />
+                      </button>
+                      <span>
+                        {selectedServices.find(
+                          (s) => s.serviceId === service._id
+                        )?.quantity || 1}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => updateQuantity(service._id, true)}
+                        className="p-1 rounded-full hover:bg-gray-100"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {selectedServices.length > 0 && (
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Your Offer Amount for Selected Services
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-gray-600">₨</span>
+                    <input
+                      type="number"
+                      value={customOfferAmount}
+                      onChange={(e) => setCustomOfferAmount(e.target.value)}
+                      className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter your offer amount"
+                      min="1"
+                      required
+                    />
+                  </div>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Original amount: ₨{calculateServicesTotal(selectedServices)}
+                  </p>
+                </div>
+              )}
             </div>
+
+            {extraServices.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Extra Services (Fixed Price)
+                </h3>
+                {extraServices.map((service) => (
+                  <div
+                    key={service._id}
+                    className="flex flex-col space-y-2 p-3 border rounded-lg"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          checked={selectedExtraServices.some(
+                            (s) => s.serviceId === service._id
+                          )}
+                          onChange={() => handleServiceSelection(service, true)}
+                          className="rounded border-gray-300"
+                        />
+                        <span className="font-medium">
+                          {service.serviceName}
+                        </span>
+                      </div>
+                      <span className="text-gray-600">₨{service.minPrice}</span>
+                    </div>
+                    {selectedExtraServices.some(
+                      (s) => s.serviceId === service._id
+                    ) && (
+                      <div className="flex items-center space-x-2 ml-6">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            updateQuantity(service._id, false, true)
+                          }
+                          className="p-1 rounded-full hover:bg-gray-100"
+                        >
+                          <Minus className="h-4 w-4" />
+                        </button>
+                        <span>
+                          {selectedExtraServices.find(
+                            (s) => s.serviceId === service._id
+                          )?.quantity || 1}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            updateQuantity(service._id, true, true)
+                          }
+                          className="p-1 rounded-full hover:bg-gray-100"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div>
               <label
                 htmlFor="description"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
-                Description of Your Requirements
+                Additional Requirements or Notes
               </label>
               <textarea
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                placeholder="Describe what you need (e.g., style, fabric preferences, timeline)"
+                placeholder="Describe any specific requirements, customizations, or timeline needs"
                 rows={4}
                 required
               />
             </div>
 
-            <div className="flex justify-end gap-3 mt-8">
+            <div className="border-t pt-4">
+              <div className="flex justify-between items-center mb-2">
+                <span className="font-medium">Total Items:</span>
+                <span>{calculateTotalItems()}</span>
+              </div>
+              <div className="flex justify-between items-center mb-2">
+                <span className="font-medium">Services Total:</span>
+                <span>
+                  ₨
+                  {customOfferAmount ||
+                    calculateServicesTotal(selectedServices)}
+                </span>
+              </div>
+              <div className="flex justify-between items-center mb-2">
+                <span className="font-medium">Extra Services Total:</span>
+                <span>₨{calculateExtraServicesTotal()}</span>
+              </div>
+              <div className="flex justify-between items-center mb-4 text-lg font-bold">
+                <span>Final Total:</span>
+                <span>₨{calculateTotalAmount()}</span>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3">
               <button
                 type="button"
                 onClick={onClose}
@@ -131,6 +448,13 @@ const PlaceOrderModal = ({ isOpen, onClose, tailorName, tailorId }) => {
       </Dialog.Portal>
     </Dialog.Root>
   );
+};
+
+PlaceOrderModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  tailorName: PropTypes.string.isRequired,
+  tailorId: PropTypes.string.isRequired,
 };
 
 export default PlaceOrderModal;

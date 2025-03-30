@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 
 export default function ServiceSelector({ onServicesSelected }) {
@@ -6,37 +6,38 @@ export default function ServiceSelector({ onServicesSelected }) {
   const [extraServices, setExtraServices] = useState([]);
   const [selectedServices, setSelectedServices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    loadServices();
-  }, []);
-
-  const loadServices = async () => {
+  const loadServices = useCallback(async () => {
     try {
+      setLoading(true);
       const tailorProfile = await axios.get("/tailor/get-profile", {
         withCredentials: true,
       });
       setServices(tailorProfile.data.profile.serviceRates || []);
       setExtraServices(tailorProfile.data.profile.extraServices || []);
-      setLoading(false);
     } catch (error) {
       console.error("Failed to load services:", error);
+      setError(error.message);
+    } finally {
       setLoading(false);
     }
-  };
+  }, []); // No dependencies needed as this is just an API call
 
-  const handleServiceToggle = (service, type = "regular") => {
+  useEffect(() => {
+    loadServices();
+  }, [loadServices]);
+
+  const handleServiceToggle = useCallback((service, type = "regular") => {
     const serviceWithType = { ...service, type };
-    const isSelected = selectedServices.some((s) => s._id === service._id);
-
-    if (isSelected) {
-      setSelectedServices(
-        selectedServices.filter((s) => s._id !== service._id)
-      );
-    } else {
-      setSelectedServices([...selectedServices, serviceWithType]);
-    }
-  };
+    setSelectedServices((prev) => {
+      const isSelected = prev.some((s) => s._id === service._id);
+      if (isSelected) {
+        return prev.filter((s) => s._id !== service._id);
+      }
+      return [...prev, serviceWithType];
+    });
+  }, []);
 
   useEffect(() => {
     onServicesSelected(selectedServices);
@@ -44,6 +45,10 @@ export default function ServiceSelector({ onServicesSelected }) {
 
   if (loading) {
     return <div>Loading services...</div>;
+  }
+
+  if (error) {
+    return <div className="text-red-500">Error loading services: {error}</div>;
   }
 
   return (

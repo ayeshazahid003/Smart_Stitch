@@ -1,5 +1,14 @@
 import mongoose from "mongoose";
 
+const AddressSchema = new mongoose.Schema({
+  line1: { type: String },
+  line2: { type: String },
+  city: { type: String },
+  state: { type: String },
+  postalCode: { type: String },
+  country: { type: String },
+});
+
 const OrderSchema = new mongoose.Schema({
   customerId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -17,6 +26,7 @@ const OrderSchema = new mongoose.Schema({
     enum: ["pending", "in progress", "completed", "refunded"],
     required: true,
   },
+  shippingAddress: AddressSchema,
   design: {
     designImage: [{ type: String }],
     customization: {

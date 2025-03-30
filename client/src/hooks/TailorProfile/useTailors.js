@@ -11,7 +11,6 @@ export const useTailors = () => {
       setLoading(true);
       setError(null);
 
-      // Convert params object to URL search params
       let queryString = Object.entries(params)
         .filter(([_, value]) => value !== undefined && value !== "")
         .map(
@@ -32,5 +31,34 @@ export const useTailors = () => {
     }
   };
 
-  return { fetchTailors, loading, error, data };
+  const fetchTailorServices = async (tailorId) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { data: result } = await axios.get(
+        `/tailor/${tailorId}/all-services`
+      );
+
+      return {
+        services: result.services || [],
+        extraServices: result.extraServices || [],
+        success: result.success,
+      };
+    } catch (err) {
+      console.error("Fetch services error:", err);
+      setError(
+        err.response?.data?.message || "Failed to fetch tailor services"
+      );
+      return {
+        services: [],
+        extraServices: [],
+        success: false,
+      };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { fetchTailors, fetchTailorServices, loading, error, data };
 };

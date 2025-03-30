@@ -29,6 +29,11 @@ router.post(
   protect,
   tailorProfileController.createTailorProfile
 );
+// Add this new route for getting all services in one request
+router.get(
+  "/tailor/:tailorId/all-services",
+  tailorProfileController.getAllTailorServices
+);
 router.get(
   "/tailor/get-profile",
   protect,
