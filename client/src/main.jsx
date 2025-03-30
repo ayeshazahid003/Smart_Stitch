@@ -5,6 +5,8 @@ import "./index.css";
 import { BrowserRouter, Route, Routes } from "react-router";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // Layouts
 import MainLayout from "./pages/MainLayout";
@@ -24,6 +26,9 @@ import UnderConstructionPage from "./pages/public/UnderConstructionPage";
 // Auth Pages
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import VerifyOTP from "./pages/auth/VerifyOTP";
+import ResetPassword from "./pages/auth/ResetPassword";
 
 // Protected Pages
 import UserProfile from "./pages/protected/client/UserProfile";
@@ -45,6 +50,7 @@ import Offers from "./pages/protected/Offers";
 
 // Context
 import { SocketProvider } from "./context/SocketContext";
+import Campaigns from "./pages/protected/tailor/Campaigns";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -64,6 +70,9 @@ createRoot(document.getElementById("root")).render(
             <Route element={<AuthLayout />}>
               <Route path="login" element={<Login />} />
               <Route path="register" element={<Register />} />
+              <Route path="forgot-password" element={<ForgotPassword />} />
+              <Route path="verify-otp" element={<VerifyOTP />} />
+              <Route path="reset-password" element={<ResetPassword />} />
             </Route>
 
             {/* Protected Routes */}
@@ -76,6 +85,7 @@ createRoot(document.getElementById("root")).render(
                 <Route path="chats" element={<Chat />} />
                 <Route path="requests" element={<AllOrders />} />
                 <Route path="orders" element={<OrderDetails />} />
+                <Route path="/campaigns" element={<Campaigns />} />
 
                 {/* Tailor Routes */}
                 <Route path="tailor" element={<TailorDashboard />} />
@@ -108,6 +118,7 @@ createRoot(document.getElementById("root")).render(
           <Route path="*" element={<UnderConstructionPage />} />
         </Routes>
       </BrowserRouter>
+      <ToastContainer />
     </SocketProvider>
   </StrictMode>
 );

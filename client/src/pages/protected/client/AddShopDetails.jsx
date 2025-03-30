@@ -1,105 +1,187 @@
 import React, { useState, useRef, useEffect } from "react";
-import axios from "axios";
-import { CameraIcon, XMarkIcon } from "@heroicons/react/24/solid";
+import { CameraIcon, XMarkIcon, MapPinIcon } from "@heroicons/react/24/solid";
 import { createTailorProfile, getTailorShop } from "../../../hooks/TailorHooks";
-import { GoogleMap, useLoadScript, Autocomplete, Marker } from "@react-google-maps/api";
+import { useLoadScript } from "@react-google-maps/api";
 import { toast } from "react-toastify";
 
-const libraries = ["places"];
+const libraries = ["places", "marker"];
 const mapContainerStyle = {
   width: "100%",
-  height: "300px",
+  height: "400px",
 };
-const initialCenter = {
-  lat: 37.7749,
-  lng: -122.4194,
-};
+
+// Default center (Lahore coordinates)
+const DEFAULT_CENTER = { lat: 31.5204, lng: 74.3587 };
 
 export default function AddShopDetails() {
   const [shopName, setShopName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [address, setAddress] = useState("");
-  const [latitude, setLatitude] = useState("");
-  const [longitude, setLongitude] = useState("");
+  const [mapCenter, setMapCenter] = useState(DEFAULT_CENTER);
+  const [markerPosition, setMarkerPosition] = useState(null);
   const [bio, setBio] = useState("");
   const [images, setImages] = useState([]);
   const [message, setMessage] = useState("");
   const [dragActive, setDragActive] = useState(false);
-  const [mapCenter, setMapCenter] = useState(initialCenter);
   const [loading, setLoading] = useState(false);
 
-  const autocompleteRef = useRef(null);
+  const mapRef = useRef(null);
+  const markerRef = useRef(null);
+  const placeInputRef = useRef(null);
 
   const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: "AIzaSyDBCi7hOX_2lQ14oISSLHXp0JS36OANFyQ",
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
     libraries,
   });
 
-  // Fetch existing tailor shop details (if any) and prefill fields
   useEffect(() => {
+    // Get user's current location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const currentLocation = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          };
+          setMapCenter(currentLocation);
+          setMarkerPosition(currentLocation);
+          reverseGeocode(currentLocation);
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          toast.error("Could not get your current location");
+          // Fall back to default center
+          setMapCenter(DEFAULT_CENTER);
+          setMarkerPosition(DEFAULT_CENTER);
+        }
+      );
+    }
+
+    // Fetch existing tailor profile
     const fetchTailorProfile = async () => {
-      setLoading(true);
-      const response = await getTailorShop();
-      if (response.success && response.shopDetails) {
-        console.log(response.shopDetails, "-------------");
-        const details = response.shopDetails;
-        setShopName(details.shopName || "");
-        setPhoneNumber(details.phoneNumber || "");
-        if (details.shopLocation) {
-          setAddress(details.shopLocation.address || "");
-          if (
-            details.shopLocation.coordinates &&
-            details.shopLocation.coordinates.length >= 2
-          ) {
-            setLatitude(details.shopLocation.coordinates[0]);
-            setLongitude(details.shopLocation.coordinates[1]);
-            setMapCenter({
-              lat: details.shopLocation.coordinates[0],
-              lng: details.shopLocation.coordinates[1],
-            });
+      try {
+        setLoading(true);
+        const response = await getTailorShop();
+        if (response.success && response.shopDetails) {
+          const details = response.shopDetails;
+          setShopName(details.shopName || "");
+          setPhoneNumber(details.phoneNumber || "");
+          setBio(details.bio || "");
+          if (details.shopLocation) {
+            setAddress(details.shopLocation.address || "");
+            if (details.shopLocation.coordinates) {
+              const position = {
+                lat: Number(details.shopLocation.coordinates.lat),
+                lng: Number(details.shopLocation.coordinates.lng),
+              };
+              setMapCenter(position);
+              setMarkerPosition(position);
+            }
+          }
+          if (details.shopImages && details.shopImages.length > 0) {
+            setImages(details.shopImages.filter((img) => img !== null));
           }
         }
-        setBio(details.bio || "");
-        if (details.shopImages && details.shopImages.length > 0) {
-          // Filter out null values from the images array
-          setImages(details.shopImages.filter((img) => img !== null));
-        }
-      } else {
-        setMessage(response.message);
+      } catch (error) {
+        console.error("Error fetching tailor profile:", error);
+        toast.error("Failed to load shop details");
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     fetchTailorProfile();
   }, []);
 
-  const onPlaceChanged = () => {
-    if (autocompleteRef.current) {
-      const place = autocompleteRef.current.getPlace();
-      if (place.geometry) {
-        const lat = place.geometry.location.lat();
-        const lng = place.geometry.location.lng();
-        setAddress(place.formatted_address);
-        setLatitude(lat);
-        setLongitude(lng);
-        setMapCenter({ lat, lng });
-      }
+  useEffect(() => {
+    if (isLoaded && !loadError) {
+      // Initialize map
+      const map = new window.google.maps.Map(document.getElementById("map"), {
+        center: mapCenter,
+        zoom: 15,
+        zoomControl: true,
+        streetViewControl: true,
+        mapTypeControl: true,
+        fullscreenControl: true,
+      });
+      mapRef.current = map;
+
+      // Create marker using standard Marker
+      const marker = new window.google.maps.Marker({
+        map,
+        position: markerPosition || mapCenter,
+        draggable: true,
+      });
+      markerRef.current = marker;
+
+      // Initialize place autocomplete
+      const placeInput = document.getElementById("place-input");
+      const placeAutocomplete = new window.google.maps.places.Autocomplete(
+        placeInput,
+        {
+          types: ["address"],
+        }
+      );
+
+      // Handle place selection
+      placeAutocomplete.addListener("place_changed", () => {
+        const place = placeAutocomplete.getPlace();
+        if (place.geometry) {
+          const location = {
+            lat: place.geometry.location.lat(),
+            lng: place.geometry.location.lng(),
+          };
+          setMapCenter(location);
+          setMarkerPosition(location);
+          setAddress(place.formatted_address);
+          map.setCenter(location);
+          marker.setPosition(location);
+        }
+      });
+
+      // Handle map clicks
+      map.addListener("click", (e) => {
+        const clickedLocation = {
+          lat: e.latLng.lat(),
+          lng: e.latLng.lng(),
+        };
+        setMarkerPosition(clickedLocation);
+        marker.setPosition(clickedLocation);
+        reverseGeocode(clickedLocation);
+      });
+
+      // Handle marker drag
+      marker.addListener("dragend", () => {
+        const position = marker.getPosition();
+        const newPos = {
+          lat: position.lat(),
+          lng: position.lng(),
+        };
+        setMarkerPosition(newPos);
+        reverseGeocode(newPos);
+      });
     }
-  };
+  }, [isLoaded, loadError, mapCenter]);
 
-  const onMarkerDragEnd = (e) => {
-    const newLat = e.latLng.lat();
-    const newLng = e.latLng.lng();
-    setLatitude(newLat);
-    setLongitude(newLng);
-    setMapCenter({ lat: newLat, lng: newLng });
+  const reverseGeocode = async (location) => {
+    if (!isLoaded || loadError) return;
 
-    const geocoder = new window.google.maps.Geocoder();
-    geocoder.geocode({ location: { lat: newLat, lng: newLng } }, (results, status) => {
-      if (status === "OK" && results[0]) {
-        setAddress(results[0].formatted_address);
-      }
-    });
+    try {
+      const geocoder = new window.google.maps.Geocoder();
+      const response = await new Promise((resolve, reject) => {
+        geocoder.geocode({ location }, (results, status) => {
+          if (status === "OK") {
+            resolve(results[0]);
+          } else {
+            reject(status);
+          }
+        });
+      });
+      setAddress(response.formatted_address);
+    } catch (error) {
+      console.error("Reverse geocoding error:", error);
+      toast.error("Could not get address for selected location");
+    }
   };
 
   const handleImageChange = (e) => {
@@ -129,105 +211,96 @@ export default function AddShopDetails() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!shopName || !phoneNumber || !address || !bio || images.length === 0) {
-      setMessage("All fields are required.");
+    if (
+      !shopName ||
+      !phoneNumber ||
+      !address ||
+      !bio ||
+      images.length === 0 ||
+      !markerPosition
+    ) {
+      toast.error("All fields are required");
       return;
     }
 
     const shopLocation = {
       address,
       coordinates: {
-        latitude: parseFloat(latitude),
-        longitude: parseFloat(longitude),
+        lat: Number(markerPosition.lat),
+        lng: Number(markerPosition.lng),
       },
     };
 
-    // Convert each image to base64 only if it's a File; if it's already a URL, keep it as-is.
-    const shopImages = await Promise.all(
-      images.map(async (image) => {
-        if (typeof image === "string") {
-          return image;
-        } else {
+    try {
+      setLoading(true);
+      const formData = new FormData();
+      formData.append("shopName", shopName);
+      formData.append("phoneNumber", phoneNumber);
+      formData.append("shopLocation", JSON.stringify(shopLocation));
+      formData.append("bio", bio);
+
+      // Handle images
+      const shopImages = await Promise.all(
+        images.map(async (image) => {
+          if (typeof image === "string") return image;
           return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(image);
             reader.onload = () => resolve(reader.result);
-            reader.onerror = (error) => reject(error);
+            reader.onerror = reject;
           });
-        }
-      })
-    );
+        })
+      );
 
-    const payload = {
-      shopName,
-      phoneNumber,
-      shopLocation,
-      bio,
-      shopImages,
-    };
+      formData.append("shopImages", JSON.stringify(shopImages));
 
-    console.log(payload);
+      const response = await createTailorProfile(formData);
 
-    try {
-      setMessage("");
-      setLoading(true);
-      const response = await createTailorProfile(payload);
-      setLoading(false);
       if (response.success) {
-        setMessage("Shop added successfully");
-        toast.success("Shop added successfully");
+        toast.success("Shop details updated successfully");
       } else {
-        setMessage(response.message);
+        toast.error(response.message || "Failed to update shop details");
       }
     } catch (error) {
+      console.error("Error updating shop details:", error);
+      toast.error("An error occurred while updating shop details");
+    } finally {
       setLoading(false);
-      setMessage("Failed to add shop");
     }
   };
 
-  if (loadError) return <div>Error loading Google Maps</div>;
-  if (!isLoaded) return <div>Loading Google Maps...</div>;
+  if (loadError)
+    return (
+      <div className="text-center py-4 text-red-600">
+        Error loading Google Maps
+      </div>
+    );
+  if (!isLoaded)
+    return <div className="text-center py-4">Loading Google Maps...</div>;
 
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4">
       <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-8">
         <h1 className="text-4xl font-bold text-center mb-8 text-gray-800">
-          Add Shop Details
+          Shop Details
         </h1>
 
         <div className="mb-8">
           <div className="relative">
-            <GoogleMap
-              mapContainerStyle={mapContainerStyle}
-              zoom={12}
-              center={mapCenter}
-              options={{ disableDefaultUI: true }}
-              className="rounded-lg overflow-hidden shadow-md"
-            >
-              {latitude && longitude && (
-                <Marker
-                  position={{
-                    lat: parseFloat(latitude),
-                    lng: parseFloat(longitude),
-                  }}
-                  draggable
-                  onDragEnd={onMarkerDragEnd}
-                />
-              )}
-            </GoogleMap>
+            <div id="map" style={mapContainerStyle}></div>
             <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 w-full max-w-md">
-              <Autocomplete
-                onLoad={(autocomplete) => (autocompleteRef.current = autocomplete)}
-                onPlaceChanged={onPlaceChanged}
-              >
+              <div className="relative">
                 <input
+                  id="place-input"
                   type="text"
-                  className="w-full p-3 rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Search location"
+                  className="w-full p-3 pl-10 rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Search location or click on map"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
+                  ref={placeInputRef}
                 />
-              </Autocomplete>
+                <MapPinIcon className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+              </div>
             </div>
           </div>
         </div>
@@ -283,8 +356,8 @@ export default function AddShopDetails() {
               value={address}
             />
           </div>
-          <input type="hidden" value={latitude} name="latitude" />
-          <input type="hidden" value={longitude} name="longitude" />
+          <input type="hidden" value={markerPosition?.lat} name="latitude" />
+          <input type="hidden" value={markerPosition?.lng} name="longitude" />
 
           <div>
             <label className="block text-lg font-medium text-gray-700 mb-2">
@@ -292,7 +365,9 @@ export default function AddShopDetails() {
             </label>
             <div
               className={`w-full p-6 border-2 border-dashed rounded-lg transition-colors flex flex-col items-center justify-center ${
-                dragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 bg-gray-100"
+                dragActive
+                  ? "border-blue-500 bg-blue-50"
+                  : "border-gray-300 bg-gray-100"
               }`}
               onDragEnter={handleDrag}
               onDragOver={handleDrag}
@@ -324,7 +399,11 @@ export default function AddShopDetails() {
                   return (
                     <div key={index} className="relative">
                       <img
-                        src={typeof image === "string" ? image : URL.createObjectURL(image)}
+                        src={
+                          typeof image === "string"
+                            ? image
+                            : URL.createObjectURL(image)
+                        }
                         alt={`Preview ${index}`}
                         className="w-full h-32 object-contain rounded-md"
                       />

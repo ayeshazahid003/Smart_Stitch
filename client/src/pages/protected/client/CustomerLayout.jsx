@@ -18,6 +18,7 @@ import {
   ChatBubbleLeftRightIcon,
   ClipboardDocumentListIcon,
   GiftIcon,
+  TagIcon,
 } from "@heroicons/react/24/outline";
 import { useUser } from "../../../context/UserContext";
 
@@ -34,12 +35,14 @@ const getNavigation = (role) => {
   const tailorNav = [
     { name: "Dashboard", href: "/tailor", icon: HomeIcon },
     { name: "Profile", href: "/user-profile", icon: UserIcon },
+    { name: "Shop Details", href: "/add-shop-details", icon: BriefcaseIcon },
     { name: "Measurements", href: "/measurements", icon: CalendarIcon },
     { name: "Services", href: "/all-services", icon: BriefcaseIcon },
     { name: "Extra Services", href: "/all-extra-services", icon: SparklesIcon },
     { name: "Portfolio", href: "/all-portfolio", icon: PhotoIcon },
     { name: "Offers", href: "/offers", icon: GiftIcon },
     { name: "Chats", href: "/chats", icon: ChatBubbleLeftRightIcon },
+    { name: "Campaigns", href: "/campaigns", icon: TagIcon },
   ];
 
   return role === "tailor" ? tailorNav : customerNav;

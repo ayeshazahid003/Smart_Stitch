@@ -45,7 +45,7 @@ export const UserProvider = ({ children }) => {
           username,
           email,
           password,
-          role
+          role,
         },
         { withCredentials: true }
       );
@@ -101,8 +101,60 @@ export const UserProvider = ({ children }) => {
       setUser(userData);
       localStorage.setItem("user", JSON.stringify(userData));
     } catch (err) {
-      console.log(err)
+      console.log(err);
       throw new Error("Updating user profile failed");
+    }
+  };
+
+  const forgotPassword = async (email) => {
+    try {
+      const response = await axios.post(`${BASE_URL}/forgot-password`, {
+        email,
+      });
+      return response.data;
+    } catch (err) {
+      console.log(err);
+      throw new Error(
+        err.response?.data?.message || "Failed to send reset email"
+      );
+    }
+  };
+
+  const verifyOtp = async (email, otp) => {
+    try {
+      const response = await axios.post(`${BASE_URL}/verify-otp`, {
+        email,
+        otp,
+      });
+      return response.data;
+    } catch (err) {
+      console.log(err);
+      throw new Error(err.response?.data?.message || "Invalid OTP");
+    }
+  };
+
+  const resetPassword = async (resetToken, newPassword) => {
+    try {
+      const response = await axios.post(`${BASE_URL}/reset-password`, {
+        resetToken,
+        newPassword,
+      });
+      return response.data;
+    } catch (err) {
+      console.log(err);
+      throw new Error(
+        err.response?.data?.message || "Failed to reset password"
+      );
+    }
+  };
+
+  const resendOtp = async (email) => {
+    try {
+      const response = await axios.post(`${BASE_URL}/resend-otp`, { email });
+      return response.data;
+    } catch (err) {
+      console.log(err);
+      throw new Error(err.response?.data?.message || "Failed to resend OTP");
     }
   };
 
@@ -115,6 +167,10 @@ export const UserProvider = ({ children }) => {
         logout,
         getUserProfile,
         updateUserProfile,
+        forgotPassword,
+        verifyOtp,
+        resetPassword,
+        resendOtp,
       }}
     >
       {children}
