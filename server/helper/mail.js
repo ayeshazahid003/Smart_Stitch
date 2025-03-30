@@ -1,19 +1,15 @@
+// helper/mail.js
 import nodemailer from "nodemailer";
 
-// SMTP configuration
+// MailHog SMTP configuration for local testing
 const smtpConfig = {
-  host: process.env.host_SECRET,
-  port: 527, // Use 587 for TLS or 465 for SSL
-  secure: false, // true for 465, false for other ports
-  auth: {
-    user: process.env.MAIL_USER_SECRET,
-    pass: process.env.MAIL_PASSWORD_SECRET,
-  },
+  host: "localhost", // MailHog server address
+  port: 1025, // MailHog SMTP port
+  secure: false, // No TLS needed for MailHog
 };
 
 // Create a transporter object
 const transporter = nodemailer.createTransport(smtpConfig);
-
 
 export const sendEmail = async (senderEmail, receiverEmail, subject, body) => {
   try {
@@ -23,14 +19,15 @@ export const sendEmail = async (senderEmail, receiverEmail, subject, body) => {
       to: receiverEmail,
       subject: subject,
       text: body,
+      html: body, // Optional: Include HTML version of the email
     };
 
     // Send the email
     const info = await transporter.sendMail(mailOptions);
-    console.log("Email sent successfully: " + info.response);
+    console.log("Email sent to MailHog:", info.messageId);
     return info;
   } catch (error) {
-    console.error("Error sending email:", error);
+    console.error("Error sending email to MailHog:", error);
     throw error;
   }
 };

@@ -41,6 +41,11 @@ const UserSchema = new mongoose.Schema({
     address: AddressSchema,
   },
   measurements: [MeasurementSchema],
+  resetPasswordToken: { type: String },
+  resetPasswordExpires: { type: Date },
+  otp: { type: String },
+  otpExpires: { type: Date },
+  isVerified: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

@@ -71,6 +71,26 @@ const OrderSchema = new mongoose.Schema({
     },
   ],
   invoiceId: { type: mongoose.Schema.Types.ObjectId, ref: "Invoice" },
+  campaignId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Campaign",
+  },
+  discounts: {
+    campaignDiscount: {
+      type: Number,
+      default: 0,
+    },
+    voucherDiscount: {
+      type: Number,
+      default: 0,
+    },
+  },
+  pricing: {
+    subtotal: { type: Number, required: true },
+    campaignDiscount: { type: Number, default: 0 },
+    voucherDiscount: { type: Number, default: 0 },
+    total: { type: Number, required: true },
+  },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

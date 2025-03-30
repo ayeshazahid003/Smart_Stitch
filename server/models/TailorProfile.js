@@ -34,8 +34,11 @@ const TailorProfileSchema = new mongoose.Schema({
     },
   ],
   shopLocation: {
-    address: { type: String }, // Address of the shop
-    coordinates: [{ type: Number }], // [longitude, latitude]
+    address: { type: String, required: true },
+    coordinates: {
+      lat: { type: Number, required: true },
+      lng: { type: Number, required: true },
+    },
   },
   shopImages: [{ type: String }], // Array of shop image URLs
   bio: { type: String }, // Tailor's biography

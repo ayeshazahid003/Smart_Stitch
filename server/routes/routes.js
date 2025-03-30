@@ -8,6 +8,7 @@ import * as reviewController from "../controllers/reviewsController.js";
 import * as chatController from "../controllers/chatController.js";
 import * as orderController from "../controllers/ordersController.js";
 import * as offerController from "../controllers/offerController.js";
+import * as campaignController from "../controllers/campaignController.js";
 import { protect } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
@@ -16,6 +17,10 @@ const router = express.Router();
 router.post("/signup", authController.createUser);
 router.post("/login", authController.loginUser);
 router.post("/logout", authController.logoutUser);
+router.post("/forgot-password", authController.forgotPassword);
+router.post("/reset-password", authController.resetPassword);
+router.post("/verify-otp", authController.verifyOtp);
+router.post("/resend-otp", authController.resendOtp);
 router.get("/verify-token", protect, authController.verifyToken);
 
 // Tailor Profile Routes
@@ -204,5 +209,12 @@ router.patch(
   protect,
   offerController.updateOfferStatus
 );
+
+// Campaign Routes
+router.post("/campaigns", protect, campaignController.createCampaign);
+router.get("/campaigns/tailor", protect, campaignController.getTailorCampaigns);
+router.get("/campaigns/active", campaignController.getActiveCampaigns);
+router.put("/campaigns/:id", protect, campaignController.updateCampaign);
+router.delete("/campaigns/:id", protect, campaignController.deleteCampaign);
 
 export default router;
