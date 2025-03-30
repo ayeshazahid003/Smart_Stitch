@@ -1,6 +1,7 @@
 import Offer from "../models/Offer.js";
 import User from "../models/User.js";
 import Order from "../models/Order.js";
+import { sendNotification } from "../helper/notificationHelper.js";
 
 export const createOffer = async (req, res) => {
   try {
@@ -66,6 +67,15 @@ export const createOffer = async (req, res) => {
     });
 
     await offer.save();
+
+    // Send notification to tailor
+    await sendNotification({
+      userId: tailorId,
+      type: "new_offer",
+      message: `You have received a new offer of ₨${amount} for ${totalItems} items`,
+      relatedId: offer._id,
+      onModel: "Offer",
+    });
 
     // Populate customer and tailor details
     const populatedOffer = await offer.populate([
@@ -137,11 +147,33 @@ export const negotiateOffer = async (req, res) => {
           offer.status === "accepted_by_customer"
             ? "accepted"
             : "accepted_by_tailor";
+
+        // Send notification to customer about tailor's acceptance
+        await sendNotification({
+          userId: offer.customer._id,
+          type: "offer_accepted",
+          message: `Your offer of ₨${
+            amount || offer.amount
+          } has been accepted by ${offer.tailor.shopName}`,
+          relatedId: offer._id,
+          onModel: "Offer",
+        });
       } else {
         offer.status =
           offer.status === "accepted_by_tailor"
             ? "accepted"
             : "accepted_by_customer";
+
+        // Send notification to tailor about customer's acceptance
+        await sendNotification({
+          userId: offer.tailor._id,
+          type: "offer_accepted",
+          message: `The customer has accepted your counter-offer of ₨${
+            amount || offer.amount
+          }`,
+          relatedId: offer._id,
+          onModel: "Offer",
+        });
       }
 
       // If both parties have accepted
@@ -195,7 +227,20 @@ export const negotiateOffer = async (req, res) => {
         offer.orderId = order._id;
       }
     } else if (!accept && amount) {
-      // Continue negotiation
+      // Send counter-offer notification
+      const recipientId =
+        userRole === "tailor" ? offer.customer._id : offer.tailor._id;
+      const senderName =
+        userRole === "tailor" ? offer.tailor.shopName : offer.customer.name;
+
+      await sendNotification({
+        userId: recipientId,
+        type: "new_offer",
+        message: `${senderName} has made a counter-offer of ₨${amount}`,
+        relatedId: offer._id,
+        onModel: "Offer",
+      });
+
       offer.status = "negotiating";
     }
 
@@ -232,7 +277,10 @@ export const updateOfferStatus = async (req, res) => {
     const { status } = req.body;
     const userId = req.user._id;
 
-    const offer = await Offer.findById(offerId);
+    const offer = await Offer.findById(offerId)
+      .populate("customer", "name")
+      .populate("tailor", "name shopName");
+
     if (!offer) {
       return res.status(404).json({ message: "Offer not found" });
     }
@@ -270,6 +318,24 @@ export const updateOfferStatus = async (req, res) => {
       }
     } else {
       offer.status = status;
+    }
+
+    // Send notification about offer rejection
+    if (status === "rejected") {
+      const recipientId =
+        userId === offer.tailor._id ? offer.customer._id : offer.tailor._id;
+      const senderName =
+        userId === offer.tailor._id
+          ? offer.tailor.shopName
+          : offer.customer.name;
+
+      await sendNotification({
+        userId: recipientId,
+        type: "offer_rejected",
+        message: `${senderName} has rejected the offer`,
+        relatedId: offer._id,
+        onModel: "Offer",
+      });
     }
 
     await offer.save();

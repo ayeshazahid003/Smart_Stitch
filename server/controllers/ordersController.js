@@ -6,6 +6,7 @@ import { sendEmail } from "../helper/mail.js";
 import { uploadMultipleFiles } from "../helper/cloudinaryUploader.js";
 import { getSocket } from "../socket.js";
 import Campaign from "../models/Campaign.js";
+import mongoose from "mongoose";
 
 export const createNewOrder = async (req, res) => {
   try {
@@ -297,8 +298,9 @@ export const getOrdersByTailor = async (req, res) => {
 
 export const updateOrderStatus = async (req, res) => {
   try {
-    const { orderId } = req.params;
+    const { id: orderId } = req.params;
     const { status, design, shippingAddress, measurement } = req.body;
+    console.log("order id", orderId);
 
     // Validate orderId
     if (!mongoose.Types.ObjectId.isValid(orderId)) {

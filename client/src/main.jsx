@@ -51,74 +51,77 @@ import Offers from "./pages/protected/Offers";
 // Context
 import { SocketProvider } from "./context/SocketContext";
 import Campaigns from "./pages/protected/tailor/Campaigns";
+import { UserProvider } from "./context/UserContext";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <SocketProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<MainLayout />}>
-            {/* Public Routes */}
-            <Route index element={<HomePage />} />
-            <Route path="/browse" element={<Browse />} />
-            <Route path="/search" element={<Search />} />
-            <Route path="/tailor/:id" element={<TailorProfile />} />
-            <Route path="/checkout/:id" element={<Checkout />} />
-            <Route path="/order-placed" element={<OrderPlaced />} />
+    <UserProvider>
+      <SocketProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<MainLayout />}>
+              {/* Public Routes */}
+              <Route index element={<HomePage />} />
+              <Route path="/browse" element={<Browse />} />
+              <Route path="/search" element={<Search />} />
+              <Route path="/tailor/:id" element={<TailorProfile />} />
+              <Route path="/checkout/:id" element={<Checkout />} />
+              <Route path="/order-placed" element={<OrderPlaced />} />
 
-            {/* Auth Routes */}
-            <Route element={<AuthLayout />}>
-              <Route path="login" element={<Login />} />
-              <Route path="register" element={<Register />} />
-              <Route path="forgot-password" element={<ForgotPassword />} />
-              <Route path="verify-otp" element={<VerifyOTP />} />
-              <Route path="reset-password" element={<ResetPassword />} />
-            </Route>
+              {/* Auth Routes */}
+              <Route element={<AuthLayout />}>
+                <Route path="login" element={<Login />} />
+                <Route path="register" element={<Register />} />
+                <Route path="forgot-password" element={<ForgotPassword />} />
+                <Route path="verify-otp" element={<VerifyOTP />} />
+                <Route path="reset-password" element={<ResetPassword />} />
+              </Route>
 
-            {/* Protected Routes */}
-            <Route element={<ProtectLayout />}>
-              <Route element={<CustomerLayout />}>
-                {/* Customer Routes */}
-                <Route path="user-profile" element={<UserProfile />} />
-                <Route path="measurements" element={<MeasurementForm />} />
-                <Route path="offers" element={<Offers />} />
-                <Route path="chats" element={<Chat />} />
-                <Route path="orders" element={<AllOrders />} />
-                <Route path="orders" element={<OrderDetails />} />
-                <Route path="/campaigns" element={<Campaigns />} />
+              {/* Protected Routes */}
+              <Route element={<ProtectLayout />}>
+                <Route element={<CustomerLayout />}>
+                  {/* Customer Routes */}
+                  <Route path="user-profile" element={<UserProfile />} />
+                  <Route path="measurements" element={<MeasurementForm />} />
+                  <Route path="offers" element={<Offers />} />
+                  <Route path="chats" element={<Chat />} />
+                  <Route path="orders" element={<AllOrders />} />
+                  <Route path="orders" element={<OrderDetails />} />
+                  <Route path="/campaigns" element={<Campaigns />} />
 
-                {/* Tailor Routes */}
-                <Route path="tailor" element={<TailorDashboard />} />
-                <Route path="all-services" element={<AllServices />} />
-                <Route path="add-services" element={<AddServices />} />
-                <Route
-                  path="all-extra-services"
-                  element={<AllExtraServices />}
-                />
-                <Route
-                  path="add-extra-services"
-                  element={<AddExtraServices />}
-                />
-                <Route path="all-portfolio" element={<AllPortfolio />} />
-                <Route
-                  path="add-Portfolio"
-                  element={<AddPortfolioOfTailor />}
-                />
+                  {/* Tailor Routes */}
+                  <Route path="tailor" element={<TailorDashboard />} />
+                  <Route path="all-services" element={<AllServices />} />
+                  <Route path="add-services" element={<AddServices />} />
+                  <Route
+                    path="all-extra-services"
+                    element={<AllExtraServices />}
+                  />
+                  <Route
+                    path="add-extra-services"
+                    element={<AddExtraServices />}
+                  />
+                  <Route path="all-portfolio" element={<AllPortfolio />} />
+                  <Route
+                    path="add-Portfolio"
+                    element={<AddPortfolioOfTailor />}
+                  />
 
-                {/* Shared Routes */}
-                <Route path="address" element={<AddressForm />} />
-                <Route path="add-shop-details" element={<AddShopDetails />} />
-                <Route
-                  path="order-details/:orderId"
-                  element={<OrderDetail />}
-                />
+                  {/* Shared Routes */}
+                  <Route path="address" element={<AddressForm />} />
+                  <Route path="add-shop-details" element={<AddShopDetails />} />
+                  <Route
+                    path="order-details/:orderId"
+                    element={<OrderDetail />}
+                  />
+                </Route>
               </Route>
             </Route>
-          </Route>
-          <Route path="*" element={<UnderConstructionPage />} />
-        </Routes>
-      </BrowserRouter>
-      <ToastContainer />
-    </SocketProvider>
+            <Route path="*" element={<UnderConstructionPage />} />
+          </Routes>
+        </BrowserRouter>
+      </SocketProvider>
+    </UserProvider>
+    <ToastContainer />
   </StrictMode>
 );
