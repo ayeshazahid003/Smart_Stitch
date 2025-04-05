@@ -1,7 +1,18 @@
 import Offer from "../models/Offer.js";
 import User from "../models/User.js";
 import Order from "../models/Order.js";
-import { sendNotification } from "../helper/notificationHelper.js";
+import Notification from "../models/Notification.js";
+import { sendNotificationToUser } from "../helper/notificationHelper.js";
+
+const createAndSendNotification = async (notificationData) => {
+  try {
+    const notification = await Notification.create(notificationData);
+    await sendNotificationToUser(notification);
+    return notification;
+  } catch (error) {
+    console.error("Error creating/sending notification:", error);
+  }
+};
 
 export const createOffer = async (req, res) => {
   try {
@@ -68,8 +79,8 @@ export const createOffer = async (req, res) => {
 
     await offer.save();
 
-    // Send notification to tailor
-    await sendNotification({
+    // Send real-time notification to tailor
+    await createAndSendNotification({
       userId: tailorId,
       type: "new_offer",
       message: `You have received a new offer of ₨${amount} for ${totalItems} items`,
@@ -148,8 +159,8 @@ export const negotiateOffer = async (req, res) => {
             ? "accepted"
             : "accepted_by_tailor";
 
-        // Send notification to customer about tailor's acceptance
-        await sendNotification({
+        // Send real-time notification to customer about tailor's acceptance
+        await createAndSendNotification({
           userId: offer.customer._id,
           type: "offer_accepted",
           message: `Your offer of ₨${
@@ -164,8 +175,8 @@ export const negotiateOffer = async (req, res) => {
             ? "accepted"
             : "accepted_by_customer";
 
-        // Send notification to tailor about customer's acceptance
-        await sendNotification({
+        // Send real-time notification to tailor about customer's acceptance
+        await createAndSendNotification({
           userId: offer.tailor._id,
           type: "offer_accepted",
           message: `The customer has accepted your counter-offer of ₨${
@@ -233,9 +244,9 @@ export const negotiateOffer = async (req, res) => {
       const senderName =
         userRole === "tailor" ? offer.tailor.shopName : offer.customer.name;
 
-      await sendNotification({
+      await createAndSendNotification({
         userId: recipientId,
-        type: "new_offer",
+        type: "new_counter_offer",
         message: `${senderName} has made a counter-offer of ₨${amount}`,
         relatedId: offer._id,
         onModel: "Offer",
@@ -320,19 +331,20 @@ export const updateOfferStatus = async (req, res) => {
       offer.status = status;
     }
 
-    // Send notification about offer rejection
-    if (status === "rejected") {
+    // Send real-time notification about offer rejection/cancellation
+    if (status === "rejected" || status === "cancelled") {
       const recipientId =
         userId === offer.tailor._id ? offer.customer._id : offer.tailor._id;
       const senderName =
         userId === offer.tailor._id
           ? offer.tailor.shopName
           : offer.customer.name;
+      const action = status === "rejected" ? "rejected" : "cancelled";
 
-      await sendNotification({
+      await createAndSendNotification({
         userId: recipientId,
-        type: "offer_rejected",
-        message: `${senderName} has rejected the offer`,
+        type: `offer_${action}`,
+        message: `${senderName} has ${action} the offer`,
         relatedId: offer._id,
         onModel: "Offer",
       });

@@ -3,33 +3,32 @@ import Notification from "../models/Notification.js";
 export const notificationSocketHandler = (io, connectedUsers) => {
   const notificationNamespace = io.of("/notifications");
 
+  // Handle namespace connection errors
+  notificationNamespace.on("connect_error", (error) => {
+    console.error("[Notification Socket] Namespace connection error:", error);
+  });
+
   notificationNamespace.on("connection", (socket) => {
     console.log(`[Notification Socket] New connection: ${socket.id}`);
 
-    // Handle user connection
-    socket.on("userConnected", (userId) => {
-      if (!userId) {
-        console.log("[Notification Socket] Connection attempt without userId");
-        return;
-      }
+    const userId = socket.handshake.auth.userId;
+    if (!userId) {
+      console.log("[Notification Socket] Connection attempt without userId");
+      socket.disconnect();
+      return;
+    }
 
-      console.log(
-        `[Notification Socket] User ${userId} connected with socket ${socket.id}`
-      );
+    // Store user's socket id and join their room
+    connectedUsers[userId] = socket.id;
+    socket.join(`user_${userId}`);
+    console.log(
+      `[Notification Socket] User ${userId} joined room: user_${userId}`
+    );
 
-      // Store user's socket id and join their room
-      connectedUsers[userId] = socket.id;
-      socket.join(`user_${userId}`);
+    // Send connection confirmation and fetch initial notifications
+    socket.emit("connectionConfirmed", { userId, socketId: socket.id });
 
-      // Send connection confirmation
-      socket.emit("connectionConfirmed", { userId, socketId: socket.id });
-    });
-
-    // Handle fetching unread notifications
-    socket.on("getUnreadNotifications", async (userId) => {
-      console.log(
-        `[Notification Socket] Fetching unread notifications for user ${userId}`
-      );
+    const fetchAndSendNotifications = async () => {
       try {
         const notifications = await Notification.find({
           userId,
@@ -39,20 +38,38 @@ export const notificationSocketHandler = (io, connectedUsers) => {
           .exec();
 
         console.log(
-          `[Notification Socket] Found ${notifications.length} unread notifications`
+          `[Notification Socket] Found ${notifications.length} unread notifications for user ${userId}`
         );
         socket.emit("unreadNotifications", notifications);
       } catch (error) {
         console.error(
-          "[Notification Socket] Error fetching unread notifications:",
+          "[Notification Socket] Error fetching notifications:",
           error
         );
         socket.emit("error", { message: "Failed to fetch notifications" });
       }
+    };
+
+    // Fetch notifications on initial connection
+    fetchAndSendNotifications();
+
+    // Handle reconnection
+    socket.on("userConnected", async (reconnectedUserId) => {
+      if (reconnectedUserId !== userId) {
+        console.warn("[Notification Socket] User ID mismatch on reconnection");
+        return;
+      }
+      console.log(`[Notification Socket] User ${userId} reconnected`);
+      await fetchAndSendNotifications();
+    });
+
+    // Handle fetching unread notifications
+    socket.on("getUnreadNotifications", async () => {
+      await fetchAndSendNotifications();
     });
 
     // Handle marking notifications as read
-    socket.on("markNotificationRead", async ({ notificationId, userId }) => {
+    socket.on("markNotificationRead", async ({ notificationId }) => {
       console.log(
         `[Notification Socket] Marking notification ${notificationId} as read for user ${userId}`
       );
@@ -73,10 +90,7 @@ export const notificationSocketHandler = (io, connectedUsers) => {
           );
         }
       } catch (error) {
-        console.error(
-          "[Notification Socket] Error marking notification as read:",
-          error
-        );
+        console.error("[Notification Socket] Error marking as read:", error);
         socket.emit("error", {
           message: "Failed to mark notification as read",
         });
@@ -84,22 +98,22 @@ export const notificationSocketHandler = (io, connectedUsers) => {
     });
 
     // Handle disconnection
-    socket.on("disconnect", () => {
-      // Find and remove the disconnected user
-      for (const [userId, socketId] of Object.entries(connectedUsers)) {
-        if (socketId === socket.id) {
-          delete connectedUsers[userId];
-          console.log(
-            `[Notification Socket] User ${userId} disconnected from socket ${socket.id}`
-          );
-          break;
-        }
+    socket.on("disconnect", (reason) => {
+      console.log(
+        `[Notification Socket] User ${userId} disconnected. Reason: ${reason}`
+      );
+      if (connectedUsers[userId] === socket.id) {
+        delete connectedUsers[userId];
       }
+      socket.leave(`user_${userId}`);
     });
 
     // Handle errors
     socket.on("error", (error) => {
-      console.error("[Notification Socket] Socket error:", error);
+      console.error(
+        `[Notification Socket] Socket error for user ${userId}:`,
+        error
+      );
     });
   });
 

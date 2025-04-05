@@ -8,26 +8,33 @@ export default function NotificationBell() {
   const [notifications, setNotifications] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const socket = useSocket();
+  const socketContext = useSocket();
   const { user } = useUser();
   const navigate = useNavigate();
 
+  // Handle socket events
   useEffect(() => {
-    if (!socket || !user?._id) return;
+    if (!user?._id) return;
+
+    const socket = socketContext?.getSocket();
+    if (!socket) {
+      console.warn("[NotificationBell] No socket connection available");
+      return;
+    }
 
     console.log("[NotificationBell] Setting up socket listeners");
 
+    // Request initial notifications
+    socket.emit("getUnreadNotifications", user._id);
+
     // Handle new notifications
-    const handleNewNotification = ({ notification }) => {
-      console.log(
-        "[NotificationBell] Received new notification:",
-        notification
-      );
-      setNotifications((prev) => [notification, ...prev]);
+    const handleNewNotification = (data) => {
+      console.log("[NotificationBell] Received new notification:", data);
+      setNotifications((prev) => [data.notification, ...prev]);
       setUnreadCount((prev) => prev + 1);
     };
 
-    // Handle read status updates
+    // Handle notification read status
     const handleNotificationRead = (updatedNotification) => {
       console.log(
         "[NotificationBell] Notification marked as read:",
@@ -41,7 +48,7 @@ export default function NotificationBell() {
       setUnreadCount((prev) => Math.max(0, prev - 1));
     };
 
-    // Handle initial unread notifications
+    // Handle initial notifications load
     const handleUnreadNotifications = (initialNotifications) => {
       console.log(
         "[NotificationBell] Received initial notifications:",
@@ -51,25 +58,25 @@ export default function NotificationBell() {
       setUnreadCount(initialNotifications.filter((n) => !n.isRead).length);
     };
 
-    // Set up socket event listeners
+    // Set up event listeners
     socket.on("receiveNotification", handleNewNotification);
     socket.on("notificationRead", handleNotificationRead);
     socket.on("unreadNotifications", handleUnreadNotifications);
 
-    // Request initial notifications
-    socket.emit("getUnreadNotifications", user._id);
-
-    // Cleanup listeners when component unmounts
+    // Cleanup listeners
     return () => {
       console.log("[NotificationBell] Cleaning up socket listeners");
       socket.off("receiveNotification", handleNewNotification);
       socket.off("notificationRead", handleNotificationRead);
       socket.off("unreadNotifications", handleUnreadNotifications);
     };
-  }, [socket, user?._id]);
+  }, [user?._id, socketContext]);
 
   const handleNotificationClick = async (notification) => {
     if (!notification.isRead) {
+      const socket = socketContext?.getSocket();
+      if (!socket) return;
+
       console.log(
         "[NotificationBell] Marking notification as read:",
         notification._id

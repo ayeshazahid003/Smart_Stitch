@@ -118,7 +118,9 @@ export const getTailorShopDetails = async (req, res) => {
 
     // Find the tailor profile by tailorId, only select required fields
     const tailorProfile = await TailorProfile.findOne({ tailorId })
-      .select("shopName shopImages shopLocation bio phoneNumber")
+      .select(
+        "shopName shopImages shopLocation bio phoneNumber serviceRates extraServices "
+      )
       .lean(); // Convert Mongoose document to a plain object
 
     // If no profile is found

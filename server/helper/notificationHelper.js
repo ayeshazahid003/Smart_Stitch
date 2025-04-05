@@ -1,6 +1,31 @@
 import { getSocket } from "../socket.js";
 import Notification from "../models/Notification.js";
 
+const getNamespaceAndEmit = async (notification) => {
+  const io = getSocket();
+  if (!io) {
+    throw new Error("[Notification Helper] Socket.io instance not found");
+  }
+
+  const notificationNamespace = io.of("/notifications");
+  const userRoom = `user_${notification.userId}`;
+
+  // Check if the user's room exists and has connections
+  const sockets = await notificationNamespace.in(userRoom).allSockets();
+  if (sockets.size === 0) {
+    console.log(
+      `[Notification Helper] No active connections in room: ${userRoom}`
+    );
+  }
+
+  // Emit to user's room
+  notificationNamespace.to(userRoom).emit("receiveNotification", {
+    notification,
+  });
+
+  return true;
+};
+
 export const sendNotification = async ({
   userId,
   type,
@@ -17,6 +42,7 @@ export const sendNotification = async ({
       onModel,
     });
 
+    // Create and save notification
     const notification = new Notification({
       userId,
       type,
@@ -31,27 +57,18 @@ export const sendNotification = async ({
       notification._id
     );
 
-    // Get the socket instance
-    const io = getSocket();
-    if (!io) {
-      throw new Error("[Notification Helper] Socket.io instance not found");
+    // Try to emit the notification
+    try {
+      await getNamespaceAndEmit(notification);
+      console.log("[Notification Helper] Notification emitted successfully");
+    } catch (socketError) {
+      console.error(
+        "[Notification Helper] Socket emission error:",
+        socketError
+      );
+      // Don't throw here - notification is saved even if emission fails
     }
 
-    // Get the notifications namespace
-    const notificationNamespace = io.of("/notifications");
-
-    // Emit to user's room
-    const userRoom = `user_${userId}`;
-    console.log(
-      "[Notification Helper] Emitting notification to room:",
-      userRoom
-    );
-
-    notificationNamespace.to(userRoom).emit("receiveNotification", {
-      notification,
-    });
-
-    console.log("[Notification Helper] Notification emitted successfully");
     return notification;
   } catch (error) {
     console.error("[Notification Helper] Error in sendNotification:", error);
@@ -62,5 +79,19 @@ export const sendNotification = async ({
       stack: error.stack,
     });
     throw error;
+  }
+};
+
+export const sendNotificationToUser = async (notification) => {
+  try {
+    await getNamespaceAndEmit(notification);
+    console.log(
+      `[Notification Helper] Notification sent to user ${notification.userId}:`,
+      notification.message
+    );
+    return true;
+  } catch (error) {
+    console.error("[Notification Helper] Error sending notification:", error);
+    return false;
   }
 };

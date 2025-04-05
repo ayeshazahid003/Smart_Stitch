@@ -14,8 +14,9 @@ export default function ServiceSelector({ onServicesSelected }) {
       const tailorProfile = await axios.get("/tailor/get-profile", {
         withCredentials: true,
       });
-      setServices(tailorProfile.data.profile.serviceRates || []);
-      setExtraServices(tailorProfile.data.profile.extraServices || []);
+      console.log("Tailor Profile:", tailorProfile.data);
+      setServices(tailorProfile.data.shopDetails.serviceRates || []);
+      setExtraServices(tailorProfile.data.shopDetails.extraServices || []);
     } catch (error) {
       console.error("Failed to load services:", error);
       setError(error.message);

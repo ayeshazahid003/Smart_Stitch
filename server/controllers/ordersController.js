@@ -7,6 +7,7 @@ import { uploadMultipleFiles } from "../helper/cloudinaryUploader.js";
 import { getSocket } from "../socket.js";
 import Campaign from "../models/Campaign.js";
 import mongoose from "mongoose";
+import { sendNotificationToUser } from "../helper/notificationHelper.js";
 
 export const createNewOrder = async (req, res) => {
   try {
@@ -298,48 +299,65 @@ export const getOrdersByTailor = async (req, res) => {
 
 export const updateOrderStatus = async (req, res) => {
   try {
-    const { id: orderId } = req.params;
-    const { status, design, shippingAddress, measurement } = req.body;
-    console.log("order id", orderId);
+    const { orderId } = req.params;
+    const { status } = req.body;
 
-    // Validate orderId
-    if (!mongoose.Types.ObjectId.isValid(orderId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid order ID",
-      });
-    }
+    const order = await Order.findById(orderId)
+      .populate("customerId", "username")
+      .populate("tailorId", "username");
 
-    // Find the order
-    const order = await Order.findById(orderId);
     if (!order) {
-      return res.status(404).json({
-        success: false,
-        message: "Order not found",
-      });
+      return res.status(404).json({ message: "Order not found" });
     }
 
-    // Update order fields
-    if (status) order.status = status;
-    if (design) order.design = design;
-    if (measurement) order.measurement = measurement;
-    if (shippingAddress) order.shippingAddress = shippingAddress;
-
-    // Save the updated order
+    // Update order status
+    order.status = status;
     await order.save();
+
+    // Determine notification recipient and message based on status
+    let notification;
+    if (status === "accepted") {
+      notification = {
+        userId: order.customerId._id,
+        type: "ORDER_ACCEPTED",
+        message: `Your order has been accepted by ${order.tailorId.username}`,
+        relatedId: order._id,
+        onModel: "Order",
+      };
+    } else if (status === "rejected") {
+      notification = {
+        userId: order.customerId._id,
+        type: "ORDER_REJECTED",
+        message: `Your order has been rejected by ${order.tailorId.username}`,
+        relatedId: order._id,
+        onModel: "Order",
+      };
+    } else if (status === "completed") {
+      notification = {
+        userId: order.customerId._id,
+        type: "ORDER_COMPLETED",
+        message: `Your order has been completed by ${order.tailorId.username}`,
+        relatedId: order._id,
+        onModel: "Order",
+      };
+    }
+
+    // Send real-time notification if applicable
+    if (notification) {
+      const savedNotification = await Notification.create(notification);
+      await sendNotificationToUser(savedNotification);
+    }
 
     res.status(200).json({
       success: true,
-      message: "Order updated successfully",
+      message: "Order status updated successfully",
       order,
     });
   } catch (error) {
-    console.error("Error updating order:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error updating order",
-      error: error.message,
-    });
+    console.error("Error updating order status:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Error updating order status" });
   }
 };
 

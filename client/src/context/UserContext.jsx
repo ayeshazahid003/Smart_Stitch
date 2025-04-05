@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
 import PropTypes from "prop-types";
 import { BASE_URL } from "@/lib/constants";
+import { connectSocket, disconnectSocket } from "@/lib/socketUtils";
 
 const UserContext = createContext(undefined);
 
@@ -9,10 +10,25 @@ export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+    const initializeUser = async () => {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        const userData = JSON.parse(storedUser);
+        setUser(userData);
+        // Connect socket for existing user session
+        const socket = connectSocket(userData._id);
+        if (socket) {
+          console.log("[UserContext] Socket connected for stored user");
+        }
+      }
+    };
+
+    initializeUser();
+
+    // Cleanup function
+    return () => {
+      disconnectSocket();
+    };
   }, []);
 
   const login = async (email, password) => {
@@ -31,8 +47,14 @@ export const UserProvider = ({ children }) => {
       const userData = response.data.user;
       setUser(userData);
       localStorage.setItem("user", JSON.stringify(userData));
+
+      // Initialize socket connection after successful login
+      const socket = connectSocket(userData._id);
+      if (socket) {
+        console.log("[UserContext] Socket connected after login");
+      }
     } catch (err) {
-      console.log(err);
+      console.error("[UserContext] Login error:", err);
       throw new Error("Login failed");
     }
   };
@@ -50,9 +72,10 @@ export const UserProvider = ({ children }) => {
         { withCredentials: true }
       );
       const userData = response.data;
-      console.log("userData", userData);
       setUser(userData);
       localStorage.setItem("user", JSON.stringify(userData));
+      // Initialize socket connection after successful registration
+      connectSocket(userData._id);
     } catch (err) {
       console.log(err);
       throw new Error("Registration failed");
@@ -68,10 +91,12 @@ export const UserProvider = ({ children }) => {
           withCredentials: true,
         }
       );
+      // Disconnect socket before clearing user data
+      disconnectSocket();
       setUser(null);
       localStorage.removeItem("user");
     } catch (err) {
-      console.log(err);
+      console.error("[UserContext] Logout error:", err);
       throw new Error("Logout failed");
     }
   };

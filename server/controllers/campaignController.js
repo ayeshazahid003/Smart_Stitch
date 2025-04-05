@@ -1,6 +1,18 @@
 import Campaign from "../models/Campaign.js";
 import User from "../models/User.js";
 import TailorProfile from "../models/TailorProfile.js";
+import Notification from "../models/Notification.js";
+import { sendNotificationToUser } from "../helper/notificationHelper.js";
+
+const createAndSendNotification = async (notificationData) => {
+  try {
+    const notification = await Notification.create(notificationData);
+    await sendNotificationToUser(notification);
+    return notification;
+  } catch (error) {
+    console.error("Error creating/sending notification:", error);
+  }
+};
 
 // Create a new campaign
 export const createCampaign = async (req, res) => {
@@ -76,6 +88,30 @@ export const createCampaign = async (req, res) => {
     });
 
     await campaign.save();
+
+    // Get tailor's subscribers for notification
+    const tailorProfile = await TailorProfile.findOne({ tailorId }).populate(
+      "subscribers.userId"
+    );
+
+    // Send notifications to all subscribers
+    if (tailorProfile && tailorProfile.subscribers) {
+      const notifications = tailorProfile.subscribers.map((sub) => ({
+        userId: sub.userId._id,
+        type: "new_campaign",
+        message: `New campaign from ${tailorProfile.shopName}: ${title}`,
+        relatedId: campaign._id,
+        onModel: "Campaign",
+      }));
+
+      // Send notifications in parallel
+      await Promise.all(
+        notifications.map((notification) =>
+          createAndSendNotification(notification)
+        )
+      );
+    }
+
     res.status(201).json({ success: true, campaign });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -179,7 +215,8 @@ export const deleteCampaign = async (req, res) => {
       });
     }
 
-    await campaign.remove();
+    await campaign.deleteOne();
+
     res.json({ success: true, message: "Campaign deleted successfully" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
