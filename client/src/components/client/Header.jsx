@@ -2,7 +2,7 @@ import { useState, Fragment } from "react";
 import { Dialog, DialogPanel, Menu, Transition } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useUser } from "../../context/UserContext";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import NotificationBell from "./NotificationBell";
 
 const navigation = [
@@ -15,6 +15,7 @@ const navigation = [
 export default function Header() {
   const { user, logout } = useUser();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <header className="bg-[#9760f4]">
@@ -77,6 +78,18 @@ export default function Header() {
                   leaveTo="transform opacity-0 scale-95"
                 >
                   <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                    <Menu.Item>
+                      {({ active }) => (
+                        <button
+                          onClick={() => navigate("/user-profile")}
+                          className={`${
+                            active ? "bg-gray-100" : ""
+                          } block w-full text-left px-4 py-2 text-sm text-gray-700`}
+                        >
+                          Dashboard
+                        </button>
+                      )}
+                    </Menu.Item>
                     <Menu.Item>
                       {({ active }) => (
                         <button
