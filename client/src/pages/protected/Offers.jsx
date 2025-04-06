@@ -141,7 +141,7 @@ export default function Offers() {
                 <h3 className="text-lg font-semibold">
                   {user?.role === "tailor"
                     ? `From: ${offer.customer.name}`
-                    : `To: ${offer.tailor.shopName}`}
+                    : `To: ${offer?.tailor?.shopName}`}
                 </h3>
                 <p className="text-gray-600">Current Amount: ₨{offer.amount}</p>
                 <p

@@ -416,12 +416,12 @@ export const updateOrderStatus = async (req, res) => {
         <p>Best regards,<br>Smart Stitch Team</p>
       `;
 
-      await sendEmail(
-        "no-reply@smartstitch.com",
-        order.customerId.email,
-        "Payment Confirmation and Invoice - Smart Stitch",
-        emailBody
-      );
+      // await sendEmail(
+      //   "no-reply@smartstitch.com",
+      //   order.customerId.email,
+      //   "Payment Confirmation and Invoice - Smart Stitch",
+      //   emailBody
+      // );
     }
 
     // Determine notification recipient and message based on status
