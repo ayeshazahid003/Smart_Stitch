@@ -1,7 +1,7 @@
 import Notification from "../models/Notification.js";
 
 export const notificationSocketHandler = (io, connectedUsers) => {
-  const notificationNamespace = io.of("/notifications");
+  const notificationNamespace = io.of("/");
 
   // Handle namespace connection errors
   notificationNamespace.on("connect_error", (error) => {
