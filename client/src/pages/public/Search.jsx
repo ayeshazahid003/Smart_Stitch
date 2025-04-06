@@ -227,7 +227,7 @@ export default function Search() {
                   onChange={() => handlePriceCheck(index)}
                 />
                 <span className="ml-2 text-md">
-                  {range.label} ({range.count})
+                  {range.label} 
                 </span>
               </label>
             ))}
@@ -247,7 +247,7 @@ export default function Search() {
                   onChange={() => handleRatingCheck(index)}
                 />
                 <span className="ml-2 text-md">
-                  {range.label} ({range.count})
+                  {range.label} 
                 </span>
               </label>
             ))}
@@ -267,7 +267,7 @@ export default function Search() {
                   onChange={() => handleExperienceCheck(index)}
                 />
                 <span className="ml-2 text-md">
-                  {range.label} ({range.count})
+                  {range.label}
                 </span>
               </label>
             ))}

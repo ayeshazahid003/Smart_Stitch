@@ -67,7 +67,7 @@ export default function TailorProfile() {
 
   const handleChatClick = () => {
     // Navigate with state
-    navigate("/chat", {
+    navigate("/chats", {
       state: {
         id: id,
         name: tailor.name,

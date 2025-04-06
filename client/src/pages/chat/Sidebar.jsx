@@ -1,4 +1,3 @@
-// src/pages/chat/Sidebar.js
 import React, { useState } from 'react';
 import { Search, Menu } from 'lucide-react';
 
@@ -42,13 +41,17 @@ function Sidebar({ contacts, onSelectContact, currentUserId }) {
             const otherParticipant = chat.participants?.find(
               (p) => p._id !== currentUserId
             );
-            // If we have data, use that participant's info
-            const name = otherParticipant?.name || 'Unknown User';
+
+            // UPDATED LINES:
+            const name =
+              otherParticipant?.name ||
+              chat.name ||
+              'Unknown User';
             const avatar =
               otherParticipant?.profilePicture ||
+              chat.avatar ||
               'https://via.placeholder.com/40';
 
-            // Get the last message's text (note: your schema might store it in `message`)
             const lastMessage = chat.messages?.length
               ? chat.messages[chat.messages.length - 1].message
               : 'No messages yet';

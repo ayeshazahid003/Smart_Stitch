@@ -19,7 +19,7 @@ export const connectSocket = (userId) => {
   console.log("[Socket Util] Initializing socket connection for user:", userId);
 
   // Connect to the notification namespace
-  const socketUrl = `${BASE_URL}/notifications`;
+  const socketUrl = `${BASE_URL}`;
   const newSocket = io(socketUrl, {
     withCredentials: true,
     reconnection: true,

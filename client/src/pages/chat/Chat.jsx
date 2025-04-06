@@ -27,7 +27,10 @@ function normalizeChat(chat) {
 export default function Chat() {
   const location = useLocation();
   const incomingChat = location.state; // Possibly from TailorProfile
-  const socket = useSocket();
+  const { getSocket } = useSocket();
+  const socket = getSocket(); // Get the socket instance from context
+
+  console.log('Socket:', socket);
   const user = JSON.parse(localStorage.getItem('user')); // Logged-in user data
 
   const [chats, setChats] = useState([]);
@@ -152,6 +155,7 @@ export default function Chat() {
     };
 
     if (socket && selectedChat) {
+      console.log('Sending message:', newMessage);
       socket.emit('sendMessage', {
         chatId: selectedChat.id,
         senderId: user._id,

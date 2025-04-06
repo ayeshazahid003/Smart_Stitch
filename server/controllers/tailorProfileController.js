@@ -1038,10 +1038,10 @@ export const getTailorProfileById = async (req, res) => {
 
     // Construct your response object to match the required format
     const tailorData = {
-      name: tailorProfile.tailorId.name,
+      name: tailorProfile.tailorId?.name || "Unknown Tailor",
       shopName: tailorProfile.shopName,
       profilePicture:
-        tailorProfile.tailorId.profilePicture ||
+        tailorProfile.tailorId?.profilePicture ||
         "https://source.unsplash.com/150x150/?portrait", // fallback
       shopLocation:
         tailorProfile.shopLocation?.address || "Location not provided",

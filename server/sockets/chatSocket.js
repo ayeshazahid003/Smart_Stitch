@@ -20,6 +20,7 @@ export const chatSocketHandler = (io, connectedUsers) => {
     // 3) Send a message
     socket.on("sendMessage", async (data) => {
       try {
+        console.log("Data received in sendMessage:", data);
         const { chatId, senderId, message, participants } = data;
 
         // Check if this chat already exists in the DB

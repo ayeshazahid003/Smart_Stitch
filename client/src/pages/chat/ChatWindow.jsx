@@ -17,9 +17,16 @@ function ChatWindow({ contact, messages, onSendMessage, currentUserId }) {
   const otherParticipant = contact.participants?.find(
     (p) => p._id !== currentUserId
   );
-  const name = otherParticipant?.name || "Unknown User";
+
+  console.log("Other participant:", otherParticipant);
+  const name =
+    otherParticipant?.name ||
+    contact.name ||
+    "Unknown User";
   const avatar =
-    otherParticipant?.profilePicture || "https://via.placeholder.com/40";
+    otherParticipant?.profilePicture ||
+    contact.avatar ||
+    "https://via.placeholder.com/40";
 
   return (
     <div className="w-full flex flex-col bg-gray-50 h-full shadow-md">

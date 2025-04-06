@@ -56,8 +56,8 @@ import { UserProvider } from "./context/UserContext";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <UserProvider>
-      <SocketProvider>
+    <SocketProvider>
+      <UserProvider>
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<MainLayout />}>
@@ -68,6 +68,8 @@ createRoot(document.getElementById("root")).render(
               <Route path="/tailor/:id" element={<TailorProfile />} />
               <Route path="/checkout/:id" element={<Checkout />} />
               <Route path="/order-placed" element={<OrderPlaced />} />
+              <Route path="chats" element={<Chat />} />
+
 
               {/* Auth Routes */}
               <Route element={<AuthLayout />}>
@@ -85,7 +87,6 @@ createRoot(document.getElementById("root")).render(
                   <Route path="user-profile" element={<UserProfile />} />
                   <Route path="measurements" element={<MeasurementForm />} />
                   <Route path="offers" element={<Offers />} />
-                  <Route path="chats" element={<Chat />} />
                   <Route path="orders" element={<AllOrders />} />
                   <Route path="orders" element={<OrderDetails />} />
                   <Route path="/campaigns" element={<Campaigns />} />
@@ -122,8 +123,8 @@ createRoot(document.getElementById("root")).render(
             <Route path="*" element={<UnderConstructionPage />} />
           </Routes>
         </BrowserRouter>
-      </SocketProvider>
-    </UserProvider>
+      </UserProvider>
+    </SocketProvider>
     <ToastContainer />
   </StrictMode>
 );
