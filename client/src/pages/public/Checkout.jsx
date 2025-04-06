@@ -6,6 +6,7 @@ import { ArrowLeft, CreditCard, DollarSign, PlusCircle } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
 import MeasurementModal from "../../components/client/MeasurementModal";
 import { useUser } from "../../context/UserContext";
+import { verifyVoucherByTitle } from "../../hooks/voucherHooks";
 
 import {
   getOrderById,
@@ -83,6 +84,9 @@ function CheckoutPage() {
     },
   });
   const [coupon, setCoupon] = useState("");
+  const [isApplyingVoucher, setIsApplyingVoucher] = useState(false);
+  const [appliedVoucher, setAppliedVoucher] = useState(null);
+  const [voucherError, setVoucherError] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -216,6 +220,96 @@ function CheckoutPage() {
     }
   };
 
+  // Constants for calculations
+  const shippingCost = 200.0;
+  const TAX_RATE = 0.1; // 10% tax
+
+  // Calculate totals from order data
+  const calculateTotals = () => {
+    const baseSubtotal = orderData?.pricing?.subtotal || 0;
+    const extraServicesTotal =
+      orderData.extraServices?.reduce(
+        (sum, service) => sum + service.price,
+        0
+      ) || 0;
+
+    const subtotal = baseSubtotal + extraServicesTotal;
+    const voucherDiscount = appliedVoucher
+      ? (subtotal * appliedVoucher.discount) / 100
+      : 0;
+    const discountedSubtotal = subtotal - voucherDiscount;
+    const tax = discountedSubtotal * TAX_RATE;
+    const total = discountedSubtotal + shippingCost + tax;
+
+    return {
+      subtotal,
+      extraServicesTotal,
+      voucherDiscount,
+      tax,
+      total,
+    };
+  };
+
+  const { subtotal, extraServicesTotal, voucherDiscount, tax, total } =
+    calculateTotals();
+
+  const handleVoucherApply = async () => {
+    if (!coupon.trim()) {
+      setVoucherError("Please enter a voucher code");
+      return;
+    }
+
+    if (appliedVoucher) {
+      setVoucherError("A voucher has already been applied");
+      return;
+    }
+
+    try {
+      setIsApplyingVoucher(true);
+      setVoucherError("");
+
+      const response = await verifyVoucherByTitle(coupon, orderData.tailorId);
+
+      if (response.success) {
+        const updatedOrder = await updateOrderStatus(orderId, {
+          voucherId: response.voucher._id,
+          status: "pending_payment",
+        });
+
+        if (updatedOrder.success) {
+          setAppliedVoucher(response.voucher);
+          toast.success(
+            `Voucher applied successfully! ${response.voucher.discount}% discount added.`
+          );
+
+          // Calculate new totals with voucher
+          const discountAmount = (subtotal * response.voucher.discount) / 100;
+          const discountedSubtotal = subtotal - discountAmount;
+          const newTax = discountedSubtotal * TAX_RATE;
+          const newTotal = discountedSubtotal + shippingCost + newTax;
+
+          // Update order data with new pricing
+          setOrderData({
+            ...orderData,
+            pricing: {
+              ...orderData.pricing,
+              subtotal: subtotal,
+              voucherDiscount: discountAmount,
+              tax: newTax,
+              total: newTotal,
+            },
+          });
+        }
+      }
+    } catch (error) {
+      setVoucherError(
+        error.response?.data?.message || "Failed to apply voucher"
+      );
+    } finally {
+      setIsApplyingVoucher(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -223,27 +317,6 @@ function CheckoutPage() {
       </div>
     );
   }
-
-  // Calculate totals from order data
-  const calculateTotals = () => {
-    const subtotal = orderData.utilizedServices.reduce(
-      (sum, service) => sum + service.price,
-      0
-    );
-    const extraServicesTotal =
-      orderData.extraServices?.reduce(
-        (sum, service) => sum + service.price,
-        0
-      ) || 0;
-    const total = subtotal + extraServicesTotal;
-    return {
-      subtotal,
-      extraServicesTotal,
-      total,
-    };
-  };
-
-  const { subtotal, extraServicesTotal, total } = calculateTotals();
 
   // Helper to determine step circle styling
   const getCircleStyle = (circleStep) => {
@@ -267,10 +340,6 @@ function CheckoutPage() {
       ? "flex-auto border-t-2 border-green-600 mx-2"
       : "flex-auto border-t-2 border-gray-300 mx-2";
   };
-
-  // Constants for calculations
-  const shippingCost = 5.0;
-  const tax = total * 0.1; // 10% tax
 
   // Function for measurement handling
   const handleSaveMeasurement = async () => {
@@ -792,18 +861,36 @@ function CheckoutPage() {
                   Order Summary
                 </h2>
                 <div className="flex items-center space-x-2 mb-4">
-                  <input
-                    type="text"
-                    placeholder="Have a coupon?"
-                    value={coupon}
-                    onChange={(e) => setCoupon(e.target.value)}
-                    className="flex-1 border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#111827]"
-                  />
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      placeholder="Have a voucher?"
+                      value={coupon}
+                      onChange={(e) => {
+                        setCoupon(e.target.value);
+                        setVoucherError("");
+                      }}
+                      className={`w-full border ${
+                        voucherError ? "border-red-300" : "border-gray-300"
+                      } rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#111827]`}
+                      disabled={appliedVoucher || isApplyingVoucher}
+                    />
+                    {voucherError && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {voucherError}
+                      </p>
+                    )}
+                  </div>
                   <button
                     type="button"
-                    className="bg-[#111827] text-white px-4 py-2 rounded-md hover:bg-[#1f2937] transition"
+                    onClick={handleVoucherApply}
+                    disabled={appliedVoucher || isApplyingVoucher}
+                    className={`bg-[#111827] text-white px-4 py-2 rounded-md hover:bg-[#1f2937] transition ${
+                      (appliedVoucher || isApplyingVoucher) &&
+                      "opacity-50 cursor-not-allowed"
+                    }`}
                   >
-                    Apply
+                    {isApplyingVoucher ? "Applying..." : "Apply"}
                   </button>
                 </div>
                 <div className="space-y-4 max-h-64 overflow-auto">
@@ -832,17 +919,35 @@ function CheckoutPage() {
                     </div>
                   ))}
                 </div>
+                {/* Negotiated Price Banner */}
+                <div className="mb-4 mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <div className="flex items-center">
+                    <span className="text-blue-700 font-medium">
+                      ✓ Negotiated Price
+                    </span>
+                  </div>
+                  <p className="text-sm text-blue-600 mt-1">
+                    This is your final negotiated price with the tailor.
+                  </p>
+                </div>
+
                 <div className="mt-4 border-t border-gray-200 pt-4 space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span>Subtotal</span>
                     <span>RS {subtotal.toFixed(2)}</span>
                   </div>
+                  {appliedVoucher && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Voucher Discount ({appliedVoucher.discount}%)</span>
+                      <span>- RS {voucherDiscount.toFixed(2)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span>Shipping</span>
                     <span>RS {shippingCost.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Tax</span>
+                    <span>Tax (10%)</span>
                     <span>RS {tax.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-base font-bold mt-2">

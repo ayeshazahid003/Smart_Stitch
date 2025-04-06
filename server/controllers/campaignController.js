@@ -89,29 +89,6 @@ export const createCampaign = async (req, res) => {
 
     await campaign.save();
 
-    // Get tailor's subscribers for notification
-    const tailorProfile = await TailorProfile.findOne({ tailorId }).populate(
-      "subscribers.userId"
-    );
-
-    // Send notifications to all subscribers
-    if (tailorProfile && tailorProfile.subscribers) {
-      const notifications = tailorProfile.subscribers.map((sub) => ({
-        userId: sub.userId._id,
-        type: "new_campaign",
-        message: `New campaign from ${tailorProfile.shopName}: ${title}`,
-        relatedId: campaign._id,
-        onModel: "Campaign",
-      }));
-
-      // Send notifications in parallel
-      await Promise.all(
-        notifications.map((notification) =>
-          createAndSendNotification(notification)
-        )
-      );
-    }
-
     res.status(201).json({ success: true, campaign });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

@@ -326,6 +326,7 @@ export default function Search() {
                 experience={tailor.experience}
                 priceRange={tailor.priceRange}
                 description={tailor.description}
+                services={tailor.services}
               />
             ))}
           </div>

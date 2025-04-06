@@ -51,6 +51,7 @@ import Offers from "./pages/protected/Offers";
 // Context
 import { SocketProvider } from "./context/SocketContext";
 import Campaigns from "./pages/protected/tailor/Campaigns";
+import Vouchers from "./pages/protected/tailor/Vouchers";
 import { UserProvider } from "./context/UserContext";
 
 createRoot(document.getElementById("root")).render(
@@ -88,6 +89,7 @@ createRoot(document.getElementById("root")).render(
                   <Route path="orders" element={<AllOrders />} />
                   <Route path="orders" element={<OrderDetails />} />
                   <Route path="/campaigns" element={<Campaigns />} />
+                  <Route path="/vouchers" element={<Vouchers />} />
 
                   {/* Tailor Routes */}
                   <Route path="tailor" element={<TailorDashboard />} />

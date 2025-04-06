@@ -8,7 +8,13 @@ import { toast } from "react-toastify";
 import PropTypes from "prop-types";
 import axios from "axios";
 
-const PlaceOrderModal = ({ isOpen, onClose, tailorName, tailorId }) => {
+const PlaceOrderModal = ({
+  isOpen,
+  onClose,
+  tailorName,
+  tailorId,
+  services: passedServices,
+}) => {
   const [description, setDescription] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -28,13 +34,20 @@ const PlaceOrderModal = ({ isOpen, onClose, tailorName, tailorId }) => {
     const fetchServices = async () => {
       try {
         setLoading(true);
-        const [servicesRes, extraServicesRes] = await Promise.all([
-          axios.get(`/tailor/services/${tailorId}`),
-          axios.get(`/tailor/extra-services/${tailorId}`),
-        ]);
-
-        setServices(servicesRes.data.services || []);
-        setExtraServices(extraServicesRes.data.extraServices || []);
+        if (passedServices) {
+          setServices(passedServices);
+          const extraServicesRes = await axios.get(
+            `/tailor/extra-services/${tailorId}`
+          );
+          setExtraServices(extraServicesRes.data.extraServices || []);
+        } else {
+          const [servicesRes, extraServicesRes] = await Promise.all([
+            axios.get(`/tailor/services/${tailorId}`),
+            axios.get(`/tailor/extra-services/${tailorId}`),
+          ]);
+          setServices(servicesRes.data.services || []);
+          setExtraServices(extraServicesRes.data.extraServices || []);
+        }
       } catch (err) {
         console.error("Error fetching services:", err);
         setError("Failed to load tailor services");
@@ -46,7 +59,19 @@ const PlaceOrderModal = ({ isOpen, onClose, tailorName, tailorId }) => {
     if (tailorId && isOpen) {
       fetchServices();
     }
-  }, [tailorId, isOpen]);
+  }, [tailorId, isOpen, passedServices]);
+
+  const calculateDiscountedPrice = (service) => {
+    if (!service.discount) return service.minPrice;
+
+    const { type, value } = service.discount;
+    if (type === "percentage") {
+      return service.minPrice - service.minPrice * (value / 100);
+    } else if (type === "fixed") {
+      return service.minPrice - value;
+    }
+    return service.minPrice;
+  };
 
   const handleServiceSelection = (service, isExtra = false) => {
     const servicesList = isExtra ? selectedExtraServices : selectedServices;
@@ -61,35 +86,31 @@ const PlaceOrderModal = ({ isOpen, onClose, tailorName, tailorId }) => {
     if (existingService) {
       setServicesList(servicesList.filter((s) => s.serviceId !== service._id));
     } else {
+      // Always use original price for the offer
       setServicesList([
         ...servicesList,
         {
           serviceId: service._id,
           serviceName: isExtra ? service.serviceName : service.type,
           quantity: 1,
-          price: service.minPrice,
-          originalPrice: service.minPrice, // Keep track of original price
+          price: service.minPrice, // Use original price
         },
       ]);
-    }
 
-    // Update custom offer amount when services are selected/deselected
-    if (!isExtra) {
-      const updatedServices = existingService
-        ? selectedServices.filter((s) => s.serviceId !== service._id)
-        : [
-            ...selectedServices,
-            {
-              serviceId: service._id,
-              serviceName: service.type,
-              quantity: 1,
-              price: service.minPrice,
-              originalPrice: service.minPrice,
-            },
-          ];
-
-      const totalOriginalAmount = calculateServicesTotal(updatedServices);
-      setCustomOfferAmount(totalOriginalAmount.toString());
+      // Update custom offer amount when services are selected/deselected
+      if (!isExtra) {
+        const updatedServices = [
+          ...selectedServices,
+          {
+            serviceId: service._id,
+            serviceName: service.type,
+            quantity: 1,
+            price: service.minPrice, // Use original price
+          },
+        ];
+        const totalAmount = calculateServicesTotal(updatedServices);
+        setCustomOfferAmount(totalAmount.toString());
+      }
     }
   };
 
@@ -123,7 +144,7 @@ const PlaceOrderModal = ({ isOpen, onClose, tailorName, tailorId }) => {
 
   const calculateServicesTotal = (services) => {
     return services.reduce(
-      (sum, service) => sum + service.originalPrice * service.quantity,
+      (sum, service) => sum + service.price * service.quantity,
       0
     );
   };
@@ -180,20 +201,16 @@ const PlaceOrderModal = ({ isOpen, onClose, tailorName, tailorId }) => {
       setIsSubmitting(true);
       setError("");
 
-      // Calculate the custom price per service based on total custom amount
-      const totalOriginalAmount = calculateServicesTotal(selectedServices);
-      const priceRatio = Number(customOfferAmount) / totalOriginalAmount;
-
-      const servicesWithCustomPrices = selectedServices.map((service) => ({
-        ...service,
-        price: Math.round(service.originalPrice * priceRatio), // Adjust each service price proportionally
-      }));
-
       const offerData = {
         tailorId,
         amount: calculateTotalAmount(),
         description,
-        selectedServices: servicesWithCustomPrices,
+        selectedServices: selectedServices.map((service) => ({
+          serviceId: service.serviceId,
+          serviceName: service.serviceName,
+          quantity: service.quantity,
+          price: service.price,
+        })),
         extraServices: selectedExtraServices,
         totalItems: calculateTotalItems(),
       };
@@ -262,7 +279,28 @@ const PlaceOrderModal = ({ isOpen, onClose, tailorName, tailorId }) => {
                       />
                       <span className="font-medium">{service.type}</span>
                     </div>
-                    <span className="text-gray-600">₨{service.minPrice}</span>
+                    <div className="text-right">
+                      {service.discount ? (
+                        <div>
+                          <span className="line-through text-gray-400">
+                            ₨{service.minPrice}
+                          </span>
+                          <span className="text-green-600 ml-2">
+                            ₨{calculateDiscountedPrice(service)}
+                          </span>
+                          <div className="text-xs text-red-500">
+                            {service.discount.value}% Off
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            (Negotiable from ₨{service.minPrice})
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-gray-600">
+                          ₨{service.minPrice}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   {selectedServices.some(
                     (s) => s.serviceId === service._id

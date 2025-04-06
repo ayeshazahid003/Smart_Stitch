@@ -20,7 +20,10 @@ const OrderSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
-  voucherId: { type: mongoose.Schema.Types.ObjectId, ref: "Voucher" },
+  voucherId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Voucher",
+  },
   status: {
     type: String,
     enum: [
@@ -103,6 +106,7 @@ const OrderSchema = new mongoose.Schema({
   },
   pricing: {
     subtotal: { type: Number, required: true },
+    tax: { type: Number },
     campaignDiscount: { type: Number, default: 0 },
     voucherDiscount: { type: Number, default: 0 },
     total: { type: Number, required: true },

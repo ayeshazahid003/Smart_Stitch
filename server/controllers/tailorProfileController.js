@@ -1,4 +1,5 @@
 import TailorProfile from "../models/TailorProfile.js";
+import Campaign from "../models/Campaign.js";
 import {
   uploadMultipleFiles,
   uploadSingleFile,
@@ -815,7 +816,16 @@ export const searchTailors = async (req, res) => {
       .select("shopName shopImages rating experience bio serviceRates tailorId")
       .lean();
 
-    // Post-query filtering for price ranges (since we need to calculate min/max from all services)
+    // Get active campaigns for all tailors
+    const currentDate = new Date();
+    const activeCampaigns = await Campaign.find({
+      tailorId: { $in: tailors.map((tailor) => tailor.tailorId) },
+      isActive: true,
+    }).lean();
+
+    console.log("Active campaigns:", activeCampaigns);
+
+    // Post-query filtering for price ranges and add campaign data
     if (minPrice || maxPrice) {
       tailors = tailors.filter((tailor) => {
         const prices = tailor.serviceRates.map((service) => service.minPrice);
@@ -843,6 +853,44 @@ export const searchTailors = async (req, res) => {
           ? Math.max(...tailor.serviceRates.map((service) => service.maxPrice))
           : 0;
 
+      // Get campaigns for this tailor
+      const tailorCampaigns = activeCampaigns.filter(
+        (campaign) =>
+          campaign.tailorId.toString() === tailor.tailorId.toString()
+      );
+
+      // Add campaign discount info to services
+      const servicesWithDiscounts = tailor.serviceRates.map((service) => {
+        let bestDiscount = null;
+
+        // Find the best discount for this service from all active campaigns
+        tailorCampaigns.forEach((campaign) => {
+          const applicableService = campaign.applicableServices.find(
+            (as) =>
+              as.serviceId.toString() === service._id.toString() &&
+              as.serviceType === "TailorProfile.serviceRates"
+          );
+
+          if (applicableService) {
+            const discountInfo = {
+              type: campaign.discountType,
+              value: campaign.discountValue,
+              campaignTitle: campaign.title,
+            };
+
+            // Update best discount if this is better
+            if (!bestDiscount || bestDiscount.value < campaign.discountValue) {
+              bestDiscount = discountInfo;
+            }
+          }
+        });
+
+        return {
+          ...service,
+          discount: bestDiscount,
+        };
+      });
+
       return {
         id: tailor.tailorId,
         shopName: tailor.shopName,
@@ -854,6 +902,7 @@ export const searchTailors = async (req, res) => {
           max: maxServicePrice,
         },
         description: tailor.bio ? tailor.bio.substring(0, 100) : "",
+        services: servicesWithDiscounts,
       };
     });
 

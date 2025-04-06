@@ -43,6 +43,7 @@ const getNavigation = (role) => {
     { name: "Offers", href: "/offers", icon: GiftIcon },
     { name: "Chats", href: "/chats", icon: ChatBubbleLeftRightIcon },
     { name: "Campaigns", href: "/campaigns", icon: TagIcon },
+    { name: "Vouchers", href: "/vouchers", icon: GiftIcon },
   ];
 
   return role === "tailor" ? tailorNav : customerNav;

@@ -525,16 +525,59 @@ export const getOrderByStatusOfTailor = async (req, res) => {
 export const updateOrder = async (req, res) => {
   try {
     const { id } = req.params;
-    const { shippingAddress, measurement, status } = req.body;
+    const { shippingAddress, measurement, status, voucherId } = req.body;
 
     const order = await Order.findById(id);
     if (!order) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Order not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
     }
 
-    // Update order fields
+    // If voucherId is provided, verify and apply voucher
+    if (voucherId) {
+      const voucher = await Voucher.findById(voucherId);
+      if (!voucher) {
+        return res.status(404).json({
+          success: false,
+          message: "Voucher not found",
+        });
+      }
+
+      // Check if voucher belongs to the correct tailor
+      if (voucher.tailorId.toString() !== order.tailorId.toString()) {
+        return res.status(400).json({
+          success: false,
+          message: "This voucher cannot be applied to this order",
+        });
+      }
+
+      // Check voucher validity
+      const now = new Date();
+      if (
+        now < new Date(voucher.validFrom) ||
+        now > new Date(voucher.validUntil)
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Voucher is not valid at this time",
+        });
+      }
+
+      // Calculate voucher discount
+      const voucherDiscount = (order.pricing.subtotal * voucher.discount) / 100;
+
+      // Update order pricing
+      order.voucherId = voucherId;
+      order.pricing = {
+        ...order.pricing,
+        voucherDiscount,
+        total: order.pricing.subtotal + order.pricing.tax - voucherDiscount,
+      };
+    }
+
+    // Update other fields if provided
     if (shippingAddress) order.shippingAddress = shippingAddress;
     if (measurement) order.measurement = measurement;
     if (status) order.status = status;

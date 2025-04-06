@@ -11,8 +11,17 @@ export default function TailorCard({
   experience,
   priceRange,
   description,
+  services,
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Calculate the maximum discount from all services
+  const maxDiscount = services?.reduce((max, service) => {
+    if (service.discount?.value > max) {
+      return service.discount.value;
+    }
+    return max;
+  }, 0);
 
   return (
     <div className="relative group">
@@ -22,6 +31,11 @@ export default function TailorCard({
           whileHover={{ y: -5 }}
           transition={{ duration: 0.2 }}
         >
+          {maxDiscount > 0 && (
+            <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium z-10">
+              Up to {maxDiscount}% Off on Services
+            </div>
+          )}
           <img
             src={image || "https://via.placeholder.com/300x200"}
             alt={shopName}
@@ -63,6 +77,7 @@ export default function TailorCard({
         onClose={() => setIsModalOpen(false)}
         tailorName={shopName}
         tailorId={_id}
+        services={services}
       />
     </div>
   );

@@ -140,6 +140,7 @@ router.put(
 );
 
 //vouchers Routes
+router.get("/all-vouchers", protect, vouchersController.getAllVouchers);
 router.post("/vouchers", protect, vouchersController.createVoucher);
 router.put("/vouchers/:id", protect, vouchersController.updateVoucher);
 router.delete("/vouchers/:id", protect, vouchersController.deleteVoucher);
@@ -152,6 +153,12 @@ router.get(
   "/vouchers/:id",
   protect,
   vouchersController.getSingleVoucherDetails
+);
+
+router.post(
+  "/vouchers/verify",
+  protect,
+  vouchersController.verifyVoucherByTitle
 );
 
 // Review Routes
