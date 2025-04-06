@@ -4,23 +4,92 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { CheckCircle, Package } from "lucide-react";
 import confetti from "canvas-confetti";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
+import { updateOrderStatus } from "../../hooks/orderHooks";
+import axios from "axios";
 
 export default function OrderPlaced() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [showConfetti, setShowConfetti] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Show confetti effect on component mount
-    if (!showConfetti) {
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 },
-      });
-      setShowConfetti(true);
-    }
-  }, [showConfetti]);
+    const verifyPaymentAndUpdateOrder = async () => {
+      try {
+        const sessionId = searchParams.get("session_id");
+        const orderId = searchParams.get("order_id");
+
+        if (!sessionId || !orderId) {
+          throw new Error("Missing session_id or order_id");
+        }
+
+        // Verify the stripe session
+        const response = await axios.get(
+          `http://localhost:5000/stripe/verify-session/${sessionId}`,
+          {
+            withCredentials: true,
+          }
+        );
+
+        if (response.data.success) {
+          // Update order status to "paid"
+          await updateOrderStatus(orderId, {
+            status: "placed",
+          });
+
+          // Show confetti effect
+          confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+          });
+          setShowConfetti(true);
+        } else {
+          throw new Error("Payment verification failed");
+        }
+      } catch (err) {
+        console.error("Error verifying payment:", err);
+        setError(err.message);
+      } finally {
+        setIsVerifying(false);
+      }
+    };
+
+    verifyPaymentAndUpdateOrder();
+  }, [searchParams]);
+
+  if (isVerifying) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#111827] mx-auto"></div>
+          <p className="mt-4 text-gray-600">Verifying your payment...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white p-8 rounded-2xl shadow-lg max-w-md w-full text-center">
+          <div className="text-red-500 text-xl mb-4">⚠️</div>
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">
+            Payment Verification Failed
+          </h1>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <button
+            onClick={() => navigate("/browse")}
+            className="w-full inline-flex items-center justify-center px-6 py-3 bg-[#111827] text-white rounded-lg"
+          >
+            Return to Shop
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">

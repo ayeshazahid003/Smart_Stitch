@@ -237,6 +237,11 @@ router.post(
   protect,
   paymentController.createCheckoutSession
 );
+router.get(
+  "/stripe/verify-session/:sessionId",
+  protect,
+  paymentController.verifySession
+);
 router.post(
   "/stripe/webhook",
   express.raw({ type: "application/json" }),

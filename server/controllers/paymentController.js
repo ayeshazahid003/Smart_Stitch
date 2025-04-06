@@ -29,7 +29,7 @@ export const createCheckoutSession = async (req, res) => {
       metadata: {
         orderId: orderId, // Store orderId in metadata for webhook processing
       },
-      success_url: `${process.env.CLIENT_URL}/order-placed?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${process.env.CLIENT_URL}/order-placed?session_id={CHECKOUT_SESSION_ID}&order_id=${orderId}`,
       cancel_url: `${process.env.CLIENT_URL}/order-cancelled`,
     });
 
@@ -82,4 +82,77 @@ export const handleWebhook = async (req, res) => {
   }
 
   res.json({ received: true });
+};
+
+export const verifySession = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+
+    if (!sessionId) {
+      return res.status(400).json({
+        success: false,
+        message: "Session ID is required",
+      });
+    }
+
+    // Retrieve the session from Stripe
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+    if (!session) {
+      return res.status(404).json({
+        success: false,
+        message: "Session not found",
+      });
+    }
+
+    // Check if payment was successful
+    const isPaymentSuccessful = session.payment_status === "paid";
+
+    if (isPaymentSuccessful) {
+      // You might want to update order status here if it wasn't already updated by webhook
+      if (session.metadata.orderId) {
+        const order = await Order.findById(session.metadata.orderId);
+        if (order && order.status !== "paid") {
+          await Order.findByIdAndUpdate(session.metadata.orderId, {
+            status: "paid",
+            paymentStatus: "paid",
+            paymentDetails: {
+              stripeSessionId: session.id,
+              paymentIntent: session.payment_intent,
+              paymentStatus: session.payment_status,
+              amountTotal: session.amount_total,
+              currency: session.currency,
+            },
+          });
+        }
+      }
+
+      return res.json({
+        success: true,
+        message: "Payment verified successfully",
+        session: {
+          id: session.id,
+          payment_status: session.payment_status,
+          amount_total: session.amount_total,
+          currency: session.currency,
+        },
+      });
+    }
+
+    return res.json({
+      success: false,
+      message: "Payment not completed",
+      session: {
+        id: session.id,
+        payment_status: session.payment_status,
+      },
+    });
+  } catch (error) {
+    console.error("Error verifying session:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error verifying payment session",
+      error: error.message,
+    });
+  }
 };

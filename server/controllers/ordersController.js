@@ -303,8 +303,9 @@ export const updateOrderStatus = async (req, res) => {
     const { status, design, shippingAddress, measurement } = req.body;
 
     const order = await Order.findById(orderId)
-      .populate("customerId", "username")
-      .populate("tailorId", "username");
+      .populate("customerId", "username email")
+      .populate("tailorId", "username")
+      .populate("invoiceId");
 
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
@@ -316,6 +317,112 @@ export const updateOrderStatus = async (req, res) => {
     order.shippingAddress = shippingAddress || order.shippingAddress;
     order.measurement = measurement || order.measurement;
     await order.save();
+
+    // Handle paid status - send email with invoice
+    console.log("order", order);
+    if (status === "placed") {
+      console.log("Sending invoice email to customer...");
+      // Format currency for better readability
+      const formatCurrency = (amount) => `$${amount.toFixed(2)}`;
+
+      // Create detailed email content
+      const emailBody = `
+        <h1>Order Payment Confirmation - Smart Stitch</h1>
+        <p>Dear ${order.customerId.username},</p>
+        <p>Thank you for your payment! Your order has been successfully processed.</p>
+        
+        <h2>Order Details:</h2>
+        <ul>
+          <li><strong>Order ID:</strong> ${order._id}</li>
+          <li><strong>Tailor:</strong> ${order.tailorId.username}</li>
+          <li><strong>Status:</strong> Paid</li>
+        </ul>
+
+        <h2>Invoice Details:</h2>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+          <tr style="background-color: #f8f9fa;">
+            <th style="padding: 10px; border: 1px solid #ddd;">Description</th>
+            <th style="padding: 10px; border: 1px solid #ddd;">Amount</th>
+          </tr>
+          ${order.utilizedServices
+            .map(
+              (service) => `
+            <tr>
+              <td style="padding: 10px; border: 1px solid #ddd;">${
+                service.serviceName
+              }</td>
+              <td style="padding: 10px; border: 1px solid #ddd;">${formatCurrency(
+                service.price
+              )}</td>
+            </tr>
+          `
+            )
+            .join("")}
+          ${order.extraServices
+            .map(
+              (service) => `
+            <tr>
+              <td style="padding: 10px; border: 1px solid #ddd;">${
+                service.serviceName
+              } (Extra)</td>
+              <td style="padding: 10px; border: 1px solid #ddd;">${formatCurrency(
+                service.price
+              )}</td>
+            </tr>
+          `
+            )
+            .join("")}
+          <tr>
+            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Subtotal</strong></td>
+            <td style="padding: 10px; border: 1px solid #ddd;">${formatCurrency(
+              order.pricing.subtotal
+            )}</td>
+          </tr>
+          ${
+            order.pricing.campaignDiscount > 0
+              ? `
+            <tr>
+              <td style="padding: 10px; border: 1px solid #ddd;">Campaign Discount</td>
+              <td style="padding: 10px; border: 1px solid #ddd;">-${formatCurrency(
+                order.pricing.campaignDiscount
+              )}</td>
+            </tr>
+          `
+              : ""
+          }
+          ${
+            order.pricing.voucherDiscount > 0
+              ? `
+            <tr>
+              <td style="padding: 10px; border: 1px solid #ddd;">Voucher Discount</td>
+              <td style="padding: 10px; border: 1px solid #ddd;">-${formatCurrency(
+                order.pricing.voucherDiscount
+              )}</td>
+            </tr>
+          `
+              : ""
+          }
+          <tr style="background-color: #f8f9fa;">
+            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Total</strong></td>
+            <td style="padding: 10px; border: 1px solid #ddd;"><strong>${formatCurrency(
+              order.pricing.total
+            )}</strong></td>
+          </tr>
+        </table>
+
+        <p style="margin-top: 20px;">You can track your order status in your account dashboard.</p>
+        
+        <p>Thank you for choosing Smart Stitch!</p>
+        <p>Best regards,<br>Smart Stitch Team</p>
+      `;
+
+      await sendEmail(
+        "no-reply@smartstitch.com",
+        order.customerId.email,
+        "Payment Confirmation and Invoice - Smart Stitch",
+        emailBody
+      );
+    }
 
     // Determine notification recipient and message based on status
     let notification;
@@ -335,21 +442,29 @@ export const updateOrderStatus = async (req, res) => {
         relatedId: order._id,
         onModel: "Order",
       };
-    } else if (status === "completed") {
+    } else if (status === "placed") {
       notification = {
         userId: order.customerId._id,
-        type: "ORDER_COMPLETED",
-        message: `Your order has been completed by ${order.tailorId.username}`,
+        type: "ORDER_PLACED",
+        message: `Your order has been placed with ${order.tailorId.username}`,
+        relatedId: order._id,
+        onModel: "Order",
+      };
+    } else if (status === "paid") {
+      notification = {
+        userId: order.customerId._id,
+        type: "ORDER_PAID",
+        message: `Payment received for your order. Check your email for the invoice.`,
         relatedId: order._id,
         onModel: "Order",
       };
     }
 
-    // Send real-time notification if applicable
-    if (notification) {
-      const savedNotification = await Notification.create(notification);
-      await sendNotificationToUser(savedNotification);
-    }
+    // // Send real-time notification if applicable
+    // if (notification) {
+    //   const savedNotification = await Notification.create(notification);
+    //   await sendNotificationToUser(savedNotification);
+    // }
 
     res.status(200).json({
       success: true,

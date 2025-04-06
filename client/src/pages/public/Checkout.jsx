@@ -228,7 +228,7 @@ function CheckoutPage() {
   const calculateTotals = () => {
     const baseSubtotal = orderData?.pricing?.subtotal || 0;
     const extraServicesTotal =
-      orderData.extraServices?.reduce(
+      orderData?.extraServices?.reduce(
         (sum, service) => sum + service.price,
         0
       ) || 0;

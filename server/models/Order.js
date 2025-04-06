@@ -32,6 +32,7 @@ const OrderSchema = new mongoose.Schema({
       "completed",
       "refunded",
       "pending_payment",
+      "placed",
     ],
     required: true,
   },
