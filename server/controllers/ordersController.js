@@ -299,8 +299,8 @@ export const getOrdersByTailor = async (req, res) => {
 
 export const updateOrderStatus = async (req, res) => {
   try {
-    const { orderId } = req.params;
-    const { status } = req.body;
+    const { id: orderId } = req.params;
+    const { status, design, shippingAddress, measurement } = req.body;
 
     const order = await Order.findById(orderId)
       .populate("customerId", "username")
@@ -312,6 +312,9 @@ export const updateOrderStatus = async (req, res) => {
 
     // Update order status
     order.status = status;
+    order.design = design || order.design;
+    order.shippingAddress = shippingAddress || order.shippingAddress;
+    order.measurement = measurement || order.measurement;
     await order.save();
 
     // Determine notification recipient and message based on status
@@ -516,5 +519,39 @@ export const getOrderByStatusOfTailor = async (req, res) => {
     res
       .status(500)
       .json({ success: false, message: "Server error.", error: error.message });
+  }
+};
+
+export const updateOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { shippingAddress, measurement, status } = req.body;
+
+    const order = await Order.findById(id);
+    if (!order) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found" });
+    }
+
+    // Update order fields
+    if (shippingAddress) order.shippingAddress = shippingAddress;
+    if (measurement) order.measurement = measurement;
+    if (status) order.status = status;
+
+    await order.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Order updated successfully",
+      order,
+    });
+  } catch (error) {
+    console.error("Error updating order:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update order",
+      error: error.message,
+    });
   }
 };

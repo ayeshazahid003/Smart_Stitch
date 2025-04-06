@@ -23,7 +23,13 @@ const OrderSchema = new mongoose.Schema({
   voucherId: { type: mongoose.Schema.Types.ObjectId, ref: "Voucher" },
   status: {
     type: String,
-    enum: ["pending", "in progress", "completed", "refunded"],
+    enum: [
+      "pending",
+      "in progress",
+      "completed",
+      "refunded",
+      "pending_payment",
+    ],
     required: true,
   },
   shippingAddress: AddressSchema,

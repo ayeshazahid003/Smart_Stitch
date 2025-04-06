@@ -5,7 +5,7 @@ export const getUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id)
       .select("-password")
-      .populate("contactInfo.address")
+      .populate("contactInfo.address");
     if (!user) {
       return res
         .status(404)
@@ -218,7 +218,6 @@ export const updateMeasurements = async (req, res) => {
   }
 };
 
-
 export const updateUserProfile = async (req, res) => {
   try {
     const id = req.user._id; // Get user ID from auth middleware
@@ -227,7 +226,9 @@ export const updateUserProfile = async (req, res) => {
     // Find the user
     const user = await User.findById(id);
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found." });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
     }
 
     // Handle base64 image upload
@@ -235,7 +236,10 @@ export const updateUserProfile = async (req, res) => {
 
     if (profilePicture) {
       // Upload base64 image directly to Cloudinary
-      const uploadedImage = await uploadSingleFile(profilePicture, "UserProfile");
+      const uploadedImage = await uploadSingleFile(
+        profilePicture,
+        "UserProfile"
+      );
       uploadedImageUrl = uploadedImage.secure_url;
     }
 
@@ -260,6 +264,62 @@ export const updateUserProfile = async (req, res) => {
       success: false,
       message: "Server error. Please try again later.",
       error,
+    });
+  }
+};
+
+export const addUserAddress = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const addressData = req.body;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    // Initialize addresses array if it doesn't exist
+    if (!user.contactInfo) {
+      user.contactInfo = { addresses: [] };
+    } else if (!user.contactInfo.addresses) {
+      user.contactInfo.addresses = [];
+    }
+
+    // Create new address with MongoDB ObjectId
+    const newAddress = {
+      _id: new mongoose.Types.ObjectId(),
+      ...addressData,
+    };
+
+    // If this is the first address or isDefault is true, set it as the default
+    if (user.contactInfo.addresses.length === 0 || addressData.isDefault) {
+      user.contactInfo.address = newAddress;
+      // Update any existing default address to non-default
+      user.contactInfo.addresses = user.contactInfo.addresses.map((addr) => ({
+        ...addr,
+        isDefault: false,
+      }));
+      newAddress.isDefault = true;
+    }
+
+    // Add the new address to the addresses array
+    user.contactInfo.addresses.push(newAddress);
+
+    await user.save();
+
+    return res.status(201).json({
+      success: true,
+      message: "Address added successfully",
+      address: newAddress,
+    });
+  } catch (error) {
+    console.error("Error adding address:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to add address",
+      error: error.message,
     });
   }
 };

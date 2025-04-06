@@ -48,33 +48,18 @@ export const getUserAddresses = async () => {
 
 export const addUserAddress = async (addressData) => {
   try {
-    const currentUser = await getUserProfile();
-    if (!currentUser.success) {
-      throw new Error("Failed to fetch user profile");
-    }
-
-    const updatedAddresses = [
-      ...(currentUser.user.contactInfo?.addresses || []),
-      { ...addressData, _id: new Date().getTime() },
-    ];
-
-    const response = await updateUserProfile({
-      ...currentUser.user,
-      contactInfo: {
-        ...currentUser.user.contactInfo,
-        addresses: updatedAddresses,
-        // If this is the first address, set it as default
-        address: currentUser.user.contactInfo?.address || addressData,
-      },
-    });
-
-    if (response.success) {
-      return { success: true, address: addressData };
-    }
-    return { success: false, message: "Failed to add address" };
+    const response = await axios.post(
+      "/users/address",
+      addressData,
+      protectedConfig
+    );
+    return response.data;
   } catch (error) {
     console.error("Error adding address:", error);
-    throw new Error("Failed to add address");
+    return {
+      success: false,
+      message: error.response?.data?.message || "Failed to add address",
+    };
   }
 };
 
@@ -142,5 +127,22 @@ export const setDefaultAddress = async (addressId) => {
   } catch (error) {
     console.error("Error setting default address:", error);
     throw new Error("Failed to set default address");
+  }
+};
+
+export const addMeasurement = async (measurementData) => {
+  try {
+    const response = await axios.post(
+      "/users/measurements",
+      { measurement: measurementData },
+      protectedConfig
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error adding measurement:", error);
+    return {
+      success: false,
+      message: error.response?.data?.message || "Failed to add measurement",
+    };
   }
 };

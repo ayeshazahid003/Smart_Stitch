@@ -81,6 +81,21 @@ export const updateOrderStatus = async (orderId, updateData) => {
   }
 };
 
+export const updateOrder = async (orderId, orderData) => {
+  try {
+    const response = await axios.put(`/orders/${orderId}`, orderData, {
+      withCredentials: true,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error updating order:", error);
+    return {
+      success: false,
+      message: error.response?.data?.message || "Failed to update order",
+    };
+  }
+};
+
 // Generate an invoice for an order (POST /orders/:id/invoice)
 export async function generateInvoiceForOrder(orderId) {
   try {
@@ -160,4 +175,24 @@ export const useCreateOffer = () => {
   };
 
   return { createOffer };
+};
+
+export const createCheckoutSession = async (orderId, amount) => {
+  try {
+    const response = await axios.post(
+      `/stripe/create-checkout-session`,
+      {
+        orderId,
+        amount,
+        currency: "usd",
+      },
+      { withCredentials: true }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error creating checkout session:", error);
+    throw new Error(
+      error.response?.data?.message || "Failed to create checkout session"
+    );
+  }
 };

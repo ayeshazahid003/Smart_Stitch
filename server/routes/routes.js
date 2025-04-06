@@ -9,6 +9,7 @@ import * as chatController from "../controllers/chatController.js";
 import * as orderController from "../controllers/ordersController.js";
 import * as offerController from "../controllers/offerController.js";
 import * as campaignController from "../controllers/campaignController.js";
+import * as paymentController from "../controllers/paymentController.js";
 import { protect } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
@@ -22,7 +23,6 @@ router.post("/reset-password", authController.resetPassword);
 router.post("/verify-otp", authController.verifyOtp);
 router.post("/resend-otp", authController.resendOtp);
 router.get("/verify-token", protect, authController.verifyToken);
-
 // Tailor Profile Routes
 router.post(
   "/tailor/profile-creation",
@@ -121,6 +121,7 @@ router.get("/tailor/:tailorId", tailorProfileController.getTailorProfileById);
 router.get("/users/profile", protect, userController.getUserProfile);
 router.put("/users/profile", protect, userController.updateUser);
 router.put("/users/update-profile", protect, userController.updateUserProfile);
+router.post("/users/address", protect, userController.addUserAddress);
 
 // user routes zain
 router.get("/users/:id", protect, userController.getUserById);
@@ -167,6 +168,7 @@ router.get("/chat-participants", protect, chatController.getChatParticipants);
 //Orders Routes
 router.post("/orders", protect, orderController.createNewOrder);
 router.get("/orders/:id", protect, orderController.getOrderById);
+router.put("/orders/:id", protect, orderController.updateOrder);
 router.get("/orders", protect, orderController.getAllOrders);
 router.get(
   "/orders/customer/:customerId",
@@ -221,5 +223,17 @@ router.get("/campaigns/tailor", protect, campaignController.getTailorCampaigns);
 router.get("/campaigns/active", campaignController.getActiveCampaigns);
 router.put("/campaigns/:id", protect, campaignController.updateCampaign);
 router.delete("/campaigns/:id", protect, campaignController.deleteCampaign);
+
+// Payment Routes
+router.post(
+  "/stripe/create-checkout-session",
+  protect,
+  paymentController.createCheckoutSession
+);
+router.post(
+  "/stripe/webhook",
+  express.raw({ type: "application/json" }),
+  paymentController.handleWebhook
+);
 
 export default router;

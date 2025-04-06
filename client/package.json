@@ -21,6 +21,7 @@
     "@radix-ui/react-select": "^2.1.2",
     "@radix-ui/react-slot": "^1.1.0",
     "@react-google-maps/api": "^2.20.6",
+    "@stripe/stripe-js": "^7.0.0",
     "axios": "^1.8.4",
     "canvas-confetti": "^1.9.3",
     "chart.js": "^4.4.8",

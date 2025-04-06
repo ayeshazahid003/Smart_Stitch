@@ -3,11 +3,25 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
 import { ArrowLeft, CreditCard, DollarSign, PlusCircle } from "lucide-react";
+import { loadStripe } from "@stripe/stripe-js";
 import MeasurementModal from "../../components/client/MeasurementModal";
 import { useUser } from "../../context/UserContext";
 
-import { getOrderById, updateOrderStatus } from "../../hooks/orderHooks";
+import {
+  getOrderById,
+  updateOrderStatus,
+  createCheckoutSession,
+} from "../../hooks/orderHooks";
+import {
+  getUserProfile,
+  addUserAddress,
+  addMeasurement,
+} from "../../hooks/userHooks";
 import { toast } from "react-toastify";
+
+const stripePromise = loadStripe(
+  "pk_test_51PmxHkKSeVleLwBsHSoyHGeqevzroDon1EPOYsmxFYNQY4xc4w6KPIrDIFAQhBUEDcQ5xVTnBY4iBt5fjuZOhbTc00F74sCE1x"
+);
 
 function CheckoutPage() {
   const { id: orderId } = useParams();
@@ -45,9 +59,6 @@ function CheckoutPage() {
   const [color, setColor] = useState("");
   const [style, setStyle] = useState("");
   const [customDescription, setCustomDescription] = useState("");
-  const [selectedAudioMethod, setSelectedAudioMethod] = useState(null);
-  const [isRecording, setIsRecording] = useState(false);
-  const [media, setMedia] = useState([]);
   const [measurementTab, setMeasurementTab] = useState("existing");
   const [tempSelectedMeasurementId, setTempSelectedMeasurementId] =
     useState(null);
@@ -73,9 +84,8 @@ function CheckoutPage() {
   });
   const [coupon, setCoupon] = useState("");
 
-  // Fetch order details when component mounts
   useEffect(() => {
-    const fetchOrderDetails = async () => {
+    const fetchData = async () => {
       if (!orderId) {
         toast.error("No order ID provided");
         navigate("/");
@@ -83,37 +93,51 @@ function CheckoutPage() {
       }
 
       try {
-        const response = await getOrderById(orderId);
-        if (response.success) {
-          setOrderData(response.order);
-          // If user has addresses in profile, select the default one
-          if (user?.addresses?.length > 0) {
-            setSelectedAddressId(user.addresses[0]._id);
+        const [userResponse, orderResponse] = await Promise.all([
+          getUserProfile(),
+          getOrderById(orderId),
+        ]);
+
+        if (userResponse.success) {
+          // Set addresses
+          const userAddresses = userResponse.user.contactInfo?.addresses || [];
+          setAddresses(userAddresses);
+
+          // Set default address if available
+          if (userResponse.user.contactInfo?.address) {
+            setSelectedAddressId(userResponse.user.contactInfo.address._id);
+            // If addresses array is empty but there's a default address, add it
+            if (userAddresses.length === 0) {
+              setAddresses([userResponse.user.contactInfo.address]);
+            }
           }
-          // Pre-fill design details if they exist
-          if (response.order.design) {
-            setFabric(response.order.design.customization?.fabric || "");
-            setColor(response.order.design.customization?.color || "");
-            setStyle(response.order.design.customization?.style || "");
-            setCustomDescription(
-              response.order.design.customization?.description || ""
-            );
+
+          // Set measurements
+          if (userResponse.user.measurements?.length > 0) {
+            setExistingMeasurements(userResponse.user.measurements);
+            setTempSelectedMeasurementId(userResponse.user.measurements[0]._id);
           }
+        }
+
+        console.log("orderResponse", orderResponse);
+
+        if (orderResponse.success) {
+          setOrderData(orderResponse.order);
         } else {
-          toast.error(response.message || "Failed to fetch order details");
+          toast.error("Failed to fetch order details");
           navigate("/");
         }
       } catch (error) {
-        console.error("Error fetching order:", error);
-        toast.error("Failed to load order details");
+        console.error("Error fetching data:", error);
+        toast.error("Failed to load checkout data");
         navigate("/");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchOrderDetails();
-  }, [orderId, navigate, user]);
+    fetchData();
+  }, [orderId, navigate]);
 
   const openMeasurementModal = () => setIsMeasurementModalOpen(true);
   const closeMeasurementModal = () => setIsMeasurementModalOpen(false);
@@ -126,28 +150,6 @@ function CheckoutPage() {
   const handleDesignImagesChange = async (e) => {
     const files = Array.from(e.target.files);
     setDesignImages(files);
-  };
-
-  const handleVideoChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setMedia([...media, { type: "video", url: event.target.result }]);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleAudioChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setMedia([...media, { type: "voicenote", url: event.target.result }]);
-      };
-      reader.readAsDataURL(file);
-    }
   };
 
   const handlePlaceOrder = async (e) => {
@@ -181,16 +183,30 @@ function CheckoutPage() {
         },
         shippingAddress: selectedAddress,
         measurement: selectedMeasurement,
-        status: paymentMethod === "cod" ? "pending" : "processing",
+        status: "pending_payment",
       };
 
-      // Update order status and move to completed step
+      // Update order with initial details
       const response = await updateOrderStatus(orderId, orderUpdateData);
 
       if (response.success) {
-        toast.success("Order placed successfully!");
-        // Navigate to order placed page
-        navigate("/order-placed");
+        if (paymentMethod === "card") {
+          const stripe = await stripePromise;
+          const session = await createCheckoutSession(orderId, total * 100);
+
+          const result = await stripe.redirectToCheckout({
+            sessionId: session.id,
+          });
+
+          if (result.error) {
+            toast.error(result.error.message);
+          }
+        } else if (paymentMethod === "cod") {
+          // For COD, directly update order to completed
+          await updateOrderStatus(orderId, { status: "completed" });
+          toast.success("Order placed successfully!");
+          navigate("/order-placed");
+        }
       } else {
         toast.error(response.message || "Failed to place order");
       }
@@ -269,12 +285,6 @@ function CheckoutPage() {
       setSelectedMeasurement(newMeasurementWithId);
     }
     closeMeasurementModal();
-  };
-
-  // Audio recording handling
-  const handleRecordAudio = () => {
-    setIsRecording((prev) => !prev);
-    // Implement actual audio recording logic here
   };
 
   const handleAddNewAddress = async () => {
@@ -510,43 +520,41 @@ function CheckoutPage() {
 
                 {/* Shipping Address - Only show if delivery is selected */}
                 {deliveryMethod === "delivery" && (
-                  <div className="bg-white p-6 rounded-lg shadow-sm border">
-                    <h2 className="text-xl font-semibold mb-4 text-[#111827]">
-                      Shipping Address
-                    </h2>
+                  <div className="mb-8">
+                    <h3 className="text-xl font-semibold mb-4">
+                      Delivery Address
+                    </h3>
                     <div className="space-y-4">
-                      {user?.addresses?.map((addr) => (
+                      {addresses.map((address) => (
                         <label
-                          key={addr._id}
+                          key={address._id}
                           className={`flex items-start p-4 border rounded-lg cursor-pointer transition-all ${
-                            selectedAddressId === addr._id
-                              ? "border-[#111827] bg-gray-50"
-                              : "border-gray-200 bg-white hover:shadow-md"
+                            selectedAddressId === address._id
+                              ? "border-indigo-600 bg-indigo-50"
+                              : "border-gray-200"
                           }`}
                         >
                           <input
                             type="radio"
                             name="address"
-                            checked={selectedAddressId === addr._id}
-                            onChange={() => setSelectedAddressId(addr._id)}
+                            checked={selectedAddressId === address._id}
+                            onChange={() => setSelectedAddressId(address._id)}
                             className="mt-1 mr-4"
                           />
                           <div>
-                            <p className="font-medium text-gray-800">
-                              {addr.name}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              {addr.addressLine1}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              {addr.addressLine2}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              {addr.city}, {addr.state} {addr.postalCode}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              {addr.phone}
-                            </p>
+                            <div className="font-medium">{address.line1}</div>
+                            {address.line2 && (
+                              <div className="text-gray-600">
+                                {address.line2}
+                              </div>
+                            )}
+                            <div className="text-gray-600">
+                              {address.city}, {address.state}{" "}
+                              {address.postalCode}
+                            </div>
+                            <div className="text-gray-600">
+                              {address.country}
+                            </div>
                           </div>
                         </label>
                       ))}
@@ -687,34 +695,40 @@ function CheckoutPage() {
                 </div>
 
                 {/* Measurement Section */}
-                <div className="bg-white p-6 rounded-lg shadow-sm border">
-                  <h2 className="text-xl font-semibold mb-4 text-[#111827]">
-                    Measurement
-                  </h2>
+                <div className="mb-8">
+                  <h3 className="text-xl font-semibold mb-4">Measurements</h3>
                   <div className="space-y-4">
-                    {selectedMeasurement ? (
-                      <div className="p-4 border rounded-lg bg-gray-50">
-                        <p className="font-medium text-gray-800">
-                          {selectedMeasurement.name}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          Height: {selectedMeasurement.height} cm
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          Chest: {selectedMeasurement.chest} cm
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          Waist: {selectedMeasurement.waist} cm
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          Hips: {selectedMeasurement.hips} cm
-                        </p>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-600">
-                        No measurement selected.
-                      </p>
-                    )}
+                    {existingMeasurements.map((measurement) => (
+                      <label
+                        key={measurement._id}
+                        className={`flex items-start p-4 border rounded-lg cursor-pointer transition-all ${
+                          tempSelectedMeasurementId === measurement._id
+                            ? "border-indigo-600 bg-indigo-50"
+                            : "border-gray-200"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="measurement"
+                          checked={
+                            tempSelectedMeasurementId === measurement._id
+                          }
+                          onChange={() =>
+                            setTempSelectedMeasurementId(measurement._id)
+                          }
+                          className="mt-1 mr-4"
+                        />
+                        <div>
+                          <div className="font-medium">{measurement.title}</div>
+                          <div className="grid grid-cols-2 gap-2 text-sm text-gray-600 mt-2">
+                            <div>Height: {measurement.data.height} cm</div>
+                            <div>Chest: {measurement.data.chest} cm</div>
+                            <div>Waist: {measurement.data.waist} cm</div>
+                            <div>Hips: {measurement.data.hips} cm</div>
+                          </div>
+                        </div>
+                      </label>
+                    ))}
                     <button
                       type="button"
                       onClick={openMeasurementModal}
@@ -805,14 +819,15 @@ function CheckoutPage() {
                       />
                       <div className="flex-1">
                         <p className="font-medium text-gray-800">
-                          {service.title}
+                          {service.serviceName}
                         </p>
                         <p className="text-sm text-gray-600">
-                          Qty: {service.quantity}
+                          Qty: {service.quantity || 1}
                         </p>
                       </div>
                       <p className="font-medium text-gray-800">
-                        ${(service.price * service.quantity).toFixed(2)}
+                        RS{" "}
+                        {(service.price * (service.quantity || 1)).toFixed(2)}
                       </p>
                     </div>
                   ))}
@@ -820,19 +835,19 @@ function CheckoutPage() {
                 <div className="mt-4 border-t border-gray-200 pt-4 space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span>Subtotal</span>
-                    <span>${subtotal.toFixed(2)}</span>
+                    <span>RS {subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Shipping</span>
-                    <span>${shippingCost.toFixed(2)}</span>
+                    <span>RS {shippingCost.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Tax</span>
-                    <span>${tax.toFixed(2)}</span>
+                    <span>RS {tax.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-base font-bold mt-2">
                     <span>Total</span>
-                    <span>${total.toFixed(2)}</span>
+                    <span>RS {total.toFixed(2)}</span>
                   </div>
                 </div>
                 <button
@@ -929,131 +944,6 @@ function CheckoutPage() {
                   />
                 </label>
               </div>
-            </div>
-
-            {/* Media Upload */}
-            <div className="space-y-6">
-              <h3 className="text-xl font-semibold text-[#111827]">
-                Media (Video / Voice Note)
-              </h3>
-              <div className="space-y-4">
-                {/* Upload Video */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Upload Video
-                  </label>
-                  <input
-                    type="file"
-                    accept="video/*"
-                    onChange={handleVideoChange}
-                    className="mt-1 block w-full text-sm text-gray-500
-                      file:mr-4 file:py-2 file:px-4
-                      file:rounded-md file:border-0
-                      file:text-sm file:font-semibold
-                      file:bg-gray-200 file:text-gray-800
-                      hover:file:bg-gray-300"
-                  />
-                </div>
-
-                {/* Audio Section */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Audio (Voice Note)
-                  </label>
-                  {selectedAudioMethod === null && (
-                    <div className="flex gap-4">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedAudioMethod("upload")}
-                        className="bg-[#111827] text-white px-4 py-2 rounded-md hover:bg-[#1f2937] transition"
-                      >
-                        Upload Audio
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedAudioMethod("record")}
-                        className="bg-[#111827] text-white px-4 py-2 rounded-md hover:bg-[#1f2937] transition"
-                      >
-                        Record Audio
-                      </button>
-                    </div>
-                  )}
-                  {selectedAudioMethod === "upload" && (
-                    <div>
-                      <input
-                        type="file"
-                        accept="audio/*"
-                        onChange={handleAudioChange}
-                        className="mt-1 block w-full text-sm text-gray-500
-                          file:mr-4 file:py-2 file:px-4
-                          file:rounded-md file:border-0
-                          file:text-sm file:font-semibold
-                          file:bg-gray-200 file:text-gray-800
-                          hover:file:bg-gray-300"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setSelectedAudioMethod(null)}
-                        className="mt-2 text-sm text-[#111827] hover:underline"
-                      >
-                        Change method
-                      </button>
-                    </div>
-                  )}
-                  {selectedAudioMethod === "record" && (
-                    <div>
-                      <button
-                        type="button"
-                        onClick={handleRecordAudio}
-                        className="px-4 py-2 border border-[#111827] rounded-md text-sm text-[#111827] hover:bg-gray-50 transition"
-                      >
-                        {isRecording ? "Stop Recording" : "Record Audio"}
-                      </button>
-                      {isRecording && (
-                        <p className="text-sm text-red-500 mt-1">
-                          Recording... speak into your microphone.
-                        </p>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => setSelectedAudioMethod(null)}
-                        className="mt-2 text-sm text-[#111827] hover:underline"
-                      >
-                        Change method
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Display Selected/Recorded Media */}
-              {media.length > 0 && (
-                <div className="mt-4 space-y-2">
-                  <p className="text-sm font-medium">Media Selected:</p>
-                  {media.map((m, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center space-x-3 p-2 border rounded-md bg-gray-50"
-                    >
-                      <span className="text-sm font-medium">
-                        {m.type === "video" ? "Video:" : "Voice Note:"}
-                      </span>
-                      {m.type === "voicenote" && (
-                        <audio controls src={m.url} className="w-40" />
-                      )}
-                      {m.type === "video" && (
-                        <video
-                          src={m.url}
-                          width={120}
-                          height={80}
-                          controls
-                          className="rounded"
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
 
             {/* Place Order Button */}
