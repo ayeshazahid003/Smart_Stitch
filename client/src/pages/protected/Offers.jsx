@@ -35,9 +35,6 @@ export default function Offers() {
   }, []);
 
   const handleAcceptOffer = async (offerId, amount) => {
-    console.log("Accepting offer with ID:", offerId);
-    console.log("Amount to accept:", amount);
-    return;
     try {
       setIsSubmitting(true);
       const response = await negotiateOffer(
