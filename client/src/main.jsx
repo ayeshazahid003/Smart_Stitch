@@ -53,6 +53,7 @@ import { SocketProvider } from "./context/SocketContext";
 import Campaigns from "./pages/protected/tailor/Campaigns";
 import Vouchers from "./pages/protected/tailor/Vouchers";
 import { UserProvider } from "./context/UserContext";
+import TailorOrders from "./pages/protected/tailor/TailorOrders";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -69,7 +70,6 @@ createRoot(document.getElementById("root")).render(
               <Route path="/checkout/:id" element={<Checkout />} />
               <Route path="/order-placed" element={<OrderPlaced />} />
               <Route path="chats" element={<Chat />} />
-
 
               {/* Auth Routes */}
               <Route element={<AuthLayout />}>
@@ -91,6 +91,7 @@ createRoot(document.getElementById("root")).render(
                   <Route path="orders" element={<OrderDetails />} />
                   <Route path="/campaigns" element={<Campaigns />} />
                   <Route path="/vouchers" element={<Vouchers />} />
+                  <Route path="tailor/orders" element={<TailorOrders />} />
 
                   {/* Tailor Routes */}
                   <Route path="tailor" element={<TailorDashboard />} />

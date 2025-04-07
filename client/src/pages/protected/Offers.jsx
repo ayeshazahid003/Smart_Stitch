@@ -35,6 +35,9 @@ export default function Offers() {
   }, []);
 
   const handleAcceptOffer = async (offerId, amount) => {
+    console.log("Accepting offer with ID:", offerId);
+    console.log("Amount to accept:", amount);
+    return;
     try {
       setIsSubmitting(true);
       const response = await negotiateOffer(
@@ -121,6 +124,18 @@ export default function Offers() {
     });
   };
 
+  // Get the latest negotiated amount from the negotiation history
+  const getLatestNegotiatedAmount = (offer) => {
+    if (offer.negotiationHistory && offer.negotiationHistory.length > 0) {
+      // Sort by creation date (newest first) and get the first item
+      const sortedHistory = [...offer.negotiationHistory].sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
+      return sortedHistory[0].amount;
+    }
+    return offer.amount; // Fallback to original amount if no history
+  };
+
   if (loading) return <div className="p-8 text-center">Loading...</div>;
   if (error) return <div className="p-8 text-center text-red-500">{error}</div>;
 
@@ -141,7 +156,7 @@ export default function Offers() {
                 <h3 className="text-lg font-semibold">
                   {user?.role === "tailor"
                     ? `From: ${offer.customer.name}`
-                    : `To: ${offer?.tailor?.shopName}`}
+                    : `To: ${offer?.tailor?.name}`}
                 </h3>
                 <p className="text-gray-600">Current Amount: ₨{offer.amount}</p>
                 <p
@@ -245,7 +260,10 @@ export default function Offers() {
                       {!offer.status.includes("accepted_by_tailor") && (
                         <button
                           onClick={() =>
-                            handleAcceptOffer(offer._id, offer.amount)
+                            handleAcceptOffer(
+                              offer._id,
+                              getLatestNegotiatedAmount(offer)
+                            )
                           }
                           className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
                           disabled={isSubmitting}
@@ -279,7 +297,10 @@ export default function Offers() {
                       {!offer.status.includes("accepted_by_customer") && (
                         <button
                           onClick={() =>
-                            handleAcceptOffer(offer._id, offer.amount)
+                            handleAcceptOffer(
+                              offer._id,
+                              getLatestNegotiatedAmount(offer)
+                            )
                           }
                           className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
                           disabled={isSubmitting}

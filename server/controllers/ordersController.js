@@ -287,7 +287,7 @@ export const getOrdersByTailor = async (req, res) => {
 
     const orders = await Order.find({
       tailorId: tailorProfile.tailorId,
-    }).populate("customerId invoiceId");
+    }).populate("customerId", "name email");
 
     res.status(200).json({ success: true, orders });
   } catch (error) {

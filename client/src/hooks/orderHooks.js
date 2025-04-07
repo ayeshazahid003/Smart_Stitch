@@ -37,6 +37,15 @@ export async function getAllOrders() {
   }
 }
 
+export async function getTailorOrders() {
+  try {
+    const response = await axios.get("/orders/tailor", protectedConfig);
+    return response.data;
+  } catch (error) {
+    return error.response?.data || { success: false, message: error.message };
+  }
+}
+
 // Get orders by customer (GET /orders/customer/:customerId)
 export async function getOrdersByCustomer(customerId) {
   try {

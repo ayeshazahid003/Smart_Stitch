@@ -173,7 +173,9 @@ router.get("/chats", protect, chatController.getUserChats);
 router.get("/chat-participants", protect, chatController.getChatParticipants);
 
 //Orders Routes
+
 router.post("/orders", protect, orderController.createNewOrder);
+router.get("/orders/tailor", protect, orderController.getOrdersByTailor);
 router.get("/orders/:id", protect, orderController.getOrderById);
 router.put("/orders/:id", protect, orderController.updateOrder);
 router.get("/orders", protect, orderController.getAllOrders);
@@ -182,7 +184,7 @@ router.get(
   protect,
   orderController.getOrdersByCustomer
 );
-router.get("/orders/tailor", protect, orderController.getOrdersByTailor);
+
 router.put("/orders/:id/status", protect, orderController.updateOrderStatus);
 router.post(
   "/orders/:id/invoice",
