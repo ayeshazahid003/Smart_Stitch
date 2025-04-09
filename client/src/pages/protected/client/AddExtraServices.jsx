@@ -1,108 +1,141 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import React, { useState } from "react";
+import axios from "axios";
+import { addExtraService } from "../../../hooks/TailorHooks";
+import { toast } from "react-toastify";
 
 const AddExtraService = () => {
-  const [serviceName, setServiceName] = useState('');
-  const [description, setDescription] = useState('');
-  const [price, setPrice] = useState('');
-  const [image, setImage] = useState(null);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
+  const [serviceName, setServiceName] = useState("");
+  const [description, setDescription] = useState("");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!serviceName || !description || !price || !image) {
-      setError("All fields are required.");
+    if (!serviceName || !description || !minPrice || !maxPrice) {
+      setMessage("All fields are required.");
       return;
     }
 
-    const formData = new FormData();
-    formData.append('serviceName', serviceName);
-    formData.append('description', description);
-    formData.append('price', price);
-    formData.append('image', image);
+    setLoading(true);
+    const payload = {
+      serviceName,
+      description,
+      minPrice,
+      maxPrice,
+    };
 
     try {
-      const response = await axios.post('/api/tailor/add-extra-service', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      if (response.data.success) {
-        setSuccess(response.data.message);
-        setServiceName('');
-        setDescription('');
-        setPrice('');
-        setImage(null);
+      const response = await addExtraService(payload);
+      if (response.success) {
+        toast.success("Extra service added successfully");
+        setServiceName("");
+        setDescription("");
+        setMinPrice("");
+        setMaxPrice("");
+      } else {
+        setMessage(response.message);
       }
-    } catch (err) {
-      setError(err.response ? err.response.data.message : "Something went wrong.");
     }
+    catch (error) {
+      setMessage("Failed to add extra service");
+    } finally {
+      setLoading(false);
+    }
+
+    
   };
 
   return (
-    <div className="p-6 max-w-lg mx-auto bg-white shadow-md rounded-lg">
-      <h1 className="text-2xl font-semibold text-gray-800 mb-6 text-center">Add Extra Service</h1>
-
-      {error && <div className="mb-4 text-red-600">{error}</div>}
-      {success && <div className="mb-4 text-green-600">{success}</div>}
-
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label htmlFor="serviceName" className="block text-gray-700 font-semibold">Service Name</label>
-          <input
-            type="text"
-            id="serviceName"
-            value={serviceName}
-            onChange={(e) => setServiceName(e.target.value)}
-            className="w-full px-4 py-2 border rounded-lg mt-2"
-            placeholder="Enter service name"
-          />
-        </div>
-
-        <div className="mb-4">
-          <label htmlFor="description" className="block text-gray-700 font-semibold">Description</label>
-          <textarea
-            id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="w-full px-4 py-2 border rounded-lg mt-2"
-            placeholder="Enter service description"
-          />
-        </div>
-
-        <div className="mb-4">
-          <label htmlFor="price" className="block text-gray-700 font-semibold">Price ($)</label>
-          <input
-            type="number"
-            id="price"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            className="w-full px-4 py-2 border rounded-lg mt-2"
-            placeholder="Enter price"
-          />
-        </div>
-
-        <div className="mb-4">
-          <label htmlFor="image" className="block text-gray-700 font-semibold">Service Image</label>
-          <input
-            type="file"
-            id="image"
-            onChange={(e) => setImage(e.target.files[0])}
-            className="w-full mt-2"
-          />
-        </div>
-
-        <button
-          type="submit"
-          className="w-full bg-gray-900 text-white font-semibold py-2 px-4 rounded-lg"
-        >
-          Add Service
-        </button>
-      </form>
+    <div className="min-h-screen flex items-center justify-center p-6">
+      <div className="max-w-xl w-full bg-white rounded-2xl shadow-2xl p-8">
+        <h1 className="text-4xl font-bold text-center mb-8 text-gray-800">
+          Add Extra Service
+        </h1>
+        {message && (
+          <p className="text-center mb-4 text-lg font-medium text-red-600">
+            {message}
+          </p>
+        )}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label
+              htmlFor="serviceName"
+              className="block text-xl font-semibold text-gray-700 mb-2"
+            >
+              Service Name
+            </label>
+            <input
+              type="text"
+              id="serviceName"
+              className="w-full p-4 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+              placeholder="Enter the extra service name"
+              value={serviceName}
+              onChange={(e) => setServiceName(e.target.value)}
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="description"
+              className="block text-xl font-semibold text-gray-700 mb-2"
+            >
+              Description
+            </label>
+            <textarea
+              id="description"
+              className="w-full p-4 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+              rows="4"
+              placeholder="Describe the extra service"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            ></textarea>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label
+                htmlFor="minPrice"
+                className="block text-xl font-semibold text-gray-700 mb-2"
+              >
+                Minimum Price ($)
+              </label>
+              <input
+                type="number"
+                id="minPrice"
+                className="w-full p-4 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                placeholder="Enter minimum price"
+                value={minPrice}
+                onChange={(e) => setMinPrice(e.target.value)}
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="maxPrice"
+                className="block text-xl font-semibold text-gray-700 mb-2"
+              >
+                Maximum Price ($)
+              </label>
+              <input
+                type="number"
+                id="maxPrice"
+                className="w-full p-4 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                placeholder="Enter maximum price"
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="flex justify-center">
+            <button
+              type="submit"
+              disabled={loading}
+              className={`w-full p-4 bg-black text-white font-bold rounded-lg transition-colors`}
+            >
+              {loading ? "Adding..." : "Add Extra Service"}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

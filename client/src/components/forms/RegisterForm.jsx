@@ -37,7 +37,7 @@ const formSchema = z.object({
   password: z.string().min(8, {
     message: "Password must be at least 8 characters long.",
   }),
-  role: z.enum(["tailor", "customer"], {
+  role: z.enum(["tailor", "customer", "platformAdmin"], {
     required_error: "Please select a role.",
   }),
 });
@@ -59,11 +59,12 @@ export default function RegisterForm() {
 
   async function onSubmit(values) {
     setIsLoading(true);
+    console.log(values);
     setError(null); // Reset error state
     try {
       await register(values.name, values.email, values.password, values.role);
       toast.success("Registration successful!");
-      navigate("/profile");
+      navigate("/login");
     } catch (err) {
       setError("Registration failed. Please try again.");
       toast.error("Registration failed. Please try again."); // Show error toast
@@ -158,13 +159,17 @@ export default function RegisterForm() {
                   <SelectContent>
                     <SelectItem value="customer">Customer</SelectItem>
                     <SelectItem value="tailor">Tailor</SelectItem>
+                    <SelectItem value="platformAdmin">
+                      Platform Admin
+                    </SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage className="text-red-500" />
               </FormItem>
             )}
           />
-          {error && <p className="text-red-500">{error}</p>} {/* Display error */}
+          {error && <p className="text-red-500">{error}</p>}{" "}
+          {/* Display error */}
           <Button
             type="submit"
             disabled={isLoading}

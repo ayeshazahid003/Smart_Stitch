@@ -1,11 +1,25 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const NotificationSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  type: { type: String, enum: ['order update', 'promotion', 'reminder'], required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  type: {
+    type: String,
+    enum: [
+      "new_offer",
+      "offer_accepted",
+      "offer_rejected",
+      "new_order",
+      "order_update",
+      "promotion",
+      "reminder",
+    ],
+    required: true,
+  },
   message: { type: String, required: true },
+  relatedId: { type: mongoose.Schema.Types.ObjectId, refPath: "onModel" },
+  onModel: { type: String, enum: ["Order", "Offer"] },
   isRead: { type: Boolean, default: false },
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
 });
 
-export default mongoose.model('Notification', NotificationSchema);
+export default mongoose.model("Notification", NotificationSchema);

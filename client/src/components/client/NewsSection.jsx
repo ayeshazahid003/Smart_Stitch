@@ -33,12 +33,24 @@ const newsArticles = [
 
 export default function NewsSection() {
   return (
-    <section className="py-16 bg-white">
+    <section className="py-16 bg-gray-50">
       <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-16 text-center">
         {/* Section Title */}
-        <h2 className="text-3xl md:text-4xl font-semibold text-gray-900">
-          Read Our Latest News
-        </h2>
+        <h3
+        className="text-4xl md:text-5xl font-sans bg-gradient-to-r from-[#cf63ff] to-[#4d1ae5] text-transparent bg-clip-text"
+        style={{
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          lineHeight: "1.2",
+          paddingTop: "10px",
+          paddingBottom: "10px",
+          overflowWrap: "break-word",
+          textAlign:"center",
+          fontWeight: 500,
+        }}
+      >
+        Read Our Latest News
+      </h3>
         <p className="text-lg italic text-gray-600 mt-2">High Quality Tailor</p>
 
         {/* News Grid */}
