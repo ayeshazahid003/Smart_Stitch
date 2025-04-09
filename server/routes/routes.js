@@ -10,7 +10,10 @@ import * as orderController from "../controllers/ordersController.js";
 import * as offerController from "../controllers/offerController.js";
 import * as campaignController from "../controllers/campaignController.js";
 import * as paymentController from "../controllers/paymentController.js";
+import * as blogController from "../controllers/BlogController.js";
+import * as imageController from "../controllers/imageController.js";
 import { protect } from "../middlewares/authMiddleware.js";
+import { PlatformAdminPermission } from "../middlewares/platformAdminMiddleware.js";
 
 const router = express.Router();
 
@@ -249,5 +252,30 @@ router.post(
   express.raw({ type: "application/json" }),
   paymentController.handleWebhook
 );
+
+// Blog Routes
+router.post(
+  "/blogs",
+  protect,
+  PlatformAdminPermission,
+  blogController.createBlog
+);
+router.get("/blogs", blogController.getAllBlogs);
+router.get("/blogs/id/:id", protect, blogController.getBlogById);
+router.get("/blog/:slug", blogController.getBlogBySlug);
+router.put(
+  "/blogs/:id",
+  protect,
+  PlatformAdminPermission,
+  blogController.updateBlog
+);
+router.delete(
+  "/blogs/:id",
+  protect,
+  PlatformAdminPermission,
+  blogController.deleteBlog
+);
+
+router.post("/uploadimage", protect, imageController.uploadImage);
 
 export default router;

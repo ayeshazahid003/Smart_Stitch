@@ -54,6 +54,9 @@ import Campaigns from "./pages/protected/tailor/Campaigns";
 import Vouchers from "./pages/protected/tailor/Vouchers";
 import { UserProvider } from "./context/UserContext";
 import TailorOrders from "./pages/protected/tailor/TailorOrders";
+import BlogListingPage from "./pages/protected/platform_admin/BlogListingPage";
+import BlogCreationPage from "./pages/protected/platform_admin/BlogCreationPage";
+import SingleBlogPage from "./pages/public/SingleBlogPage";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -66,6 +69,7 @@ createRoot(document.getElementById("root")).render(
               <Route index element={<HomePage />} />
               <Route path="/browse" element={<Browse />} />
               <Route path="/search" element={<Search />} />
+              <Route path="/blogs/:slug" element={<SingleBlogPage />} />
               <Route path="/tailor/:id" element={<TailorProfile />} />
               <Route path="/checkout/:id" element={<Checkout />} />
               <Route path="/order-placed" element={<OrderPlaced />} />
@@ -92,6 +96,18 @@ createRoot(document.getElementById("root")).render(
                   <Route path="/campaigns" element={<Campaigns />} />
                   <Route path="/vouchers" element={<Vouchers />} />
                   <Route path="tailor/orders" element={<TailorOrders />} />
+                  <Route
+                    path="/platform-admin/blogs"
+                    element={<BlogListingPage />}
+                  />
+                  <Route
+                    path="/admin/blogs/create"
+                    element={<BlogCreationPage />}
+                  />
+                  <Route
+                    path="/admin/blogs/edit/:id"
+                    element={<BlogCreationPage />}
+                  />
 
                   {/* Tailor Routes */}
                   <Route path="tailor" element={<TailorDashboard />} />

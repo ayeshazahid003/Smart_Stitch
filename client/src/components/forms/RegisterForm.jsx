@@ -37,7 +37,7 @@ const formSchema = z.object({
   password: z.string().min(8, {
     message: "Password must be at least 8 characters long.",
   }),
-  role: z.enum(["tailor", "customer"], {
+  role: z.enum(["tailor", "customer", "platformAdmin"], {
     required_error: "Please select a role.",
   }),
 });
@@ -159,6 +159,9 @@ export default function RegisterForm() {
                   <SelectContent>
                     <SelectItem value="customer">Customer</SelectItem>
                     <SelectItem value="tailor">Tailor</SelectItem>
+                    <SelectItem value="platformAdmin">
+                      Platform Admin
+                    </SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage className="text-red-500" />

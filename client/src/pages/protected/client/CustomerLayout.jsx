@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, Outlet, useLocation, Navigate } from "react-router";
+import { Link, Outlet, useLocation } from "react-router";
 import {
   Dialog,
   DialogBackdrop,
@@ -47,7 +47,21 @@ const getNavigation = (role) => {
     { name: "Vouchers", href: "/vouchers", icon: GiftIcon },
   ];
 
-  return role === "tailor" ? tailorNav : customerNav;
+  const platformAdminNav = [
+    { name: "Blogs", href: "/platform-admin/blogs", icon: SparklesIcon },
+    // { name: "Dashboard", href: "/admin", icon: HomeIcon },
+    // { name: "Users", href: "/users", icon: UserIcon },
+    // { name: "Tailors", href: "/tailors", icon: BriefcaseIcon },
+    // { name: "Services", href: "/services", icon: CalendarIcon },
+    // { name: "Orders", href: "/orders", icon: ClipboardDocumentListIcon },
+    // { name: "Campaigns", href: "/campaigns", icon: TagIcon },
+  ];
+
+  return role === "tailor"
+    ? tailorNav
+    : role === "platformAdmin"
+    ? platformAdminNav
+    : customerNav;
 };
 
 function classNames(...classes) {

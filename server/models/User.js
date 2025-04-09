@@ -39,7 +39,11 @@ const UserSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  role: { type: String, enum: ["customer", "tailor"], required: true },
+  role: {
+    type: String,
+    enum: ["customer", "tailor", "platformAdmin"],
+    required: true,
+  },
   profilePicture: { type: String },
   contactInfo: {
     phone: { type: String },
