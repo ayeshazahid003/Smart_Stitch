@@ -12,6 +12,7 @@ import * as campaignController from "../controllers/campaignController.js";
 import * as paymentController from "../controllers/paymentController.js";
 import * as blogController from "../controllers/BlogController.js";
 import * as imageController from "../controllers/imageController.js";
+import * as trendingDesignController from "../controllers/trendingDesignController.js";
 import { protect } from "../middlewares/authMiddleware.js";
 import { PlatformAdminPermission } from "../middlewares/platformAdminMiddleware.js";
 
@@ -277,5 +278,37 @@ router.delete(
 );
 
 router.post("/uploadimage", protect, imageController.uploadImage);
+
+// Trending Designs Routes
+router.post(
+  "/trending-designs",
+  protect,
+  PlatformAdminPermission,
+  trendingDesignController.addTrendingDesign
+);
+router.get(
+  "/trending-designs",
+  protect,
+  PlatformAdminPermission,
+  trendingDesignController.getAllTrendingDesigns
+);
+router.get(
+  "/trending-designs/:id",
+  protect,
+  PlatformAdminPermission,
+  trendingDesignController.getSingleTrendingDesign
+);
+router.put(
+  "/trending-designs/:id",
+  protect,
+  PlatformAdminPermission,
+  trendingDesignController.updateTrendingDesign
+);
+router.delete(
+  "/trending-designs/:id",
+  protect,
+  PlatformAdminPermission,
+  trendingDesignController.deleteTrendingDesign
+);
 
 export default router;

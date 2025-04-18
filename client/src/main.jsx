@@ -57,6 +57,7 @@ import TailorOrders from "./pages/protected/tailor/TailorOrders";
 import BlogListingPage from "./pages/protected/platform_admin/BlogListingPage";
 import BlogCreationPage from "./pages/protected/platform_admin/BlogCreationPage";
 import SingleBlogPage from "./pages/public/SingleBlogPage";
+import TrendingDesignPage from "./pages/protected/platform_admin/TrendingDesignPage";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -99,6 +100,10 @@ createRoot(document.getElementById("root")).render(
                   <Route
                     path="/platform-admin/blogs"
                     element={<BlogListingPage />}
+                  />
+                  <Route
+                    path="trending-designs"
+                    element={<TrendingDesignPage />}
                   />
                   <Route
                     path="/admin/blogs/create"
