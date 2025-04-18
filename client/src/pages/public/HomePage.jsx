@@ -15,6 +15,7 @@ import luxury from "../../assets/luxury.jpg";
 import office from "../../assets/office.jpg";
 import tailor from "../../assets/tailor.png";
 import HomePageBlog from "./HomePageBlog";
+import TailorFeatureSection from "./TailorFeatureSection";
 // Dummy Data
 const tailors = [
   {
@@ -82,22 +83,22 @@ const faqData = [
   {
     question: "Can I customise or alter any of your designs?",
     answer:
-      "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor. Ad dolore magna ut enim veniam velit.",
+      "Yes, you can customize or alter any of our designs to suit your preferences. Our tailors will work closely with you to ensure the design meets your expectations.",
   },
   {
     question: "How do I take my measurements to purchase a gown?",
     answer:
-      "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor. Ad dolore magna ut enim veniam velit.",
+      "You can follow our detailed measurement guide available on our website, or schedule an appointment with one of our tailors for precise measurements.",
   },
   {
     question: "Where are your dresses made?",
     answer:
-      "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor. Ad dolore magna ut enim veniam velit.",
+      "All our dresses are handcrafted by skilled tailors in our local workshops, ensuring high-quality craftsmanship and attention to detail.",
   },
   {
     question: "How to pick the right material?",
     answer:
-      "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor. Ad dolore magna ut enim veniam velit.",
+      "Our tailors can guide you in selecting the right material based on the design, occasion, and your preferences. You can also visit our fabric gallery for inspiration.",
   },
 ];
 
@@ -243,53 +244,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Featured Tailors Section */}
-      <section className="py-16 bg-gray-50">
-        <h3
-          className="text-4xl md:text-5xl font-sans bg-gradient-to-r from-[#cf63ff] to-[#4d1ae5] text-transparent bg-clip-text"
-          style={{
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            lineHeight: "1.2",
-            paddingTop: "10px",
-            paddingBottom: "40px",
-            overflowWrap: "break-word",
-            textAlign: "center",
-            fontWeight: 500,
-          }}
-        >
-          Featured Tailors
-        </h3>
-
-        <div className="flex justify-center flex-wrap gap-6 px-4">
-          {tailors.map((tailor) => (
-            <div
-              key={tailor.id}
-              className="min-w-[220px] bg-white p-5 rounded-xl shadow-lg border border-[#E5D5FA] transition-transform duration-300 hover:scale-105 hover:shadow-2xl overflow-hidden will-change-transform"
-            >
-              <div className="relative w-32 h-32 mx-auto mb-4 transition-transform duration-300 hover:scale-105 overflow-hidden">
-                <img
-                  src={tailor.image}
-                  alt={tailor.name}
-                  className="w-full h-full rounded-full object-cover border-4 border-[#9760F4]"
-                />
-              </div>
-
-              <h3 className="text-xl font-semibold text-[#2D033B]">
-                {tailor.name}
-              </h3>
-              <p className="text-yellow-500 text-sm mb-3">⭐ {tailor.rating}</p>
-
-              <Link
-                to={`/tailor/${tailor.id}`}
-                className="inline-block bg-[#9760F4] text-white py-2 px-5 rounded-full hover:bg-[#7b4bdb] transition-colors duration-300"
-              >
-                View Profile
-              </Link>
-            </div>
-          ))}
-        </div>
-      </section>
+      <TailorFeatureSection />
 
       {/* Trending Designs Section */}
       <section className="py-16 bg-gray-50">
@@ -444,10 +399,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Bottom image gallery */}
-      <NewsSection />
-
-      {/* Footer */}
       <Footer />
     </div>
   );

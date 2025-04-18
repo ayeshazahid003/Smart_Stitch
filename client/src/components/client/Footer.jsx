@@ -1,105 +1,83 @@
+// src/components/Footer.jsx
 import React from "react";
 import { Mail, Phone, MapPin, ArrowRight } from "lucide-react";
+import { Link } from "react-router";
 
 export default function Footer() {
   return (
-    <footer className="bg-[#9760f4] text-white py-12">
+    <footer className="bg-gradient-to-r from-[#020535] to-[#4d1ae5] text-white py-12">
       <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-16">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
-          
-          {/* Left Section - Branding */}
+          {/* Branding */}
           <div>
-            <h4 className="text-xl font-semibold tracking-wide">SmartStitch</h4>
-            <p className="mt-4 text-sm text-[#ffffff]-400 max-w-xs">
-              Discover the finest tailor and haute couture studio in town, get in touch with us and let’s start the work on your new suit together.
+            <h4 className="text-xl font-semibold">SmartStitch</h4>
+            <p className="mt-4 text-sm max-w-xs">
+              Connecting you to skilled tailors for a seamless tailoring
+              experience.
             </p>
-            {/* Social Icons */}
-            <div className="flex space-x-4 mt-4">
-              <a href="#" className="text-[#ffffff]-400 hover:text-white transition">
-                🌐
-              </a>
-              <a href="#" className="text-[#ffffff]-400 hover:text-white transition">
-                🎥
-              </a>
-              <a href="#" className="text-[#ffffff]-400 hover:text-white transition">
-                📸
-              </a>
-              <a href="#" className="text-[#ffffff]-400 hover:text-white transition">
-                📌
-              </a>
-            </div>
           </div>
 
-          {/* Middle Section - Contact Info */}
+          {/* Contact Info */}
           <div>
-            <h5 className="text-lg font-semibold mb-4">Information:</h5>
-            <ul className="text-sm text-[#ffffff]-400 space-y-2">
+            <h5 className="text-lg font-semibold mb-4">Contact</h5>
+            <ul className="text-sm space-y-2">
               <li className="flex items-center space-x-2">
-                <Mail className="w-4 h-4 text-[#ffffff]" />
-                <span>info.tailor@example.com</span>
+                <Mail className="w-4 h-4" />
+                <span>contact@smartstitch.com</span>
               </li>
               <li className="flex items-center space-x-2">
-                <Phone className="w-4 h-4 text-[#ffffff]" />
-                <span>+345 8892 7413</span>
+                <Phone className="w-4 h-4" />
+                <span>+92 300 1234567</span>
               </li>
               <li className="flex items-center space-x-2">
-                <MapPin className="w-4 h-4 text-[#ffffff]" />
-                <span>35 Savile Row, London W1S</span>
+                <MapPin className="w-4 h-4" />
+                <span>Lahore, Pakistan</span>
               </li>
-              <li>Monday to Saturday: 10am - 6pm</li>
-              <li>Sunday: Closed</li>
             </ul>
           </div>
-
 
           {/* Quick Links */}
           <div>
-            <h5 className="text-lg font-semibold mb-4">Quick Links:</h5>
-            <ul className="text-sm text-[#ffffff]-400 space-y-2">
-              <li className="hover:text-white transition">
-                <a href="#">ABOUT</a>
+            <h5 className="text-lg font-semibold mb-4">Quick Links</h5>
+            <ul className="text-sm space-y-2">
+              <li>
+                <Link to="/about" className="hover:underline">
+                  About
+                </Link>
               </li>
-              <li className="hover:text-white transition">
-                <a href="#">SERVICES</a>
-              </li>
-              <li className="hover:text-white transition">
-                <a href="#">OUR HERITAGE</a>
-              </li>
-              <li className="hover:text-white transition">
-                <a href="#">TAILORS</a>
-              </li>
-              <li className="hover:text-white transition">
-                <a href="#">CONTACT US</a>
+              <li>
+                <Link to="/blog" className="hover:underline">
+                  Blog
+                </Link>
               </li>
             </ul>
           </div>
 
-          {/* Join Us Section */}
+          {/* Newsletter Signup */}
           <div>
-          <h5 className="text-lg font-semibold mb-4">Join Us:</h5>
-          <p className="text-sm text-[#ffffff]">
-            Sign up for exclusive offers, original stories, events, and more.
-          </p>
-          <form className="mt-4 relative">
-            <input
-              type="email"
-              placeholder="Your email *"
-              className="w-full px-4 py-2 bg-transparent border border-gray-600 text-white placeholder-white focus:outline-none focus:border-white"
-            />
-            <button
-              type="submit"
-              className="absolute top-0 right-0 h-full px-4 flex items-center justify-center bg-transparent border-l border-gray-600 text-white-400 hover:text-white"
-            >
-              <ArrowRight className="w-5 h-5" />
-            </button>
-          </form>
+            <h5 className="text-lg font-semibold mb-4">Stay Updated</h5>
+            <p className="text-sm mb-4">
+              Sign up for news, tips, and special offers.
+            </p>
+            <form className="relative">
+              <input
+                type="email"
+                placeholder="Your email"
+                className="w-full px-4 py-2 bg-white/10 border border-white/30 rounded-full placeholder-white focus:outline-none focus:ring-2 focus:ring-[#9760F4]"
+              />
+              <button
+                type="submit"
+                className="absolute top-0 right-0 h-full px-4 flex items-center justify-center text-white/70 hover:text-white"
+              >
+                <ArrowRight className="w-5 h-5" />
+              </button>
+            </form>
+          </div>
         </div>
 
-        </div>
-
-        {/* Footer Bottom */}
-        <div className="mt-12 pt-6 border-t border-gray-700 text-center text-sm text-[#ffffff]-500">
-          © 2024 SmartStitch. All rights reserved.
+        {/* Bottom */}
+        <div className="mt-12 pt-6 border-t border-white/30 text-center text-sm text-white/50">
+          © {new Date().getFullYear()} SmartStitch. All rights reserved.
         </div>
       </div>
     </footer>

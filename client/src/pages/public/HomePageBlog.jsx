@@ -265,8 +265,6 @@ const HomePageBlog = () => {
           </div>
         </div>
       </section>
-
-      <Footer />
     </div>
   );
 };

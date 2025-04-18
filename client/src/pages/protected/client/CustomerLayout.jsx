@@ -21,6 +21,7 @@ import {
   TagIcon,
 } from "@heroicons/react/24/outline";
 import { useUser } from "../../../context/UserContext";
+import { useNavigate } from "react-router";
 
 const getNavigation = (role) => {
   const customerNav = [
@@ -70,12 +71,19 @@ function classNames(...classes) {
 
 export default function CustomerLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user, getUserProfile } = useUser();
+  const { user, getUserProfile, logout } = useUser();
   const location = useLocation(); // Get the current location
+  const navigate = useNavigate(); // Hook to navigate programmatically
 
   useEffect(() => {
     getUserProfile();
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      navigate("/"); // Redirect to home if no user
+    }
+  }, [user, navigate]);
 
   return (
     <>
@@ -144,6 +152,20 @@ export default function CustomerLayout() {
                         ))}
                       </ul>
                     </li>
+                    <li className="mt-auto">
+                      <div className="border-t border-white/25 pt-6">
+                        {user && (
+                          <button
+                            onClick={() => {
+                              logout();
+                            }}
+                            className="block w-full rounded-md px-3 py-2 text-base font-semibold text-white hover:underline"
+                          >
+                            Log out
+                          </button>
+                        )}
+                      </div>
+                    </li>
                   </ul>
                 </nav>
               </div>
@@ -195,12 +217,27 @@ export default function CustomerLayout() {
                   >
                     <img
                       alt=""
-                      src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+                      src={
+                        user?.profilePicture ||
+                        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+                      }
                       className="size-8 rounded-full bg-gray-800"
                     />
                     <span className="sr-only">Your profile</span>
                     <span aria-hidden="true">{user?.name || "Najam"}</span>
                   </Link>
+                  <div className="mt-6 border-t border-white/25 pt-6">
+                    {user && (
+                      <button
+                        onClick={() => {
+                          logout();
+                        }}
+                        className="block w-full rounded-md px-3 py-2 text-base font-semibold text-white hover:underline"
+                      >
+                        Log out
+                      </button>
+                    )}
+                  </div>
                 </li>
               </ul>
             </nav>
@@ -223,7 +260,10 @@ export default function CustomerLayout() {
             <span className="sr-only">Your profile</span>
             <img
               alt=""
-              src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+              src={
+                user?.profilePicture ||
+                "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+              }
               className="size-8 rounded-full bg-gray-800"
             />
           </Link>

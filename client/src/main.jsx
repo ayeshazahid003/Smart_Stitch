@@ -58,6 +58,9 @@ import BlogListingPage from "./pages/protected/platform_admin/BlogListingPage";
 import BlogCreationPage from "./pages/protected/platform_admin/BlogCreationPage";
 import SingleBlogPage from "./pages/public/SingleBlogPage";
 import TrendingDesignPage from "./pages/protected/platform_admin/TrendingDesignPage";
+import AboutPage from "./pages/public/AboutPage";
+import BlogPage from "./pages/public/BlogPage";
+import ContactUs from "./pages/public/ContactUsPage";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -68,8 +71,11 @@ createRoot(document.getElementById("root")).render(
             <Route path="/" element={<MainLayout />}>
               {/* Public Routes */}
               <Route index element={<HomePage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/blogs" element={<BlogPage />} />
               <Route path="/browse" element={<Browse />} />
               <Route path="/search" element={<Search />} />
+              <Route path="/contact" element={<ContactUs />} />
               <Route path="/blogs/:slug" element={<SingleBlogPage />} />
               <Route path="/tailor/:id" element={<TailorProfile />} />
               <Route path="/checkout/:id" element={<Checkout />} />
