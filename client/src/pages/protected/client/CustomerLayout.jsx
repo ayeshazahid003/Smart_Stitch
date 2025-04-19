@@ -71,19 +71,9 @@ function classNames(...classes) {
 
 export default function CustomerLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user, getUserProfile, logout } = useUser();
+  const { user, logout } = useUser();
   const location = useLocation(); // Get the current location
   const navigate = useNavigate(); // Hook to navigate programmatically
-
-  useEffect(() => {
-    getUserProfile();
-  }, []);
-
-  useEffect(() => {
-    if (!user) {
-      navigate("/"); // Redirect to home if no user
-    }
-  }, [user, navigate]);
 
   return (
     <>

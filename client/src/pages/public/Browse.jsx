@@ -149,6 +149,7 @@ export default function Browse() {
               priceRange={tailor.priceRange}
               description={tailor.description}
               services={tailor.services}
+              location={tailor.location}
             />
           ))
         ) : (

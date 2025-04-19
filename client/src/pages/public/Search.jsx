@@ -226,9 +226,7 @@ export default function Search() {
                   checked={selectedPriceIndexes.includes(index)}
                   onChange={() => handlePriceCheck(index)}
                 />
-                <span className="ml-2 text-md">
-                  {range.label} 
-                </span>
+                <span className="ml-2 text-md">{range.label}</span>
               </label>
             ))}
           </div>
@@ -246,9 +244,7 @@ export default function Search() {
                   checked={selectedRatingIndexes.includes(index)}
                   onChange={() => handleRatingCheck(index)}
                 />
-                <span className="ml-2 text-md">
-                  {range.label} 
-                </span>
+                <span className="ml-2 text-md">{range.label}</span>
               </label>
             ))}
           </div>
@@ -266,9 +262,7 @@ export default function Search() {
                   checked={selectedExperienceIndexes.includes(index)}
                   onChange={() => handleExperienceCheck(index)}
                 />
-                <span className="ml-2 text-md">
-                  {range.label}
-                </span>
+                <span className="ml-2 text-md">{range.label}</span>
               </label>
             ))}
           </div>
@@ -327,6 +321,7 @@ export default function Search() {
                 priceRange={tailor.priceRange}
                 description={tailor.description}
                 services={tailor.services}
+                location={tailor.location}
               />
             ))}
           </div>

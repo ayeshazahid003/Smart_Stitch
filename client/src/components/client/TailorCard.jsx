@@ -12,8 +12,11 @@ export default function TailorCard({
   priceRange,
   description,
   services,
+  location,
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  console.log("location from tailor card", location);
 
   // Calculate the maximum discount from all services
   const maxDiscount = services?.reduce((max, service) => {
@@ -57,6 +60,23 @@ export default function TailorCard({
                 <span>💰</span> PKR {priceRange?.min?.toLocaleString()} -{" "}
                 {priceRange?.max?.toLocaleString()}
               </div>
+              {location && location.coordinates && location.address ? (
+                <div className="flex items-center gap-1">
+                  <a
+                    href={`https://www.google.com/maps?q=${location.coordinates.lat},${location.coordinates.lng}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                  >
+                    <span>📍</span> View on Map
+                  </a>
+                </div>
+              ) : (
+                <div className="text-xs text-gray-400 mt-1 flex items-center gap-1">
+                  <span>ℹ️</span> Location not available
+                </div>
+              )}
             </div>
           </div>
         </motion.div>

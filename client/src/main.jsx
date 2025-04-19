@@ -61,6 +61,7 @@ import TrendingDesignPage from "./pages/protected/platform_admin/TrendingDesignP
 import AboutPage from "./pages/public/AboutPage";
 import BlogPage from "./pages/public/BlogPage";
 import ContactUs from "./pages/public/ContactUsPage";
+import LocationPicker from "./pages/protected/tailor/LocationPage";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -81,6 +82,7 @@ createRoot(document.getElementById("root")).render(
               <Route path="/checkout/:id" element={<Checkout />} />
               <Route path="/order-placed" element={<OrderPlaced />} />
               <Route path="chats" element={<Chat />} />
+              <Route path="location" element={<LocationPicker />} />
 
               {/* Auth Routes */}
               <Route element={<AuthLayout />}>
@@ -95,6 +97,7 @@ createRoot(document.getElementById("root")).render(
               <Route element={<ProtectLayout />}>
                 <Route element={<CustomerLayout />}>
                   {/* Customer Routes */}
+
                   <Route path="user-profile" element={<UserProfile />} />
                   <Route path="measurements" element={<MeasurementForm />} />
                   <Route path="offers" element={<Offers />} />

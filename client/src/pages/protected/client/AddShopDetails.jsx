@@ -1,212 +1,87 @@
-import React, { useState, useRef, useEffect } from "react";
-import { CameraIcon, XMarkIcon, MapPinIcon } from "@heroicons/react/24/solid";
+import React, { useState, useEffect } from "react";
+import LocationPicker from "../tailor/LocationPage";
 import { createTailorProfile, getTailorShop } from "../../../hooks/TailorHooks";
-import { useLoadScript } from "@react-google-maps/api";
+import { CameraIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { toast } from "react-toastify";
-
-const libraries = ["places", "marker"];
-const mapContainerStyle = {
-  width: "100%",
-  height: "400px",
-};
-
-// Default center (Lahore coordinates)
-const DEFAULT_CENTER = { lat: 31.5204, lng: 74.3587 };
+import axios from "axios";
 
 export default function AddShopDetails() {
   const [shopName, setShopName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [address, setAddress] = useState("");
-  const [mapCenter, setMapCenter] = useState(DEFAULT_CENTER);
   const [markerPosition, setMarkerPosition] = useState(null);
   const [bio, setBio] = useState("");
   const [images, setImages] = useState([]);
-  const [message, setMessage] = useState("");
-  const [dragActive, setDragActive] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const mapRef = useRef(null);
-  const markerRef = useRef(null);
-  const placeInputRef = useRef(null);
-
-  const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
-    libraries,
-  });
-
   useEffect(() => {
-    // Get user's current location
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const currentLocation = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          };
-          setMapCenter(currentLocation);
-          setMarkerPosition(currentLocation);
-          reverseGeocode(currentLocation);
-        },
-        (error) => {
-          console.error("Error getting location:", error);
-          toast.error("Could not get your current location");
-          // Fall back to default center
-          setMapCenter(DEFAULT_CENTER);
-          setMarkerPosition(DEFAULT_CENTER);
-        }
-      );
-    }
-
-    // Fetch existing tailor profile
-    const fetchTailorProfile = async () => {
-      try {
-        setLoading(true);
-        const response = await getTailorShop();
-        if (response.success && response.shopDetails) {
-          const details = response.shopDetails;
-          setShopName(details.shopName || "");
-          setPhoneNumber(details.phoneNumber || "");
-          setBio(details.bio || "");
-          if (details.shopLocation) {
-            setAddress(details.shopLocation.address || "");
-            if (details.shopLocation.coordinates) {
-              const position = {
-                lat: Number(details.shopLocation.coordinates.lat),
-                lng: Number(details.shopLocation.coordinates.lng),
-              };
-              setMapCenter(position);
-              setMarkerPosition(position);
-            }
-          }
-          if (details.shopImages && details.shopImages.length > 0) {
-            setImages(details.shopImages.filter((img) => img !== null));
+    (async () => {
+      setLoading(true);
+      const res = await getTailorShop();
+      if (res.success && res.shopDetails) {
+        const d = res.shopDetails;
+        setShopName(d.shopName || "");
+        setPhoneNumber(d.phoneNumber || "");
+        setBio(d.bio || "");
+        if (d.shopLocation) {
+          setAddress(d.shopLocation.address || "");
+          if (d.shopLocation.coordinates) {
+            setMarkerPosition({
+              latitude: Number(d.shopLocation.coordinates.lat),
+              longitude: Number(d.shopLocation.coordinates.lng),
+            });
           }
         }
-      } catch (error) {
-        console.error("Error fetching tailor profile:", error);
-        toast.error("Failed to load shop details");
-      } finally {
-        setLoading(false);
+        if (d.shopImages) setImages(d.shopImages.filter(Boolean));
       }
-    };
 
-    fetchTailorProfile();
+      setLoading(false);
+    })();
   }, []);
 
-  useEffect(() => {
-    if (isLoaded && !loadError) {
-      // Initialize map
-      const map = new window.google.maps.Map(document.getElementById("map"), {
-        center: mapCenter,
-        zoom: 15,
-        zoomControl: true,
-        streetViewControl: true,
-        mapTypeControl: true,
-        fullscreenControl: true,
-      });
-      mapRef.current = map;
+  const handleLocationSave = (loc) => {
+    setMarkerPosition({ latitude: loc.latitude, longitude: loc.longitude });
+    setAddress(loc.address);
+  };
 
-      // Create marker using standard Marker
-      const marker = new window.google.maps.Marker({
-        map,
-        position: markerPosition || mapCenter,
-        draggable: true,
-      });
-      markerRef.current = marker;
+  const handleImageChange = (e) =>
+    setImages((prev) => [...prev, ...Array.from(e.target.files)]);
+  const removeImage = (i) =>
+    setImages((prev) => prev.filter((_, idx) => idx !== i));
 
-      // Initialize place autocomplete
-      const placeInput = document.getElementById("place-input");
-      const placeAutocomplete = new window.google.maps.places.Autocomplete(
-        placeInput,
+  // Helper function to convert File to base64
+  const fileToBase64 = async (file) => {
+    if (typeof file === "string") return file; // Already a URL or base64
+
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // Helper function to upload a single image
+  const uploadImage = async (base64Image) => {
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/uploadimage",
         {
-          types: ["address"],
+          file: base64Image,
+          folder: "Home",
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
         }
       );
-
-      // Handle place selection
-      placeAutocomplete.addListener("place_changed", () => {
-        const place = placeAutocomplete.getPlace();
-        if (place.geometry) {
-          const location = {
-            lat: place.geometry.location.lat(),
-            lng: place.geometry.location.lng(),
-          };
-          setMapCenter(location);
-          setMarkerPosition(location);
-          setAddress(place.formatted_address);
-          map.setCenter(location);
-          marker.setPosition(location);
-        }
-      });
-
-      // Handle map clicks
-      map.addListener("click", (e) => {
-        const clickedLocation = {
-          lat: e.latLng.lat(),
-          lng: e.latLng.lng(),
-        };
-        setMarkerPosition(clickedLocation);
-        marker.setPosition(clickedLocation);
-        reverseGeocode(clickedLocation);
-      });
-
-      // Handle marker drag
-      marker.addListener("dragend", () => {
-        const position = marker.getPosition();
-        const newPos = {
-          lat: position.lat(),
-          lng: position.lng(),
-        };
-        setMarkerPosition(newPos);
-        reverseGeocode(newPos);
-      });
-    }
-  }, [isLoaded, loadError, mapCenter]);
-
-  const reverseGeocode = async (location) => {
-    if (!isLoaded || loadError) return;
-
-    try {
-      const geocoder = new window.google.maps.Geocoder();
-      const response = await new Promise((resolve, reject) => {
-        geocoder.geocode({ location }, (results, status) => {
-          if (status === "OK") {
-            resolve(results[0]);
-          } else {
-            reject(status);
-          }
-        });
-      });
-      setAddress(response.formatted_address);
+      return response.data.url;
     } catch (error) {
-      console.error("Reverse geocoding error:", error);
-      toast.error("Could not get address for selected location");
+      console.error("Error uploading image:", error);
+      throw error;
     }
-  };
-
-  const handleImageChange = (e) => {
-    const files = Array.from(e.target.files);
-    // Append new files to existing images array.
-    // Note: Existing images may be URL strings.
-    setImages((prevImages) => [...prevImages, ...files]);
-  };
-
-  const handleDrag = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(e.type === "dragenter" || e.type === "dragover");
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    const files = Array.from(e.dataTransfer.files);
-    setImages((prevImages) => [...prevImages, ...files]);
-  };
-
-  const removeImage = (index) => {
-    setImages((prevImages) => prevImages.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e) => {
@@ -216,227 +91,162 @@ export default function AddShopDetails() {
       !phoneNumber ||
       !address ||
       !bio ||
-      images.length === 0 ||
-      !markerPosition
+      !markerPosition ||
+      images.length === 0
     ) {
-      toast.error("All fields are required");
-      return;
+      return toast.error("All fields are required");
     }
 
-    const shopLocation = {
-      address,
-      coordinates: {
-        lat: Number(markerPosition.lat),
-        lng: Number(markerPosition.lng),
-      },
-    };
+    setLoading(true);
 
     try {
-      setLoading(true);
-      const formData = new FormData();
-      formData.append("shopName", shopName);
-      formData.append("phoneNumber", phoneNumber);
-      formData.append("shopLocation", JSON.stringify(shopLocation));
-      formData.append("bio", bio);
-
-      // Handle images
-      const shopImages = await Promise.all(
-        images.map(async (image) => {
-          if (typeof image === "string") return image;
-          return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(image);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = reject;
-          });
-        })
-      );
-
-      formData.append("shopImages", JSON.stringify(shopImages));
-
-      const response = await createTailorProfile(formData);
-
-      if (response.success) {
-        toast.success("Shop details updated successfully");
-      } else {
-        toast.error(response.message || "Failed to update shop details");
+      // Step 1: Upload all images first
+      const imageUploadPromises = [];
+      for (const img of images) {
+        const base64Image = await fileToBase64(img);
+        imageUploadPromises.push(uploadImage(base64Image));
       }
+
+      // Wait for all images to upload and get their URLs
+      const shopImageUrls = await Promise.all(imageUploadPromises);
+      console.log("Uploaded image URLs:", shopImageUrls);
+
+      // Step 2: Create shop profile with the image URLs
+      const shopLocation = {
+        address,
+        coordinates: {
+          lat: markerPosition.latitude,
+          lng: markerPosition.longitude,
+        },
+      };
+
+      console.log("Shop location:", shopLocation);
+
+      // Create JSON payload
+      const shopData = {
+        shopName,
+        phoneNumber,
+        bio,
+        shopLocation,
+        shopImages: shopImageUrls,
+      };
+
+      // Make API request with JSON data
+      const response = await createTailorProfile(shopData);
+
+      if (response.success) toast.success("Shop details updated");
+      else toast.error(response.message || "Update failed");
     } catch (error) {
-      console.error("Error updating shop details:", error);
-      toast.error("An error occurred while updating shop details");
+      console.error("Error:", error);
+      toast.error("Failed to upload images or update shop details");
     } finally {
       setLoading(false);
     }
   };
 
-  if (loadError)
-    return (
-      <div className="text-center py-4 text-red-600">
-        Error loading Google Maps
-      </div>
-    );
-  if (!isLoaded)
-    return <div className="text-center py-4">Loading Google Maps...</div>;
-
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4">
-      <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-8">
-        <h1 className="text-4xl font-bold text-center mb-8 text-gray-800">
+      <div className="max-w-3xl mx-auto bg-white shadow rounded-lg p-8 space-y-6">
+        <h2 className="text-3xl font-bold text-gray-800 text-center">
           Shop Details
-        </h1>
+        </h2>
 
-        <div className="mb-8">
-          <div className="relative">
-            <div id="map" style={mapContainerStyle}></div>
-            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 w-full max-w-md">
-              <div className="relative">
-                <input
-                  id="place-input"
-                  type="text"
-                  className="w-full p-3 pl-10 rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Search location or click on map"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  ref={placeInputRef}
-                />
-                <MapPinIcon className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
-              </div>
+        <div>
+          <label className="block font-medium text-gray-700 mb-1">
+            Shop Name
+          </label>
+          <input
+            className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500"
+            value={shopName}
+            onChange={(e) => setShopName(e.target.value)}
+            placeholder="Enter shop name"
+          />
+        </div>
+
+        <div>
+          <label className="block font-medium text-gray-700 mb-1">
+            Phone Number
+          </label>
+          <input
+            className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500"
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
+            placeholder="Enter phone number"
+          />
+        </div>
+
+        <div>
+          <label className="block font-medium text-gray-700 mb-1">Bio</label>
+          <textarea
+            className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500"
+            rows={4}
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
+            placeholder="Enter shop description"
+          />
+        </div>
+
+        <div>
+          <label className="block font-medium text-gray-700 mb-2">
+            Location
+          </label>
+          <LocationPicker
+            initialLocation={
+              markerPosition && {
+                latitude: markerPosition.latitude,
+                longitude: markerPosition.longitude,
+                address,
+              }
+            }
+            onSave={handleLocationSave}
+          />
+        </div>
+
+        <div>
+          <label className="block font-medium text-gray-700 mb-1">
+            Shop Images
+          </label>
+          <div className="flex items-center space-x-4">
+            <label className="cursor-pointer bg-gray-100 p-4 rounded-md hover:bg-gray-200">
+              <CameraIcon className="w-6 h-6 text-gray-600" />
+              <input
+                type="file"
+                multiple
+                className="hidden"
+                onChange={handleImageChange}
+                accept="image/*"
+              />
+            </label>
+            <div className="grid grid-cols-3 gap-4">
+              {images.map((img, idx) => (
+                <div key={idx} className="relative">
+                  <img
+                    src={
+                      typeof img === "string" ? img : URL.createObjectURL(img)
+                    }
+                    alt={`preview-${idx}`}
+                    className="w-24 h-24 object-cover rounded-md"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(idx)}
+                    className="absolute top-1 right-1 bg-gray-800 text-white rounded-full p-1"
+                  >
+                    <XMarkIcon className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-lg font-medium text-gray-700 mb-2">
-                Shop Name
-              </label>
-              <input
-                type="text"
-                className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter shop name"
-                value={shopName}
-                onChange={(e) => setShopName(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="block text-lg font-medium text-gray-700 mb-2">
-                Phone Number
-              </label>
-              <input
-                type="text"
-                className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter phone number"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-lg font-medium text-gray-700 mb-2">
-              Bio
-            </label>
-            <textarea
-              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter bio"
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              rows="4"
-            ></textarea>
-          </div>
-          <div>
-            <label className="block text-lg font-medium text-gray-700 mb-2">
-              Selected Address
-            </label>
-            <input
-              type="text"
-              readOnly
-              className="w-full p-3 border border-gray-300 rounded-md bg-gray-50"
-              placeholder="Address selected from map"
-              value={address}
-            />
-          </div>
-          <input type="hidden" value={markerPosition?.lat} name="latitude" />
-          <input type="hidden" value={markerPosition?.lng} name="longitude" />
-
-          <div>
-            <label className="block text-lg font-medium text-gray-700 mb-2">
-              Shop Images
-            </label>
-            <div
-              className={`w-full p-6 border-2 border-dashed rounded-lg transition-colors flex flex-col items-center justify-center ${
-                dragActive
-                  ? "border-blue-500 bg-blue-50"
-                  : "border-gray-300 bg-gray-100"
-              }`}
-              onDragEnter={handleDrag}
-              onDragOver={handleDrag}
-              onDragLeave={handleDrag}
-              onDrop={handleDrop}
-            >
-              <CameraIcon className="w-10 h-10 text-gray-400 mb-2" />
-              <p className="text-gray-600 mb-1">
-                Drop your images or video here, or
-              </p>
-              <label className="cursor-pointer text-blue-600 underline">
-                browse
-                <input
-                  type="file"
-                  className="hidden"
-                  multiple
-                  accept=".jpeg, .png, .mp4"
-                  onChange={handleImageChange}
-                />
-              </label>
-              <p className="text-gray-500 text-sm mt-1">
-                JPEG, PNG, MP4 allowed
-              </p>
-            </div>
-            {images.length > 0 && (
-              <div className="mt-4 grid grid-cols-3 gap-4">
-                {images.map((image, index) => {
-                  if (!image) return null;
-                  return (
-                    <div key={index} className="relative">
-                      <img
-                        src={
-                          typeof image === "string"
-                            ? image
-                            : URL.createObjectURL(image)
-                        }
-                        alt={`Preview ${index}`}
-                        className="w-full h-32 object-contain rounded-md"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="absolute top-1 right-1 bg-gray-800 text-white rounded-full p-1"
-                      >
-                        <XMarkIcon className="w-4 h-4" />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-          <div className="flex justify-center">
-            <button
-              type="submit"
-              disabled={loading}
-              className={`w-full md:w-1/3 p-3 font-semibold rounded-md transition-colors ${
-                loading ? "bg-blue-300" : "bg-gray-900 hover:bg-gray-800"
-              } text-white`}
-            >
-              {loading ? "Adding..." : "Add Shop"}
-            </button>
-          </div>
-          {message && (
-            <div className="mt-4 text-center text-red-600 font-medium">
-              {message}
-            </div>
-          )}
-        </form>
+        <button
+          onClick={handleSubmit}
+          disabled={loading}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md font-semibold disabled:opacity-50"
+        >
+          {loading ? "Saving..." : "Save Shop"}
+        </button>
       </div>
     </div>
   );

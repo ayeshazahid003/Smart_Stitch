@@ -10,6 +10,7 @@ import crypto from "crypto";
 export const createTailorProfile = async (req, res) => {
   try {
     const { shopName, shopImages, shopLocation, bio, phoneNumber } = req.body;
+
     const tailorId = req.user._id;
 
     // 1. Validate required fields
@@ -31,9 +32,11 @@ export const createTailorProfile = async (req, res) => {
     }
 
     // 2. Convert shopLocation.coordinates to array [latitude, longitude]
+
+    console.log("shop locations", shopLocation);
     if (shopLocation?.coordinates) {
-      const { latitude, longitude } = shopLocation.coordinates;
-      shopLocation.coordinates = [Number(latitude), Number(longitude)];
+      const { lat, lng } = shopLocation.coordinates;
+      shopLocation.coordinates = { lat: Number(lat), lng: Number(lng) };
     }
 
     // 3. Check if tailor profile already exists
@@ -118,11 +121,7 @@ export const getTailorShopDetails = async (req, res) => {
     const tailorId = req.user._id; // Get tailor ID from authenticated user
 
     // Find the tailor profile by tailorId, only select required fields
-    const tailorProfile = await TailorProfile.findOne({ tailorId })
-      .select(
-        "shopName shopImages shopLocation bio phoneNumber serviceRates extraServices "
-      )
-      .lean(); // Convert Mongoose document to a plain object
+    const tailorProfile = await TailorProfile.findOne({ tailorId }).lean(); // Convert Mongoose document to a plain object
 
     // If no profile is found
     if (!tailorProfile) {
@@ -812,9 +811,8 @@ export const searchTailors = async (req, res) => {
     }
 
     // Get tailors matching the base criteria
-    let tailors = await TailorProfile.find(filterQuery)
-      .select("shopName shopImages rating experience bio serviceRates tailorId")
-      .lean();
+    let tailors = await TailorProfile.find(filterQuery).lean();
+    console.log("Tailors found:", tailors);
 
     // Get active campaigns for all tailors
     const currentDate = new Date();
@@ -897,6 +895,7 @@ export const searchTailors = async (req, res) => {
         image: tailor.shopImages[0] || "",
         rating: tailor.rating || 0,
         experience: tailor.experience || 0,
+        location: tailor.shopLocation || "Location not provided",
         priceRange: {
           min: minServicePrice,
           max: maxServicePrice,

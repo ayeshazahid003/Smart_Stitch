@@ -47,6 +47,7 @@ export default function TailorFeatureSection() {
               priceRange={t.priceRange}
               description={t.description}
               services={t.services}
+              location={t.location}
             />
           ))}
         </div>
