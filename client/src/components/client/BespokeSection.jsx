@@ -1,6 +1,9 @@
 import React from "react";
+import { useNavigate } from "react-router";
 
 export default function BespokeSection() {
+  const navigate = useNavigate();
+
   return (
     <section className="bg-gradient-to-r from-[#cf63ff] to-[#4d1ae5] text-white py-16">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center">
@@ -17,7 +20,12 @@ export default function BespokeSection() {
           </p>
 
           {/* Explore Button */}
-          <button className="mt-6 px-6 py-2 border border-[#ffffff]-400 text-white text-sm uppercase tracking-wider hover:bg-white hover:text-black transition">
+          <button className="mt-6 px-6 py-2 border border-[#ffffff]-400 text-white text-sm uppercase tracking-wider hover:bg-white hover:text-black transition"
+            onClick={() => {
+              navigate("/browse");
+            }
+            }
+          >
             Explore
           </button>
         </div>
