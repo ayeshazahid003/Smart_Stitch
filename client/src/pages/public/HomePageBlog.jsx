@@ -1,16 +1,25 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router";
+// src/components/HomePageBlog.jsx
+import React, { useState, useEffect } from "react";
+import { Link, useLocation } from "react-router";
 import { getAllBlogs } from "../../hooks/BlogsHooks";
 import { format } from "date-fns";
 import Header from "../../components/client/Header";
 import Footer from "../../components/client/Footer";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const HomePageBlog = () => {
+  const location = useLocation();
+  const showHeader = location.pathname === "/blogs";
+
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+
+  // state for the CTA newsletter form
+  const [newsletterEmail, setNewsletterEmail] = useState("");
 
   useEffect(() => {
     const fetchBlogs = async () => {
@@ -26,7 +35,6 @@ const HomePageBlog = () => {
 
         if (result.success) {
           setBlogs(result.data);
-
           if (result.pagination) {
             setTotalPages(result.pagination.pages);
           }
@@ -49,8 +57,24 @@ const HomePageBlog = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const handleNewsletterSubscribe = (e) => {
+    e.preventDefault();
+    if (newsletterEmail.trim()) {
+      setTimeout(() => {
+        toast.success("You have subscribed to our newsletter!");
+      }, 500);
+      setNewsletterEmail("");
+    } else {
+      setTimeout(() => {
+        toast.error("Please enter a valid email address.");
+      }, 500);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
+      {showHeader && <Header />}
+
       {/* Hero Section */}
       <section className="relative py-16 md:py-24 bg-gradient-to-r from-[#020535] to-[#4d1ae5]">
         <div className="absolute inset-0 overflow-hidden">
@@ -252,19 +276,31 @@ const HomePageBlog = () => {
               offers directly to your inbox.
             </p>
 
-            <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 max-w-md mx-auto relative z-10">
+            <form
+              onSubmit={handleNewsletterSubscribe}
+              className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 max-w-md mx-auto relative z-10"
+            >
               <input
                 type="email"
                 placeholder="Your email address"
+                value={newsletterEmail}
+                onChange={(e) => setNewsletterEmail(e.target.value)}
                 className="flex-grow px-4 py-3 rounded-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#9760F4]"
               />
-              <button className="bg-[#9760F4] px-6 py-3 rounded-full hover:bg-[#8A53E9] transition-colors duration-300 shadow-lg">
+              <button
+                type="submit"
+                className="bg-[#9760F4] px-6 py-3 rounded-full hover:bg-[#8A53E9] transition-colors duration-300 shadow-lg"
+              >
                 Subscribe
               </button>
-            </div>
+            </form>
           </div>
         </div>
       </section>
+
+      <Footer />
+
+      {/* Toast Notifications */}
     </div>
   );
 };

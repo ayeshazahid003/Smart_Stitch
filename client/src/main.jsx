@@ -1,8 +1,8 @@
 // src/index.js
-import { StrictMode } from "react";
+import { StrictMode, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
-import { BrowserRouter, Route, Routes } from "react-router";
+import { BrowserRouter, Route, Routes, useLocation } from "react-router";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { ToastContainer } from "react-toastify";
@@ -63,11 +63,21 @@ import BlogPage from "./pages/public/BlogPage";
 import ContactUs from "./pages/public/ContactUsPage";
 import LocationPicker from "./pages/protected/tailor/LocationPage";
 
+// ScrollToTop component
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
+
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <SocketProvider>
       <UserProvider>
         <BrowserRouter>
+          <ScrollToTop />
           <Routes>
             <Route path="/" element={<MainLayout />}>
               {/* Public Routes */}
@@ -97,7 +107,6 @@ createRoot(document.getElementById("root")).render(
               <Route element={<ProtectLayout />}>
                 <Route element={<CustomerLayout />}>
                   {/* Customer Routes */}
-
                   <Route path="user-profile" element={<UserProfile />} />
                   <Route path="measurements" element={<MeasurementForm />} />
                   <Route path="offers" element={<Offers />} />
@@ -143,7 +152,10 @@ createRoot(document.getElementById("root")).render(
 
                   {/* Shared Routes */}
                   <Route path="address" element={<AddressForm />} />
-                  <Route path="add-shop-details" element={<AddShopDetails />} />
+                  <Route
+                    path="add-shop-details"
+                    element={<AddShopDetails />}
+                  />
                   <Route
                     path="order-details/:orderId"
                     element={<OrderDetail />}

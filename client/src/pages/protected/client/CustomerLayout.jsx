@@ -25,15 +25,16 @@ import { useNavigate } from "react-router";
 
 const getNavigation = (role) => {
   const customerNav = [
+    { name: "Home", href: "/", icon: HomeIcon },
     { name: "Profile", href: "/user-profile", icon: UserIcon },
     { name: "Measurements", href: "/measurements", icon: CalendarIcon },
     { name: "Offers", href: "/offers", icon: GiftIcon },
     { name: "Chats", href: "/chats", icon: ChatBubbleLeftRightIcon },
-    { name: "Requests", href: "/requests", icon: ClipboardDocumentListIcon },
     { name: "Orders", href: "/orders", icon: ClipboardDocumentListIcon },
   ];
 
   const tailorNav = [
+    { name: "Home", href: "/", icon: HomeIcon },
     { name: "Dashboard", href: "/tailor", icon: HomeIcon },
     { name: "Profile", href: "/user-profile", icon: UserIcon },
     { name: "Shop Details", href: "/add-shop-details", icon: BriefcaseIcon },
@@ -111,11 +112,9 @@ export default function CustomerLayout() {
               {/* Sidebar component, swap this element with another sidebar if you like */}
               <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-gray-900 px-6 pb-2 ring-1 ring-white/10">
                 <div className="flex h-16 shrink-0 items-center">
-                  <img
-                    alt="Your Company"
-                    src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=500"
-                    className="h-8 w-auto"
-                  />
+                  <h1 className="text-2xl font-ibarra font-bold italic text-white">
+                    Smart Stitch
+                  </h1>
                 </div>
                 <nav className="flex flex-1 flex-col">
                   <ul role="list" className="flex flex-1 flex-col gap-y-7">
@@ -148,6 +147,7 @@ export default function CustomerLayout() {
                           <button
                             onClick={() => {
                               logout();
+                              navigate("/"); // Redirect to login page after logout
                             }}
                             className="block w-full rounded-md px-3 py-2 text-base font-semibold text-white hover:underline"
                           >
@@ -168,11 +168,8 @@ export default function CustomerLayout() {
           {/* Sidebar component, swap this element with another sidebar if you like */}
           <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-gray-900 px-6">
             <div className="flex h-16 shrink-0 items-center">
-              <img
-                alt="Your Company"
-                src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=500"
-                className="h-8 w-auto"
-              />
+            <h1 className="text-2xl font-ibarra font-bold italic text-white">Smart Stitch</h1>
+
             </div>
             <nav className="flex flex-1 flex-col">
               <ul role="list" className="flex flex-1 flex-col gap-y-7">
@@ -221,6 +218,7 @@ export default function CustomerLayout() {
                       <button
                         onClick={() => {
                           logout();
+                          navigate("/"); // Redirect to login page after logout
                         }}
                         className="block w-full rounded-md px-3 py-2 text-base font-semibold text-white hover:underline"
                       >

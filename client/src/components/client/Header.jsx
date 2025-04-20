@@ -11,6 +11,7 @@ const navigation = [
   { name: "Blog", href: "/blogs" },
   { name: "Contact", href: "/contact" },
   { name: "Services", href: "/browse" },
+  {name: "Tailors", href: "/search"},
 ];
 
 export default function Header() {
@@ -28,7 +29,8 @@ export default function Header() {
         <div className="flex lg:flex-1">
           <Link to="/" className="-m-1.5 p-1.5">
             <span className="sr-only">TailorSys</span>
-            <img src="/logo.svg" alt="TailorSys" className="h-8 w-auto" />
+            {/* <img src="/logo.svg" alt="TailorSys" className="h-8 w-auto" /> */}
+            <h1 className="text-2xl font-ibarra font-bold italic">Smart Stitch</h1>
           </Link>
         </div>
 

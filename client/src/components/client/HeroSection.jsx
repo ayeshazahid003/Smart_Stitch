@@ -58,10 +58,10 @@ export default function HeroSection() {
 
             {/* Discover More Button */}
             <button
-              onClick={() => navigate("/browse")}
+              onClick={() => navigate("/search")}
               className="border border-[#9760F4] text-[#9760F4] px-6 py-3 uppercase tracking-wider hover:bg-[#51cbff] hover:border-[#51cbff] hover:text-[#020535] transition flex items-center justify-center"
             >
-              Discover More
+              Find Tailors
               <ArrowRight className="w-4 h-4 ml-2 transform -rotate-45" />
             </button>
           </div>

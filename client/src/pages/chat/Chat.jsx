@@ -1,7 +1,7 @@
 // src/pages/chat/Chat.js
 
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import Sidebar from './Sidebar';
 import ChatWindow from './ChatWindow';
 import { getUserChats, getChatParticipants } from '../../hooks/chatHooks';
@@ -29,9 +29,18 @@ export default function Chat() {
   const incomingChat = location.state; // Possibly from TailorProfile
   const { getSocket } = useSocket();
   const socket = getSocket(); // Get the socket instance from context
+  const navigate = useNavigate();
+
+  const user = JSON.parse(localStorage.getItem('user')); // Logged-in user data
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!user || !user._id) {
+      navigate('/login', { replace: true });
+    }
+  }, [user, navigate]);
 
   console.log('Socket:', socket);
-  const user = JSON.parse(localStorage.getItem('user')); // Logged-in user data
 
   const [chats, setChats] = useState([]);
   const [participants, setParticipants] = useState([]);
@@ -40,10 +49,11 @@ export default function Chat() {
 
   // 1) Fetch chats & participants on mount
   useEffect(() => {
+    if (!user || !user._id) return; // guard
     fetchChats();
     fetchChatParticipants();
     console.log('Incoming chat:', incomingChat);
-  }, []);
+  }, [user, incomingChat]);
 
   // 2) Join the chat room and listen for messages when selected
   useEffect(() => {
@@ -167,6 +177,11 @@ export default function Chat() {
     // Optimistic update
     setMessages((prev) => [...prev, newMessage]);
   };
+
+  // If redirecting, do not render chat UI
+  if (!user || !user._id) {
+    return null;
+  }
 
   return (
     <div className="flex h-screen bg-gray-100">

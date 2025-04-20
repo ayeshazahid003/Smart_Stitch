@@ -1,6 +1,7 @@
 // src/components/AboutPage.jsx
 import React from "react";
 import { Disclosure } from "@headlessui/react";
+import Header from "../../components/client/Header";
 
 const faqs = [
   {
@@ -29,6 +30,7 @@ export default function AboutPage() {
   return (
     <div className="bg-white text-gray-800">
       {/* Hero */}
+      <Header />
       <section className="py-16 bg-gradient-to-r from-[#020535] to-[#4d1ae5] text-white">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl font-bold mb-4">
