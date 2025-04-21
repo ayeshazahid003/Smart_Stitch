@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { useUser } from "../../context/UserContext";
 import { useOffers, useNegotiateOffer } from "../../hooks/offerHooks";
 import { toast } from "react-toastify";
+import { getOrderById } from "../../hooks/orderHooks";
 
 export default function Offers() {
   const [offers, setOffers] = useState([]);
@@ -49,8 +50,13 @@ export default function Offers() {
         if (response.order) {
           toast.success(response.message);
           // If the user is a customer, redirect to payment
+          console.log("order from offer", response.order);
           if (user?.role === "customer") {
-            navigate(`/checkout/${response.order._id}`);
+            //get order status, if its completed, then we dont show payment button
+            const orderStatus = response.order.status;
+            if (orderStatus !== "completed") {
+              navigate(`/checkout/${response.order._id}`);
+            }
           } else {
             // For tailor, just reload the offers
             await loadOffers();
@@ -131,6 +137,25 @@ export default function Offers() {
       return sortedHistory[0].amount;
     }
     return offer.amount; // Fallback to original amount if no history
+  };
+
+  const handleProceedToPayment = async (orderId) => {
+    try {
+      const order = await getOrderById(orderId);
+      if (order) {
+        console.log("Order details:", order.order.status);
+        if (order.order.status == "pending") {
+          navigate(`/checkout/${orderId}`);
+        } else {
+          toast.error("Order is already processed");
+          navigate(`/orders`);
+        }
+      } else {
+        toast.error("Order not found");
+      }
+    } catch (err) {
+      toast.error("Failed to fetch order details");
+    }
   };
 
   if (loading) return <div className="p-8 text-center">Loading...</div>;
@@ -384,7 +409,7 @@ export default function Offers() {
                       View Order
                     </button>
                     <button
-                      onClick={() => navigate(`/checkout/${offer.orderId}`)}
+                      onClick={() => handleProceedToPayment(offer.orderId)}
                       className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
                     >
                       Proceed to Payment

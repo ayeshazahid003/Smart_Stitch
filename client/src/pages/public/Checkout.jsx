@@ -106,8 +106,7 @@ function CheckoutPage() {
 
         // addresses
         if (userResponse.success) {
-          const userAddresses =
-            userResponse.user.contactInfo?.addresses || [];
+          const userAddresses = userResponse.user.contactInfo?.addresses || [];
           setAddresses(userAddresses);
 
           if (userResponse.user.contactInfo?.address) {
@@ -171,7 +170,12 @@ function CheckoutPage() {
       const payload = {
         design: {
           designImage: [],
-          customization: { fabric, color, style, description: customDescription },
+          customization: {
+            fabric,
+            color,
+            style,
+            description: customDescription,
+          },
           media: [],
         },
         shippingAddress: addr,
@@ -183,18 +187,19 @@ function CheckoutPage() {
       if (resp.success) {
         if (paymentMethod === "card") {
           const stripe = await stripePromise;
-          const session = await createCheckoutSession(
-            orderId,
-            total * 100
-          );
+          const session = await createCheckoutSession(orderId, total * 100);
           const result = await stripe.redirectToCheckout({
             sessionId: session.id,
           });
           if (result.error) toast.error(result.error.message);
         } else {
-          await updateOrderStatus(orderId, { status: "completed" });
+          console.log("we are in the else");
+          await updateOrderStatus(orderId, {
+            status: "completed",
+            paymentMethod: "cod",
+          });
           toast.success("Order placed successfully!");
-          navigate("/order-placed");
+          navigate(`/order-placed?order_id=${orderId}`);
         }
       } else {
         toast.error(resp.message || "Failed to place order");
@@ -208,26 +213,23 @@ function CheckoutPage() {
   // Pricing calc
   const SHIPPING_COST = 200;
   const TAX_RATE = 0.1;
-  const { subtotal, extraServicesTotal, voucherDiscount, tax, total } =
-    (() => {
-      const base = orderData?.pricing?.subtotal || 0;
-      const extra =
-        orderData?.extraServices?.reduce((s, x) => s + x.price, 0) || 0;
-      const sub = base + extra;
-      const vDisc = appliedVoucher
-        ? (sub * appliedVoucher.discount) / 100
-        : 0;
-      const discSub = sub - vDisc;
-      const t = discSub * TAX_RATE;
-      const tot = discSub + SHIPPING_COST + t;
-      return {
-        subtotal: sub,
-        extraServicesTotal: extra,
-        voucherDiscount: vDisc,
-        tax: t,
-        total: tot,
-      };
-    })();
+  const { subtotal, extraServicesTotal, voucherDiscount, tax, total } = (() => {
+    const base = orderData?.pricing?.subtotal || 0;
+    const extra =
+      orderData?.extraServices?.reduce((s, x) => s + x.price, 0) || 0;
+    const sub = base + extra;
+    const vDisc = appliedVoucher ? (sub * appliedVoucher.discount) / 100 : 0;
+    const discSub = sub - vDisc;
+    const t = discSub * TAX_RATE;
+    const tot = discSub + SHIPPING_COST + t;
+    return {
+      subtotal: sub,
+      extraServicesTotal: extra,
+      voucherDiscount: vDisc,
+      tax: t,
+      total: tot,
+    };
+  })();
 
   // Apply voucher
   const handleVoucherApply = async () => {
@@ -250,9 +252,7 @@ function CheckoutPage() {
         });
         if (updated.success) {
           setAppliedVoucher(resp.voucher);
-          toast.success(
-            `Voucher applied: ${resp.voucher.discount}% discount`
-          );
+          toast.success(`Voucher applied: ${resp.voucher.discount}% discount`);
           // recompute new pricing
           const disc = (subtotal * resp.voucher.discount) / 100;
           const newSub = subtotal - disc;
@@ -270,9 +270,7 @@ function CheckoutPage() {
         }
       }
     } catch (err) {
-      setVoucherError(
-        err.response?.data?.message || "Failed to apply voucher"
-      );
+      setVoucherError(err.response?.data?.message || "Failed to apply voucher");
     } finally {
       setIsApplyingVoucher(false);
     }
@@ -281,9 +279,7 @@ function CheckoutPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-lg text-gray-600">
-          Loading checkout details...
-        </p>
+        <p className="text-lg text-gray-600">Loading checkout details...</p>
       </div>
     );
   }
@@ -545,9 +541,7 @@ function CheckoutPage() {
                             className="mt-1 mr-4"
                           />
                           <div>
-                            <div className="font-medium">
-                              {address.line1}
-                            </div>
+                            <div className="font-medium">{address.line1}</div>
                             {address.line2 && (
                               <div className="text-gray-600">
                                 {address.line2}
@@ -701,9 +695,7 @@ function CheckoutPage() {
 
                 {/* Measurement Section */}
                 <div className="mb-8">
-                  <h3 className="text-xl font-semibold mb-4">
-                    Measurements
-                  </h3>
+                  <h3 className="text-xl font-semibold mb-4">Measurements</h3>
                   <div className="space-y-4">
                     {existingMeasurements.map((measurement) => (
                       <label
@@ -717,29 +709,17 @@ function CheckoutPage() {
                         <input
                           type="radio"
                           name="measurement"
-                          checked={
-                            selectedMeasurement?._id === measurement._id
-                          }
+                          checked={selectedMeasurement?._id === measurement._id}
                           onChange={() => setSelectedMeasurement(measurement)}
                           className="mt-1 mr-4"
                         />
                         <div>
-                          <div className="font-medium">
-                            {measurement.title}
-                          </div>
+                          <div className="font-medium">{measurement.title}</div>
                           <div className="grid grid-cols-2 gap-2 text-sm text-gray-600 mt-2">
-                            <div>
-                              Height: {measurement.data.height} cm
-                            </div>
-                            <div>
-                              Chest: {measurement.data.chest} cm
-                            </div>
-                            <div>
-                              Waist: {measurement.data.waist} cm
-                            </div>
-                            <div>
-                              Hips: {measurement.data.hips} cm
-                            </div>
+                            <div>Height: {measurement.data.height} cm</div>
+                            <div>Chest: {measurement.data.chest} cm</div>
+                            <div>Waist: {measurement.data.waist} cm</div>
+                            <div>Hips: {measurement.data.hips} cm</div>
                           </div>
                         </div>
                       </label>
@@ -773,7 +753,7 @@ function CheckoutPage() {
                       <CreditCard className="w-5 h-5 mr-2" />
                       Pay by Card
                     </button>
-                    {/* <button
+                    <button
                       type="button"
                       onClick={() => setPaymentMethod("cod")}
                       className={`flex items-center px-4 py-2 border rounded-md transition ${
@@ -784,7 +764,7 @@ function CheckoutPage() {
                     >
                       <DollarSign className="w-5 h-5 mr-2" />
                       Cash on Delivery
-                    </button> */}
+                    </button>
                   </div>
                   {paymentMethod === "card" && (
                     <div className="mt-4 p-4 border border-gray-300 rounded-md text-gray-700">
@@ -842,10 +822,7 @@ function CheckoutPage() {
 
                 <div className="space-y-4 max-h-64 overflow-auto">
                   {orderData?.utilizedServices.map((s) => (
-                    <div
-                      key={s.id}
-                      className="flex items-center space-x-4"
-                    >
+                    <div key={s.id} className="flex items-center space-x-4">
                       <img
                         src={s.image || "/placeholder.svg"}
                         alt={s.serviceName}
@@ -884,9 +861,7 @@ function CheckoutPage() {
                   </div>
                   {appliedVoucher && (
                     <div className="flex justify-between text-green-600">
-                      <span>
-                        Voucher Discount ({appliedVoucher.discount}%)
-                      </span>
+                      <span>Voucher Discount ({appliedVoucher.discount}%)</span>
                       <span>- RS {voucherDiscount.toFixed(2)}</span>
                     </div>
                   )}

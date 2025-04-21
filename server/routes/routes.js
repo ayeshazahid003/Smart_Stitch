@@ -69,7 +69,11 @@ router.delete(
   tailorProfileController.removePortfolioFromTailor
 );
 
-router.put("/tailor/portfolio/:portfolioId", protect, tailorProfileController.updatePortfolio);
+router.put(
+  "/tailor/portfolio/:portfolioId",
+  protect,
+  tailorProfileController.updatePortfolio
+);
 router.put(
   "/tailor/service/:serviceId",
   protect,
@@ -182,6 +186,7 @@ router.get("/chat-participants", protect, chatController.getChatParticipants);
 
 router.post("/orders", protect, orderController.createNewOrder);
 router.get("/orders/tailor", protect, orderController.getOrdersByTailor);
+router.get("/orders/user", protect, orderController.getOrdersByUser);
 router.get("/orders/:id", protect, orderController.getOrderById);
 router.put("/orders/:id", protect, orderController.updateOrder);
 router.get("/orders", protect, orderController.getAllOrders);

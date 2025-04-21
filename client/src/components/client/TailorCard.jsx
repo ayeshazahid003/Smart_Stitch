@@ -16,8 +16,6 @@ export default function TailorCard({
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  console.log("location from tailor card", location);
-
   // Calculate the maximum discount from all services
   const maxDiscount = services?.reduce((max, service) => {
     if (service.discount?.value > max) {

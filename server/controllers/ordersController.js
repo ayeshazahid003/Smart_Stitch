@@ -253,10 +253,11 @@ export const getAllOrders = async (req, res) => {
     const user = req.user;
     const { role } = user; // Assuming role is a property of the user object
     let orders = [];
-    if(role === "customer") {
-      await Order.find({customerId:req.user._id}).populate("customerId tailorId invoiceId");
-    }
-    else {
+    if (role === "customer") {
+      await Order.find({ customerId: req.user._id }).populate(
+        "customerId tailorId invoiceId"
+      );
+    } else {
       await Order.find().populate("customerId tailorId invoiceId");
     }
 
@@ -306,6 +307,25 @@ export const getOrdersByTailor = async (req, res) => {
   }
 };
 
+export const getOrdersByUser = async (req, res) => {
+  try {
+    const user = req.user;
+    // Find orders for the current user
+    const orders = await Order.find({
+      customerId: user._id,
+    })
+      .populate("customerId", "name email")
+      .populate("tailorId", "name");
+
+    res.status(200).json({ success: true, orders });
+  } catch (error) {
+    console.error("Error fetching orders by user:", error); // Log the error for debugging
+    res
+      .status(500)
+      .json({ success: false, message: "Server error.", error: error.message });
+  }
+};
+
 export const updateOrderStatus = async (req, res) => {
   try {
     const { id: orderId } = req.params;
@@ -313,7 +333,7 @@ export const updateOrderStatus = async (req, res) => {
     if (shippingAddress) {
       shippingAddress._id = new mongoose.Types.ObjectId();
     }
-    console.log(measurement,"--------");
+    console.log(measurement, "--------");
 
     const order = await Order.findById(orderId)
       .populate("customerId", "username email")
@@ -328,11 +348,12 @@ export const updateOrderStatus = async (req, res) => {
     order.status = status;
     order.design = design || order.design;
     order.shippingAddress = shippingAddress || order.shippingAddress;
-    order.measurement = measurement.data || order.measurement;
+    order.measurement = measurement?.data || order.measurement;
     await order.save();
 
-    // Handle paid status - send email with invoice
     console.log("order", order);
+
+    // Handle specific statuses
     if (status === "placed") {
       console.log("Sending invoice email to customer...");
       // Format currency for better readability
@@ -429,15 +450,31 @@ export const updateOrderStatus = async (req, res) => {
         <p>Best regards,<br>Smart Stitch Team</p>
       `;
 
-      // await sendEmail(
-      //   "no-reply@smartstitch.com",
-      //   order.customerId.email,
-      //   "Payment Confirmation and Invoice - Smart Stitch",
-      //   emailBody
-      // );
+      await sendEmail(
+        "no-reply@smartstitch.com",
+        order.customerId.email,
+        "Payment Confirmation and Invoice - Smart Stitch",
+        emailBody
+      );
+    } else if (status === "stitched") {
+      // Send email to customer when order is stitched
+      const stitchedEmailBody = `
+        <h1>Your Order is Ready for Pickup - Smart Stitch</h1>
+        <p>Dear ${order.customerId.username},</p>
+        <p>Your order has been stitched and is ready for pickup!</p>
+        <p>Order ID: ${order._id}</p>
+        <p>Thank you for choosing Smart Stitch!</p>
+        <p>Best regards,<br>Smart Stitch Team</p>
+      `;
+      await sendEmail(
+        "no-reply@smartstitch.com",
+        order.customerId.email,
+        "Your Order is Ready for Pickup - Smart Stitch",
+        stitchedEmailBody
+      );
     }
 
-    // Determine notification recipient and message based on status
+    // Create notification based on status
     let notification;
     if (status === "accepted") {
       notification = {
@@ -473,22 +510,25 @@ export const updateOrderStatus = async (req, res) => {
       };
     }
 
-    // // Send real-time notification if applicable
-    // if (notification) {
-    //   const savedNotification = await Notification.create(notification);
-    //   await sendNotificationToUser(savedNotification);
-    // }
+    // Send real-time notification if applicable
+    if (notification) {
+      const savedNotification = await Notification.create(notification);
+      await sendNotificationToUser(savedNotification);
+    }
 
-    res.status(200).json({
+    // Always send a response regardless of the status
+    return res.status(200).json({
       success: true,
       message: "Order status updated successfully",
       order,
     });
   } catch (error) {
     console.error("Error updating order status:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Error updating order status" });
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update order status",
+      error: error.message,
+    });
   }
 };
 

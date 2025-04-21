@@ -111,7 +111,7 @@ createRoot(document.getElementById("root")).render(
                   <Route path="measurements" element={<MeasurementForm />} />
                   <Route path="offers" element={<Offers />} />
                   <Route path="orders" element={<AllOrders />} />
-                  <Route path="orders" element={<OrderDetails />} />
+                  {/* <Route path="orders" element={<OrderDetails />} /> */}
                   <Route path="/campaigns" element={<Campaigns />} />
                   <Route path="/vouchers" element={<Vouchers />} />
                   <Route path="tailor/orders" element={<TailorOrders />} />
@@ -152,10 +152,7 @@ createRoot(document.getElementById("root")).render(
 
                   {/* Shared Routes */}
                   <Route path="address" element={<AddressForm />} />
-                  <Route
-                    path="add-shop-details"
-                    element={<AddShopDetails />}
-                  />
+                  <Route path="add-shop-details" element={<AddShopDetails />} />
                   <Route
                     path="order-details/:orderId"
                     element={<OrderDetail />}

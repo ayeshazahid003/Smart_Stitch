@@ -37,6 +37,8 @@ export default function OrderPlaced() {
           // Update order status to "paid"
           await updateOrderStatus(orderId, {
             status: "placed",
+            paymentStatus: "paid",
+            paymentMethod: "card",
           });
 
           // Show confetti effect

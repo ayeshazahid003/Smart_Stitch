@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { useUser } from "../../context/UserContext";
-import { getAllOrders } from "../../hooks/orderHooks";
+import { getOrdersByUser } from "../../hooks/orderHooks";
 import { toast } from "react-toastify";
 
 const AllOrders = () => {
@@ -16,8 +16,9 @@ const AllOrders = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await getAllOrders();
+        const response = await getOrdersByUser();
         if (response.success) {
+          console.log("Fetched orders:", response.orders);
           setOrders(response.orders);
         } else {
           toast.error(response.message || "Failed to fetch orders");
@@ -41,10 +42,11 @@ const AllOrders = () => {
   };
 
   const calculateTotal = (order) => {
-    const servicesTotal = order.utilizedServices?.reduce(
-      (total, service) => total + service.price,
-      0
-    ) || 0;
+    const servicesTotal =
+      order.utilizedServices?.reduce(
+        (total, service) => total + service.price,
+        0
+      ) || 0;
 
     const extraServicesTotal =
       order.extraServices?.reduce(
@@ -52,17 +54,18 @@ const AllOrders = () => {
         0
       ) || 0;
 
-    return (
-      order.pricing?.total ??
-      (servicesTotal + extraServicesTotal)
-    ).toFixed(2);
+    return (order.pricing?.total ?? servicesTotal + extraServicesTotal).toFixed(
+      2
+    );
   };
 
   /* -------------------------------------------------------------------- */
   /* Render                                                               */
   /* -------------------------------------------------------------------- */
   if (loading)
-    return <div className="text-center text-gray-500 mt-10">Loading orders...</div>;
+    return (
+      <div className="text-center text-gray-500 mt-10">Loading orders...</div>
+    );
 
   if (!orders.length)
     return (
@@ -160,14 +163,15 @@ const AllOrders = () => {
                     >
                       View Details
                     </button>
-                    {user?.role === "customer" && order.status === "pending" && (
-                      <button
-                        onClick={() => navigate(`/checkout/${order._id}`)}
-                        className="ml-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition duration-200"
-                      >
-                        Checkout
-                      </button>
-                    )}
+                    {user?.role === "customer" &&
+                      order.status === "pending" && (
+                        <button
+                          onClick={() => navigate(`/checkout/${order._id}`)}
+                          className="ml-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition duration-200"
+                        >
+                          Checkout
+                        </button>
+                      )}
                   </td>
                 </tr>
               ))}

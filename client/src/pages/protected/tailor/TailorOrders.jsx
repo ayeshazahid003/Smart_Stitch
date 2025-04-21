@@ -86,7 +86,7 @@ const TailorOrders = () => {
   };
 
   const viewOrderDetails = (orderId) => {
-    // navigate(`/tailor/orders/${orderId}`);
+    navigate(`/order-details/${orderId}`);
     return;
   };
 
@@ -157,11 +157,6 @@ const TailorOrders = () => {
       color: "bg-purple-100 text-purple-800 border-purple-200",
     },
     {
-      value: "sold",
-      label: "Sold",
-      color: "bg-green-100 text-green-800 border-green-200",
-    },
-    {
       value: "completed",
       label: "Completed",
       color: "bg-emerald-100 text-emerald-800 border-emerald-200",
@@ -182,24 +177,9 @@ const TailorOrders = () => {
       color: "bg-red-100 text-red-800 border-red-200",
     },
     {
-      value: "on hold",
-      label: "On Hold",
-      color: "bg-orange-100 text-orange-800 border-orange-200",
-    },
-    {
       value: "returned",
       label: "Returned",
       color: "bg-pink-100 text-pink-800 border-pink-200",
-    },
-    {
-      value: "failed",
-      label: "Failed",
-      color: "bg-red-100 text-red-800 border-red-200",
-    },
-    {
-      value: "disputed",
-      label: "Disputed",
-      color: "bg-orange-100 text-orange-800 border-orange-200",
     },
     {
       value: "picked up",
@@ -267,7 +247,7 @@ const TailorOrders = () => {
           </span>
         </div>
 
-        <div className="bg-white shadow-md rounded-lg overflow-hidden mb-8">
+        <div className="bg-white shadow-md rounded-lg overflow-visible mb-8">
           <div className="p-6 border-b border-gray-200">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="relative rounded-md shadow-sm">
@@ -408,64 +388,66 @@ const TailorOrders = () => {
                         )}
                       </td>
                       <td
-                        className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"
+                        className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium relative"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <Menu
                           as="div"
-                          className="relative inline-block text-left"
+                          className=" inline-block text-left relative"
                         >
-                          <div>
-                            <Menu.Button className="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                              Update Status
-                              <ChevronDownIcon
-                                className="-mr-1 ml-2 h-5 w-5"
-                                aria-hidden="true"
-                              />
-                            </Menu.Button>
-                          </div>
+                          <div className="absolute right-0 top-[-20px] z-10">
+                            <div>
+                              <Menu.Button className="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                Update Status
+                                <ChevronDownIcon
+                                  className="-mr-1 ml-2 h-5 w-5"
+                                  aria-hidden="true"
+                                />
+                              </Menu.Button>
+                            </div>
 
-                          <Transition
-                            as={Fragment}
-                            enter="transition ease-out duration-100"
-                            enterFrom="transform opacity-0 scale-95"
-                            enterTo="transform opacity-100 scale-100"
-                            leave="transition ease-in duration-75"
-                            leaveFrom="transform opacity-100 scale-100"
-                            leaveTo="transform opacity-0 scale-95"
-                          >
-                            <Menu.Items className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none divide-y divide-gray-100 z-[999]">
-                              <div className="py-1 max-h-64 overflow-y-auto">
-                                {orderStatuses.map((status) => (
-                                  <Menu.Item key={status.value}>
-                                    {({ active }) => (
-                                      <button
-                                        onClick={() =>
-                                          handleStatusUpdate(
-                                            order._id,
-                                            status.value
-                                          )
-                                        }
-                                        className={`${
-                                          active
-                                            ? "bg-gray-100 text-gray-900"
-                                            : "text-gray-700"
-                                        } group flex items-center px-4 py-2 text-sm w-full text-left`}
-                                      >
-                                        <span
-                                          className={`mr-2 h-2 w-2 rounded-full ${status.color
-                                            .replace("bg-", "bg-")
-                                            .replace("text-", "")
-                                            .replace("border-", "")}`}
-                                        ></span>
-                                        {status.label}
-                                      </button>
-                                    )}
-                                  </Menu.Item>
-                                ))}
-                              </div>
-                            </Menu.Items>
-                          </Transition>
+                            <Transition
+                              as={Fragment}
+                              enter="transition ease-out duration-100"
+                              enterFrom="transform opacity-0 scale-95"
+                              enterTo="transform opacity-100 scale-100"
+                              leave="transition ease-in duration-75"
+                              leaveFrom="transform opacity-100 scale-100"
+                              leaveTo="transform opacity-0 scale-95"
+                            >
+                              <Menu.Items className="origin-top-right right-12 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none divide-y divide-gray-100 z-50 fixed">
+                                <div className="py-1 max-h-64 overflow-y-auto">
+                                  {orderStatuses.map((status) => (
+                                    <Menu.Item key={status.value}>
+                                      {({ active }) => (
+                                        <button
+                                          onClick={() =>
+                                            handleStatusUpdate(
+                                              order._id,
+                                              status.value
+                                            )
+                                          }
+                                          className={`${
+                                            active
+                                              ? "bg-gray-100 text-gray-900"
+                                              : "text-gray-700"
+                                          } group flex items-center px-4 py-2 text-sm w-full text-left`}
+                                        >
+                                          <span
+                                            className={`mr-2 h-2 w-2 rounded-full ${status.color
+                                              .replace("bg-", "bg-")
+                                              .replace("text-", "")
+                                              .replace("border-", "")}`}
+                                          ></span>
+                                          {status.label}
+                                        </button>
+                                      )}
+                                    </Menu.Item>
+                                  ))}
+                                </div>
+                              </Menu.Items>
+                            </Transition>
+                          </div>
                         </Menu>
                       </td>
                     </tr>
