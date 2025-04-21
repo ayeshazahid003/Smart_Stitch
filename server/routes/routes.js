@@ -68,6 +68,8 @@ router.delete(
   protect,
   tailorProfileController.removePortfolioFromTailor
 );
+
+router.put("/tailor/portfolio/:portfolioId", protect, tailorProfileController.updatePortfolio);
 router.put(
   "/tailor/service/:serviceId",
   protect,

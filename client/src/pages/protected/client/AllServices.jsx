@@ -13,7 +13,15 @@ import { useNavigate } from "react-router";
 
 Modal.setAppElement("#root");
 
+/* -------------------------------------------------------------------- */
+/* Helper: always get an ID, whether it’s _id or id                      */
+/* -------------------------------------------------------------------- */
+const getId = (obj) => obj?._id || obj?.id;
+
 export default function AllServices() {
+  /* ------------------------------------------------------------------ */
+  /* State                                                              */
+  /* ------------------------------------------------------------------ */
   const navigate = useNavigate();
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -30,120 +38,122 @@ export default function AllServices() {
     image: null,
   });
 
+  /* ------------------------------------------------------------------ */
+  /* Tailor ID                                                          */
+  /* ------------------------------------------------------------------ */
   const [userId] = useState(() => {
     const user = JSON.parse(localStorage.getItem("user"));
     return user?._id;
   });
 
+  /* ------------------------------------------------------------------ */
+  /* Fetch services                                                     */
+  /* ------------------------------------------------------------------ */
   useEffect(() => {
     const fetchServices = async () => {
       if (!userId) return;
-
       setLoading(true);
       const response = await getListOfServices(userId);
       if (response.success) {
-        setServices(response.services.slice().reverse());
+        setServices(
+          response.services
+            .filter(Boolean)
+            .map((s) => ({ ...s, _id: getId(s) })) // normalize id
+            .reverse()
+        );
       } else {
         setMessage(response.message);
       }
       setLoading(false);
     };
-
     fetchServices();
   }, [userId]);
 
+  /* ------------------------------------------------------------------ */
+  /* Edit service                                                       */
+  /* ------------------------------------------------------------------ */
   const openEditModal = (service) => {
-    setSelectedService(service);
+    setSelectedService({ ...service, _id: getId(service) });
     setEditModalIsOpen(true);
   };
-
   const closeEditModal = () => {
     setSelectedService(null);
     setEditModalIsOpen(false);
   };
-
-  const openDeleteModal = (service) => {
-    setSelectedService(service);
-    setDeleteModalIsOpen(true);
-  };
-
-  const closeDeleteModal = () => {
-    setSelectedService(null);
-    setDeleteModalIsOpen(false);
-  };
-
+  const handleChange = (field, value) =>
+    setSelectedService((prev) => ({ ...prev, [field]: value }));
   const handleUpdate = async () => {
-    let image64 = selectedService.image;
+    if (!selectedService) return;
+    const { minPrice, maxPrice } = selectedService;
+    if (Number(maxPrice) < Number(minPrice)) {
+      toast.error("Maximum price cannot be less than minimum price");
+      return;
+    }
 
-    if (selectedService.image && selectedService.image instanceof File) {
+    let image64 = selectedService.image;
+    if (selectedService.image instanceof File) {
       const reader = new FileReader();
       reader.readAsDataURL(selectedService.image);
       reader.onloadend = async () => {
         image64 = reader.result;
-
-        const payload = {
-          type: selectedService.type,
-          description: selectedService.description,
-          minPrice: selectedService.minPrice,
-          maxPrice: selectedService.maxPrice,
-          image: image64,
-        };
-
-        const response = await updateService(selectedService._id, payload);
-
-        if (!response.success) {
-          toast.error("Failed to update service");
-          return;
-        }
-        toast.success("Service updated successfully!");
-        setServices((prev) =>
-          prev.map((s) =>
-            s._id === selectedService._id ? response.service : s
-          )
-        );
-        closeEditModal();
+        await finalizeUpdate(image64);
       };
     } else {
-      const payload = {
-        type: selectedService.type,
-        description: selectedService.description,
-        minPrice: selectedService.minPrice,
-        maxPrice: selectedService.maxPrice,
-        image: selectedService.image,
-      };
-
-      const response = await updateService(selectedService._id, payload);
-      if (!response.success) {
-        toast.error("Failed to update service");
-        return;
-      }
-      toast.success("Service updated successfully!");
-      setServices((prev) =>
-        prev.map((s) => (s._id === selectedService._id ? response.service : s))
-      );
-      closeEditModal();
+      await finalizeUpdate(image64);
     }
   };
+  const finalizeUpdate = async (img) => {
+    const payload = {
+      type: selectedService.type,
+      description: selectedService.description,
+      minPrice: selectedService.minPrice,
+      maxPrice: selectedService.maxPrice,
+      image: img,
+    };
+    const id = getId(selectedService);
+    const response = await updateService(id, payload);
+    if (!response.success) {
+      toast.error("Failed to update service");
+      return;
+    }
+    const updated = {
+      ...response.service,
+      _id: getId(response.service) || id,
+    };
+    toast.success("Service updated successfully!");
+    setServices((prev) =>
+      prev.map((s) => (getId(s) === id ? updated : s))
+    );
+    closeEditModal();
+  };
 
+  /* ------------------------------------------------------------------ */
+  /* Delete service                                                     */
+  /* ------------------------------------------------------------------ */
+  const openDeleteModal = (service) => {
+    setSelectedService({ ...service, _id: getId(service) });
+    setDeleteModalIsOpen(true);
+  };
+  const closeDeleteModal = () => {
+    setSelectedService(null);
+    setDeleteModalIsOpen(false);
+  };
   const handleDelete = async () => {
-    const response = await removeServiceFromTailor(selectedService._id);
+    const id = getId(selectedService);
+    const response = await removeServiceFromTailor(id);
     if (!response.success) {
       toast.error("Failed to delete service");
       return;
     }
     toast.success("Service deleted successfully!");
-    setServices((prev) => prev.filter((s) => s._id !== selectedService._id));
+    setServices((prev) => prev.filter((s) => getId(s) !== id));
     closeDeleteModal();
   };
 
-  const handleChange = (field, value) => {
-    setSelectedService((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const openAddModal = () => {
-    setModalAddOpen(true);
-  };
-
+  /* ------------------------------------------------------------------ */
+  /* Add service                                                        */
+  /* ------------------------------------------------------------------ */
+  const openAddModal = () => setModalAddOpen(true);
   const closeAddModal = () => {
     setNewService({
       type: "",
@@ -154,19 +164,20 @@ export default function AllServices() {
     });
     setModalAddOpen(false);
   };
-
-  const handleNewServiceChange = (field, value) => {
+  const handleNewServiceChange = (field, value) =>
     setNewService((prev) => ({ ...prev, [field]: value }));
+  const handleNewImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) setNewService((prev) => ({ ...prev, image: file }));
   };
-
   const handleAddService = async () => {
-    if (
-      !newService.type ||
-      !newService.description ||
-      !newService.minPrice ||
-      !newService.maxPrice
-    ) {
+    const { type, description, minPrice, maxPrice } = newService;
+    if (!type || !description || !minPrice || !maxPrice) {
       toast.error("All fields are required");
+      return;
+    }
+    if (Number(maxPrice) < Number(minPrice)) {
+      toast.error("Maximum price cannot be less than minimum price");
       return;
     }
 
@@ -176,44 +187,28 @@ export default function AllServices() {
       reader.readAsDataURL(newService.image);
       reader.onloadend = async () => {
         image64 = reader.result;
-        const payload = {
-          ...newService,
-          image: image64,
-        };
-
-        const response = await addServiceToTailor(payload);
-        if (!response.success) {
-          toast.error("Failed to add service");
-          return;
-        }
-
-        toast.success("Service added successfully!");
-        setServices((prev) => [response.service, ...prev]);
-        closeAddModal();
+        await finalizeAdd({ ...newService, image: image64 });
       };
     } else {
-      const response = await addServiceToTailor(newService);
-      if (!response.success) {
-        toast.error("Failed to add service");
-        return;
-      }
-
-      toast.success("Service added successfully!");
-      setServices((prev) => [response.service, ...prev]);
-      closeAddModal();
+      await finalizeAdd(newService);
     }
   };
-
-  const handleNewImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setNewService((prev) => ({ ...prev, image: file }));
+  const finalizeAdd = async (payload) => {
+    const response = await addServiceToTailor(payload);
+    if (!response.success) {
+      toast.error("Failed to add service");
+      return;
     }
+    const added = { ...response.service, _id: getId(response.service) };
+    toast.success("Service added successfully!");
+    setServices((prev) => [added, ...prev]);
+    closeAddModal();
   };
 
-  if (loading) {
-    return <div className="text-center py-8">Loading...</div>;
-  }
+  /* ------------------------------------------------------------------ */
+  /* UI                                                                  */
+  /* ------------------------------------------------------------------ */
+  if (loading) return <div className="text-center py-8">Loading...</div>;
 
   return (
     <div className="p-4">
@@ -234,7 +229,7 @@ export default function AllServices() {
       <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {services.map((service) => (
           <div
-            key={service._id}
+            key={getId(service)}
             className="bg-white border border-gray-200 rounded-lg shadow p-4 flex flex-col"
           >
             {service.image && (
@@ -275,6 +270,7 @@ export default function AllServices() {
         ))}
       </div>
 
+      {/* Edit Modal */}
       <EditServiceModal
         isOpen={editModalIsOpen}
         service={selectedService}
@@ -283,6 +279,7 @@ export default function AllServices() {
         onUpdate={handleUpdate}
       />
 
+      {/* Tailor profile not found */}
       {message === "Tailor profile not found." && (
         <div className="flex items-center justify-center h-screen">
           <div className="text-center">
@@ -300,7 +297,8 @@ export default function AllServices() {
         </div>
       )}
 
-      {services.length === 0 && (
+      {/* No services */}
+      {!loading && services.length === 0 && (
         <div className="flex items-center justify-center h-screen">
           <div className="text-center">
             <p className="text-gray-600 text-xl w-[400px] mb-4">
@@ -316,6 +314,7 @@ export default function AllServices() {
         </div>
       )}
 
+      {/* Delete Modal */}
       <Modal
         isOpen={deleteModalIsOpen}
         onRequestClose={closeDeleteModal}
@@ -350,6 +349,7 @@ export default function AllServices() {
         )}
       </Modal>
 
+      {/* Add Modal */}
       <Modal
         isOpen={modalAddOpen}
         onRequestClose={closeAddModal}
@@ -393,6 +393,7 @@ export default function AllServices() {
                 </label>
                 <input
                   type="number"
+                  min="0"
                   value={newService.minPrice}
                   onChange={(e) =>
                     handleNewServiceChange("minPrice", e.target.value)
@@ -406,6 +407,7 @@ export default function AllServices() {
                 </label>
                 <input
                   type="number"
+                  min="0"
                   value={newService.maxPrice}
                   onChange={(e) =>
                     handleNewServiceChange("maxPrice", e.target.value)

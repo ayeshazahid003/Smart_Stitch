@@ -10,6 +10,9 @@ const AllOrders = () => {
   const navigate = useNavigate();
   const { user } = useUser();
 
+  /* -------------------------------------------------------------------- */
+  /* Fetch orders                                                         */
+  /* -------------------------------------------------------------------- */
   useEffect(() => {
     const fetchOrders = async () => {
       try {
@@ -30,27 +33,51 @@ const AllOrders = () => {
     fetchOrders();
   }, []);
 
+  /* -------------------------------------------------------------------- */
+  /* Helpers                                                              */
+  /* -------------------------------------------------------------------- */
   const handleViewDetails = (orderId) => {
     navigate(`/order-details/${orderId}`);
   };
 
   const calculateTotal = (order) => {
-    const servicesTotal = order.utilizedServices.reduce(
+    const servicesTotal = order.utilizedServices?.reduce(
       (total, service) => total + service.price,
       0
-    );
+    ) || 0;
+
     const extraServicesTotal =
       order.extraServices?.reduce(
         (total, service) => total + service.price,
         0
       ) || 0;
-    return (order.pricing?.total || servicesTotal + extraServicesTotal).toFixed(
-      2
-    );
+
+    return (
+      order.pricing?.total ??
+      (servicesTotal + extraServicesTotal)
+    ).toFixed(2);
   };
 
+  /* -------------------------------------------------------------------- */
+  /* Render                                                               */
+  /* -------------------------------------------------------------------- */
   if (loading)
-    return <div className="text-center text-gray-500">Loading orders...</div>;
+    return <div className="text-center text-gray-500 mt-10">Loading orders...</div>;
+
+  if (!orders.length)
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-8">
+        <h2 className="text-2xl font-semibold text-gray-700 mb-4 text-center">
+          Seems like you haven&apos;t added any order yet.
+        </h2>
+        <button
+          onClick={() => navigate("/search")}
+          className="px-6 py-3 bg-gray-900 text-white rounded-md hover:bg-gray-700 transition-colors"
+        >
+          Start Searching
+        </button>
+      </div>
+    );
 
   return (
     <div className="min-h-screen p-8">
@@ -129,19 +156,18 @@ const AllOrders = () => {
                   <td className="px-6 py-4">
                     <button
                       onClick={() => handleViewDetails(order._id)}
-                      className="px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-white hover:text-gray-900 border-b hover:border-gray-900 transition duration-200"
+                      className="px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-white hover:text-gray-900 border hover:border-gray-900 transition duration-200"
                     >
                       View Details
                     </button>
-                    {user?.role === "customer" &&
-                      order.status === "pending" && (
-                        <button
-                          onClick={() => navigate(`/checkout/${order._id}`)}
-                          className="ml-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition duration-200"
-                        >
-                          Checkout
-                        </button>
-                      )}
+                    {user?.role === "customer" && order.status === "pending" && (
+                      <button
+                        onClick={() => navigate(`/checkout/${order._id}`)}
+                        className="ml-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition duration-200"
+                      >
+                        Checkout
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}

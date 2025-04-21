@@ -159,9 +159,9 @@ export default function RegisterForm() {
                   <SelectContent>
                     <SelectItem value="customer">Customer</SelectItem>
                     <SelectItem value="tailor">Tailor</SelectItem>
-                    <SelectItem value="platformAdmin">
+                    {/* <SelectItem value="platformAdmin">
                       Platform Admin
-                    </SelectItem>
+                    </SelectItem> */}
                   </SelectContent>
                 </Select>
                 <FormMessage className="text-red-500" />

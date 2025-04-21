@@ -8,6 +8,9 @@ import {
 } from "../../../hooks/voucherHooks";
 
 export default function Vouchers() {
+  /* ------------------------------------------------------------------ */
+  /* State                                                              */
+  /* ------------------------------------------------------------------ */
   const [vouchers, setVouchers] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -20,92 +23,26 @@ export default function Vouchers() {
   const [editingVoucher, setEditingVoucher] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  /* ------------------------------------------------------------------ */
+  /* Fetch on mount                                                     */
+  /* ------------------------------------------------------------------ */
   useEffect(() => {
-    const fetchVouchers = async () => {
+    (async () => {
       try {
-        setLoading(true);
-        const response = await getAllVouchers();
-        if (response.success) {
-          setVouchers(response.vouchers);
-        } else {
-          toast.error(response.message || "Failed to fetch vouchers");
-        }
-      } catch (error) {
+        const res = await getAllVouchers();
+        if (res.success) setVouchers(res.vouchers);
+        else toast.error(res.message || "Failed to fetch vouchers");
+      } catch {
         toast.error("Error fetching vouchers");
       } finally {
         setLoading(false);
       }
-    };
-
-    fetchVouchers();
+    })();
   }, []);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const data = {
-        ...formData,
-        discount: Number(formData.discount),
-      };
-
-      let response;
-      if (editingVoucher) {
-        response = await updateVoucher(editingVoucher._id, data);
-        if (response.success) {
-          setVouchers(
-            vouchers.map((v) =>
-              v._id === editingVoucher._id ? response.voucher : v
-            )
-          );
-          toast.success("Voucher updated successfully!");
-        }
-      } else {
-        response = await createVoucher(data);
-        if (response.success) {
-          setVouchers([...vouchers, response.voucher]);
-          toast.success("Voucher created successfully!");
-        }
-      }
-
-      if (response.success) {
-        setIsModalOpen(false);
-        resetForm();
-      } else {
-        toast.error(response.message || "Something went wrong");
-      }
-    } catch (error) {
-      toast.error("Failed to save voucher");
-    }
-  };
-
-  const handleDelete = async (voucherId) => {
-    if (window.confirm("Are you sure you want to delete this voucher?")) {
-      try {
-        const response = await deleteVoucher(voucherId);
-        if (response.success) {
-          setVouchers(vouchers.filter((v) => v._id !== voucherId));
-          toast.success("Voucher deleted successfully!");
-        } else {
-          toast.error(response.message || "Failed to delete voucher");
-        }
-      } catch (error) {
-        toast.error("Error deleting voucher");
-      }
-    }
-  };
-
-  const handleEdit = (voucher) => {
-    setEditingVoucher(voucher);
-    setFormData({
-      title: voucher.title,
-      description: voucher.description || "",
-      discount: voucher.discount,
-      validFrom: new Date(voucher.validFrom).toISOString().split("T")[0],
-      validUntil: new Date(voucher.validUntil).toISOString().split("T")[0],
-    });
-    setIsModalOpen(true);
-  };
-
+  /* ------------------------------------------------------------------ */
+  /* Helpers                                                            */
+  /* ------------------------------------------------------------------ */
   const resetForm = () => {
     setFormData({
       title: "",
@@ -117,29 +54,89 @@ export default function Vouchers() {
     setEditingVoucher(null);
   };
 
-  if (loading) {
+  /* ------------------------------------------------------------------ */
+  /* CRUD handlers                                                      */
+  /* ------------------------------------------------------------------ */
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const data = { ...formData, discount: Number(formData.discount) };
+    try {
+      let res;
+      if (editingVoucher) {
+        res = await updateVoucher(editingVoucher._id, data);
+        if (res.success) {
+          setVouchers((v) =>
+            v.map((x) => (x._id === editingVoucher._id ? res.voucher : x))
+          );
+          toast.success("Voucher updated!");
+        }
+      } else {
+        res = await createVoucher(data);
+        if (res.success) {
+          setVouchers((v) => [...v, res.voucher]);
+          toast.success("Voucher created!");
+        }
+      }
+      if (res?.success) {
+        setIsModalOpen(false);
+        resetForm();
+      } else toast.error(res.message || "Something went wrong");
+    } catch {
+      toast.error("Failed to save voucher");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this voucher?")) return;
+    try {
+      const res = await deleteVoucher(id);
+      if (res.success) {
+        setVouchers((v) => v.filter((x) => x._id !== id));
+        toast.success("Voucher deleted!");
+      } else toast.error(res.message || "Failed to delete voucher");
+    } catch {
+      toast.error("Error deleting voucher");
+    }
+  };
+
+  const handleEdit = (v) => {
+    setEditingVoucher(v);
+    setFormData({
+      title: v.title,
+      description: v.description || "",
+      discount: v.discount,
+      validFrom: new Date(v.validFrom).toISOString().split("T")[0],
+      validUntil: new Date(v.validUntil).toISOString().split("T")[0],
+    });
+    setIsModalOpen(true);
+  };
+
+  /* ------------------------------------------------------------------ */
+  /* UI                                                                  */
+  /* ------------------------------------------------------------------ */
+  if (loading)
     return (
-      <div className="py-10 px-4 sm:px-6 lg:px-8">
+      <div className="py-10 px-4">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+          <div className="h-8 bg-gray-200 rounded w-1/4" />
+          <div className="h-4 bg-gray-200 rounded w-1/2" />
           <div className="space-y-3">
-            <div className="h-4 bg-gray-200 rounded"></div>
-            <div className="h-4 bg-gray-200 rounded"></div>
-            <div className="h-4 bg-gray-200 rounded"></div>
+            <div className="h-4 bg-gray-200 rounded" />
+            <div className="h-4 bg-gray-200 rounded" />
+            <div className="h-4 bg-gray-200 rounded" />
           </div>
         </div>
       </div>
     );
-  }
 
   return (
     <div className="py-10 px-4 sm:px-6 lg:px-8">
+      {/* Header */}
       <div className="sm:flex sm:items-center">
         <div className="sm:flex-auto">
           <h1 className="text-2xl font-semibold text-gray-900">Vouchers</h1>
           <p className="mt-2 text-sm text-gray-700">
-            Manage your discount vouchers for customers
+            Manage your discount vouchers for customers.
           </p>
         </div>
         <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
@@ -148,200 +145,176 @@ export default function Vouchers() {
               resetForm();
               setIsModalOpen(true);
             }}
-            className="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+            className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
           >
             Add Voucher
           </button>
         </div>
       </div>
 
-      {/* Vouchers List */}
-      <div className="mt-8 flow-root">
-        <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-          <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-            <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
-              <table className="min-w-full divide-y divide-gray-300">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
-                      Title
-                    </th>
-                    <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      Discount
-                    </th>
-                    <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      Valid From
-                    </th>
-                    <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      Valid Until
-                    </th>
-                    <th className="relative py-3.5 pl-3 pr-4 sm:pr-6">
-                      <span className="sr-only">Actions</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
-                  {vouchers.map((voucher) => (
-                    <tr key={voucher._id}>
-                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                        {voucher.title}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {voucher.discount}%
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {new Date(voucher.validFrom).toLocaleDateString()}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {new Date(voucher.validUntil).toLocaleDateString()}
-                      </td>
-                      <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                        <button
-                          onClick={() => handleEdit(voucher)}
-                          className="text-indigo-600 hover:text-indigo-900 mr-4"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(voucher._id)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+      {/* List */}
+      <div className="mt-8 overflow-x-auto shadow ring-1 ring-gray-300 sm:rounded-lg">
+        <table className="min-w-full divide-y divide-gray-200 bg-white">
+          <thead className="bg-gray-50">
+            <tr>
+              {["Title", "Discount", "Valid From", "Valid Until", ""].map(
+                (h, i) => (
+                  <th
+                    key={i}
+                    className={`py-3 px-4 text-left text-sm font-semibold text-gray-900 ${
+                      i === 0 ? "sm:pl-6" : ""
+                    }`}
+                  >
+                    {h}
+                  </th>
+                )
+              )}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {vouchers.map((v) => (
+              <tr key={v._id}>
+                <td className="py-4 px-4 text-sm font-medium text-gray-900 sm:pl-6">
+                  {v.title}
+                </td>
+                <td className="px-4 py-4 text-sm text-gray-500">
+                  {v.discount}%
+                </td>
+                <td className="px-4 py-4 text-sm text-gray-500">
+                  {new Date(v.validFrom).toLocaleDateString()}
+                </td>
+                <td className="px-4 py-4 text-sm text-gray-500">
+                  {new Date(v.validUntil).toLocaleDateString()}
+                </td>
+                <td className="px-4 py-4 text-right text-sm font-medium space-x-4">
+                  <button
+                    onClick={() => handleEdit(v)}
+                    className="text-indigo-600 hover:text-indigo-900"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(v._id)}
+                    className="text-red-600 hover:text-red-900"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      {/* Modal for Create/Edit Voucher */}
+      {/* ---------------- Modal ---------------- */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-10 overflow-y-auto">
-          <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-            <div className="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
-              <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto">
+          {/* Overlay */}
+          <div
+            className="fixed inset-0 bg-gray-900 bg-opacity-50"
+            onClick={() => {
+              setIsModalOpen(false);
+              resetForm();
+            }}
+          />
+          {/* Card */}
+          <div className="relative z-50 w-full max-w-lg mx-auto bg-white rounded-lg shadow-lg p-6">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">
+              {editingVoucher ? "Edit Voucher" : "Create Voucher"}
+            </h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Title
+                </label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) =>
+                    setFormData({ ...formData, title: e.target.value })
+                  }
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Description
+                </label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  rows={3}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Discount (%)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={formData.discount}
+                  onChange={(e) =>
+                    setFormData({ ...formData, discount: e.target.value })
+                  }
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label
-                    htmlFor="title"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Title
+                  <label className="block text-sm font-medium text-gray-700">
+                    Valid From
                   </label>
                   <input
-                    type="text"
-                    id="title"
-                    value={formData.title}
+                    type="date"
+                    value={formData.validFrom}
                     onChange={(e) =>
-                      setFormData({ ...formData, title: e.target.value })
+                      setFormData({ ...formData, validFrom: e.target.value })
                     }
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                     required
                   />
                 </div>
-
                 <div>
-                  <label
-                    htmlFor="description"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Description
-                  </label>
-                  <textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    rows={3}
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="discount"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Discount (%)
+                  <label className="block text-sm font-medium text-gray-700">
+                    Valid Until
                   </label>
                   <input
-                    type="number"
-                    id="discount"
-                    value={formData.discount}
+                    type="date"
+                    value={formData.validUntil}
                     onChange={(e) =>
-                      setFormData({ ...formData, discount: e.target.value })
+                      setFormData({ ...formData, validUntil: e.target.value })
                     }
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                     required
-                    min="0"
-                    max="100"
                   />
                 </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label
-                      htmlFor="validFrom"
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      Valid From
-                    </label>
-                    <input
-                      type="date"
-                      id="validFrom"
-                      value={formData.validFrom}
-                      onChange={(e) =>
-                        setFormData({ ...formData, validFrom: e.target.value })
-                      }
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="validUntil"
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      Valid Until
-                    </label>
-                    <input
-                      type="date"
-                      id="validUntil"
-                      value={formData.validUntil}
-                      onChange={(e) =>
-                        setFormData({ ...formData, validUntil: e.target.value })
-                      }
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
-                  <button
-                    type="submit"
-                    className="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
-                  >
-                    {editingVoucher ? "Update" : "Create"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsModalOpen(false);
-                      resetForm();
-                    }}
-                    className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            </div>
+              </div>
+              <div className="flex justify-end space-x-4 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    resetForm();
+                  }}
+                  className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+                >
+                  {editingVoucher ? "Update" : "Create"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

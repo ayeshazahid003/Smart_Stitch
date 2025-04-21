@@ -250,7 +250,16 @@ export const getOrderById = async (req, res) => {
 
 export const getAllOrders = async (req, res) => {
   try {
-    const orders = await Order.find().populate("customerId tailorId invoiceId");
+    const user = req.user;
+    const { role } = user; // Assuming role is a property of the user object
+    let orders = [];
+    if(role === "customer") {
+      await Order.find({customerId:req.user._id}).populate("customerId tailorId invoiceId");
+    }
+    else {
+      await Order.find().populate("customerId tailorId invoiceId");
+    }
+
     res.status(200).json({ success: true, orders });
   } catch (error) {
     res

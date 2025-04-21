@@ -41,6 +41,7 @@ export const createVoucher = async (req, res) => {
       voucher: savedVoucher,
     });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ success: false, message: "Server error.", error });
   }
 };
@@ -85,15 +86,18 @@ export const deleteVoucher = async (req, res) => {
       });
     }
 
-    await voucher.remove();
+    await Voucher.findByIdAndDelete(id); // ⬅️ direct delete here
 
-    res
-      .status(200)
-      .json({ success: true, message: "Voucher deleted successfully." });
+    res.status(200).json({
+      success: true,
+      message: "Voucher deleted successfully.",
+    });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ success: false, message: "Server error.", error });
   }
 };
+
 
 export const checkVoucherIsApplicable = async (req, res) => {
   try {

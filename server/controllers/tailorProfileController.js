@@ -399,6 +399,70 @@ export const removePortfolioFromTailor = async (req, res) => {
   }
 };
 
+export const updatePortfolio = async (req, res) => {
+  try {
+
+    const { portfolioId } = req.params; // Portfolio ID passed as a route parameter
+    const { name, description, date, image } = req.body;
+    const tailorId = req.user._id; // Get the tailorId from the authenticated user
+
+    // Find the tailor profile
+    const tailorProfile = await TailorProfile.findOne({ tailorId });
+
+    if (!tailorProfile) {
+      return res.status(404).json({
+        success: false,
+        message: "Tailor profile not found.",
+      });
+    }
+
+    // Find the portfolio entry and update it
+    const portfolioEntry = tailorProfile.portfolio.find(
+      (portfolio) => portfolio._id.toString() === portfolioId
+    );
+    if (!portfolioEntry) {
+      return res.status(404).json({
+        success: false,
+        message: "Portfolio entry not found.",
+      });
+    }
+
+    if (name) portfolioEntry.name = name;
+    if (description) portfolioEntry.description = description;
+    if (date) portfolioEntry.date = date;
+    if (image) {
+      try {
+        const uploadedImage = await uploadSingleFile(image, "Home");
+        portfolioEntry.image = uploadedImage.secure_url;
+      } catch (uploadError) {
+        console.error("Error uploading image to Cloudinary:", uploadError);
+        return res.status(500).json({
+          success: false,
+          message: "Failed to upload image to Cloudinary.",
+          error: uploadError.message,
+        });
+      }
+    }
+
+    // Save the updated profile
+    await tailorProfile.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Portfolio entry updated successfully.",
+      portfolioEntry,
+    });
+  }
+  catch (error) {
+    console.error("Error removing portfolio entry:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+      error: error.message,
+    });
+  }
+};
+
 export const updateService = async (req, res) => {
   try {
     const { serviceId } = req.params; // Service ID passed as a route parameter

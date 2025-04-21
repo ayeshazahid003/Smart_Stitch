@@ -3,17 +3,23 @@ import { getUserProfile, updateUserProfile } from "../../../hooks/userHooks";
 import { useLoadScript, Autocomplete } from "@react-google-maps/api";
 
 export default function UserProfile() {
-  // Google Places API config
+  /* --------------------------------------------------------------------- */
+  /* Google Places API config --------------------------------------------- */
+  /* --------------------------------------------------------------------- */
   const libraries = ["places"];
   const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: "AIzaSyDBCi7hOX_2lQ14oISSLHXp0JS36OANFyQ", // <-- Replace with your key
+    googleMapsApiKey: "AIzaSyBxlCPMKTJnAEuy43rjvfhkZ8twF0Wumdo",
     libraries,
   });
 
-  // Reference for the autocomplete instance
+  /* --------------------------------------------------------------------- */
+  /* Refs ----------------------------------------------------------------- */
+  /* --------------------------------------------------------------------- */
   const autocompleteRef = useRef(null);
 
-  // Default user shape (prevents "undefined" errors for nested fields)
+  /* --------------------------------------------------------------------- */
+  /* Default shape -------------------------------------------------------- */
+  /* --------------------------------------------------------------------- */
   const defaultUser = {
     name: "",
     email: "",
@@ -32,53 +38,70 @@ export default function UserProfile() {
     },
   };
 
-  // Local state
+  /* --------------------------------------------------------------------- */
+  /* State ---------------------------------------------------------------- */
+  /* --------------------------------------------------------------------- */
   const [user, setUser] = useState(defaultUser);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-
-  // For profile picture preview
-  const [profilePreview, setProfilePreview] = useState(user.profilePicture);
+  const [profilePreview, setProfilePreview] = useState("");
   const [profileFile, setProfileFile] = useState(null);
-
-  // We'll keep a local "searchAddress" for the autocomplete field
   const [searchAddress, setSearchAddress] = useState("");
 
-  // Called when a place is selected from the autocomplete dropdown.
-  // It extracts and fills the formatted address, city, state, postal code, and country fields.
+  /* --------------------------------------------------------------------- */
+  /* Validators ----------------------------------------------------------- */
+  /* --------------------------------------------------------------------- */
+  const phoneRegex = /^\+92\d{10}$/; // +92 followed by 10 digits
+  const emailRegex =
+    /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+
+  const validateInputs = () => {
+    if (!user.name.trim()) {
+      setMessage("Name is required.");
+      return false;
+    }
+    if (!emailRegex.test(user.email)) {
+      setMessage("Please enter a valid email address.");
+      return false;
+    }
+    if (!phoneRegex.test(user.contactInfo.phone)) {
+      setMessage("Phone must start with +92 and contain 10 digits after it.");
+      return false;
+    }
+    if (!user.contactInfo.address.line1.trim()) {
+      setMessage("Address Line 1 is required (select from search field).");
+      return false;
+    }
+    setMessage("");
+    return true;
+  };
+
+  /* --------------------------------------------------------------------- */
+  /* Autocomplete handler ------------------------------------------------- */
+  /* --------------------------------------------------------------------- */
   const onPlaceChanged = () => {
     if (autocompleteRef.current) {
       const place = autocompleteRef.current.getPlace();
       if (place) {
         const formatted = place.formatted_address || "";
-
-        // Initialize local variables
-        let city = "";
-        let state = "";
-        let postalCode = "";
-        let country = "";
+        let city = "",
+          state = "",
+          postalCode = "",
+          country = "";
 
         if (place.address_components) {
           for (const component of place.address_components) {
             const types = component.types;
-            if (types.includes("locality")) {
-              city = component.long_name;
-            }
-            if (types.includes("administrative_area_level_1")) {
+            if (types.includes("locality")) city = component.long_name;
+            if (types.includes("administrative_area_level_1"))
               state = component.long_name;
-            }
-            if (types.includes("postal_code")) {
-              postalCode = component.long_name;
-            }
-            if (types.includes("country")) {
-              country = component.long_name; // or component.short_name for country code
-            }
+            if (types.includes("postal_code")) postalCode = component.long_name;
+            if (types.includes("country")) country = component.long_name;
           }
         }
 
         setSearchAddress(formatted);
-
         setUser((prev) => ({
           ...prev,
           contactInfo: {
@@ -97,134 +120,129 @@ export default function UserProfile() {
     }
   };
 
-  // Fetch user profile on mount
+  /* --------------------------------------------------------------------- */
+  /* Fetch profile -------------------------------------------------------- */
+  /* --------------------------------------------------------------------- */
   useEffect(() => {
-    const fetchUserProfileData = async () => {
+    (async () => {
       setLoading(true);
-      const response = await getUserProfile();
-      if (response.success) {
-        const fetchedUser = response.user || {};
-        // Merge with defaults to ensure nested objects exist
-        const mergedUser = {
+      const res = await getUserProfile();
+      if (res.success) {
+        const fetched = res.user || {};
+        const merged = {
           ...defaultUser,
-          ...fetchedUser,
+          ...fetched,
           contactInfo: {
             ...defaultUser.contactInfo,
-            ...fetchedUser.contactInfo,
+            ...fetched.contactInfo,
             address: {
               ...defaultUser.contactInfo.address,
-              ...fetchedUser.contactInfo?.address,
+              ...fetched.contactInfo?.address,
             },
           },
         };
-        setUser(mergedUser);
-        setProfilePreview(mergedUser.profilePicture);
+        setUser(merged);
+        setProfilePreview(merged.profilePicture);
       } else {
-        setMessage(response.message);
+        setMessage(res.message);
       }
       setLoading(false);
-    };
-    fetchUserProfileData();
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Update top-level fields (name, email, role if allowed, etc.)
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setUser((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+  /* --------------------------------------------------------------------- */
+  /* Change handlers ------------------------------------------------------ */
+  /* --------------------------------------------------------------------- */
+  const handleChange = ({ target: { name, value } }) =>
+    setUser((p) => ({ ...p, [name]: value }));
 
-  // Update contactInfo fields (phone, etc.)
-  const handleContactInfoChange = (e) => {
-    const { name, value } = e.target;
-    setUser((prev) => ({
-      ...prev,
+  const handleContactInfoChange = ({ target: { name, value } }) =>
+    setUser((p) => ({
+      ...p,
+      contactInfo: { ...p.contactInfo, [name]: value },
+    }));
+
+  const handleAddressChange = ({ target: { name, value } }) =>
+    setUser((p) => ({
+      ...p,
       contactInfo: {
-        ...prev.contactInfo,
-        [name]: value,
+        ...p.contactInfo,
+        address: { ...p.contactInfo.address, [name]: value },
       },
     }));
-  };
 
-  // Update address fields
-  const handleAddressChange = (e) => {
-    const { name, value } = e.target;
-    setUser((prev) => ({
-      ...prev,
-      contactInfo: {
-        ...prev.contactInfo,
-        address: {
-          ...prev.contactInfo.address,
-          [name]: value,
-        },
-      },
+  const handlePhoneChange = ({ target: { value } }) => {
+    // Allow only digits and a single leading '+', truncate to +92 plus 10 digits
+    let cleaned = value.replace(/[^\d+]/g, "");
+    if (cleaned.startsWith("+")) {
+      cleaned = "+" + cleaned.slice(1).replace(/\+/g, "");
+    } else if (cleaned.length) {
+      cleaned = "+".concat(cleaned.replace(/\+/g, ""));
+    }
+    if (cleaned.length > 13) cleaned = cleaned.slice(0, 13); // +92xxxxxxxxxx
+    setUser((p) => ({
+      ...p,
+      contactInfo: { ...p.contactInfo, phone: cleaned },
     }));
   };
 
-  // Profile picture file input handler updated to use FileReader's onload event.
   const handleProfilePictureChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       setProfileFile(file);
       const reader = new FileReader();
-      reader.onload = () => {
-        setProfilePreview(reader.result);
-      };
+      reader.onload = () => setProfilePreview(reader.result);
       reader.readAsDataURL(file);
     }
   };
 
-  // Form submit
+  /* --------------------------------------------------------------------- */
+  /* Submit --------------------------------------------------------------- */
+  /* --------------------------------------------------------------------- */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setMessage("");
     setSuccessMessage("");
+    if (!validateInputs()) return;
 
-    // If user selected a new profile picture, embed its base64 in user data
-    let updatedUser = { ...user };
-    if (profileFile) {
-      updatedUser.profilePicture = profilePreview;
-    }
+    setLoading(true);
+    let updated = { ...user };
+    if (profileFile) updated.profilePicture = profilePreview;
 
-    const response = await updateUserProfile(updatedUser);
-    if (response.success) {
+    const res = await updateUserProfile(updated);
+    if (res.success) {
       setSuccessMessage("Profile updated successfully!");
-      // Merge again in case server changed anything
-      const fetchedUser = response.user || {};
-      const mergedUser = {
+      const fetched = res.user || {};
+      const merged = {
         ...defaultUser,
-        ...fetchedUser,
+        ...fetched,
         contactInfo: {
           ...defaultUser.contactInfo,
-          ...fetchedUser.contactInfo,
+          ...fetched.contactInfo,
           address: {
             ...defaultUser.contactInfo.address,
-            ...fetchedUser.contactInfo?.address,
+            ...fetched.contactInfo?.address,
           },
         },
       };
-      setUser(mergedUser);
-      setProfilePreview(mergedUser.profilePicture);
-    } else {
-      setMessage(response.message);
-    }
+      setUser(merged);
+      setProfilePreview(merged.profilePicture);
+    } else setMessage(res.message);
     setLoading(false);
   };
 
+  /* --------------------------------------------------------------------- */
+  /* Render --------------------------------------------------------------- */
+  /* --------------------------------------------------------------------- */
   if (loadError)
-    return <div className="p-4 text-center">Error loading Google Maps</div>;
+    return <div className="p-4 text-center">Error loading Google Maps</div>;
   if (!isLoaded)
-    return <div className="p-4 text-center">Loading address search...</div>;
+    return <div className="p-4 text-center">Loading address search…</div>;
 
   return (
     <div className="max-w-7xl mx-auto p-6 bg-white shadow rounded">
-      {/* Top Section: Profile Picture + Basic Info */}
+      {/* Top Section ---------------------------------------------------- */}
       <div className="flex flex-col md:flex-row items-center justify-between mb-6">
-        {/* Left: Picture, Name, Email */}
         <div className="flex items-center space-x-4">
           <div className="w-20 h-20">
             {profilePreview ? (
@@ -235,20 +253,19 @@ export default function UserProfile() {
               />
             ) : (
               <div className="w-20 h-20 rounded-full bg-gray-300 flex items-center justify-center border">
-                <span className="text-gray-600 text-sm">No Image</span>
+                <span className="text-gray-600 text-sm">No Image</span>
               </div>
             )}
           </div>
           <div>
-            <h2 className="text-xl font-bold">{user.name || "User Name"}</h2>
+            <h2 className="text-xl font-bold">{user.name || "User Name"}</h2>
             <p className="text-gray-500">{user.email || "Email"}</p>
           </div>
         </div>
 
-        {/* Right: Upload New Profile Picture */}
         <div className="mt-4 md:mt-0">
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Change Profile Picture
+            Change Profile Picture
           </label>
           <input
             type="file"
@@ -259,29 +276,30 @@ export default function UserProfile() {
         </div>
       </div>
 
-      {/* Messages */}
+      {/* Messages ------------------------------------------------------- */}
       {message && <p className="text-red-500 mb-4 text-center">{message}</p>}
       {successMessage && (
         <p className="text-green-500 mb-4 text-center">{successMessage}</p>
       )}
 
-      {/* Form */}
-      <form onSubmit={handleSubmit}>
+      {/* Form ----------------------------------------------------------- */}
+      <form onSubmit={handleSubmit} noValidate>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Full Name */}
+          {/* Name */}
           <div>
-            <label className="block font-semibold mb-1">Full Name</label>
+            <label className="block font-semibold mb-1">Full Name</label>
             <input
               type="text"
               name="name"
               value={user.name}
+              required
               onChange={handleChange}
               className="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300"
               placeholder="Enter your full name"
             />
           </div>
 
-          {/* Role (editable only if user.role === "customer") */}
+          {/* Role */}
           <div>
             <label className="block font-semibold mb-1">Role</label>
             {user.role === "customer" ? (
@@ -305,52 +323,57 @@ export default function UserProfile() {
             )}
           </div>
 
-          {/* Email */}
+          {/* Email */}
           <div>
             <label className="block font-semibold mb-1">Email</label>
             <input
               type="email"
               name="email"
               value={user.email}
+              required
               onChange={handleChange}
               className="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300"
               placeholder="Enter your email"
             />
           </div>
 
-          {/* Phone */}
+          {/* Phone */}
           <div>
             <label className="block font-semibold mb-1">Phone</label>
             <input
-              type="text"
+              type="tel"
               name="phone"
               value={user.contactInfo.phone}
-              onChange={handleContactInfoChange}
+              required
+              onChange={handlePhoneChange}
               className="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300"
-              placeholder="Enter your phone number"
+              pattern="\+92[0-9]{10}"
+              title="Phone number must start with +92 followed by 10 digits"
+              inputMode="tel"
+              placeholder="+923XXXXXXXXX"
             />
           </div>
 
-          {/* Google Places Search Field */}
-          <div className="mb-4">
-            <label className="block font-semibold mb-1">Search Address</label>
+          {/* Google Places Search */}
+          <div className="mb-4 md:col-span-2">
+            <label className="block font-semibold mb-1">Search Address</label>
             <Autocomplete
-              onLoad={(autocomplete) => (autocompleteRef.current = autocomplete)}
+              onLoad={(a) => (autocompleteRef.current = a)}
               onPlaceChanged={onPlaceChanged}
             >
               <input
                 type="text"
-                className="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300"
-                placeholder="Type to search address"
                 value={searchAddress}
                 onChange={(e) => setSearchAddress(e.target.value)}
+                className="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300"
+                placeholder="Type to search address"
               />
             </Autocomplete>
           </div>
 
-          {/* Address Line 2 */}
+          {/* Address Line 2 */}
           <div>
-            <label className="block font-semibold mb-1">Address Line 2</label>
+            <label className="block font-semibold mb-1">Address Line 2</label>
             <input
               type="text"
               name="line2"
@@ -361,7 +384,7 @@ export default function UserProfile() {
             />
           </div>
 
-          {/* City */}
+          {/* City */}
           <div>
             <label className="block font-semibold mb-1">City</label>
             <input
@@ -374,7 +397,7 @@ export default function UserProfile() {
             />
           </div>
 
-          {/* State */}
+          {/* State */}
           <div>
             <label className="block font-semibold mb-1">State/Province</label>
             <input
@@ -387,20 +410,22 @@ export default function UserProfile() {
             />
           </div>
 
-          {/* Postal Code */}
+          {/* Postal Code */}
           <div>
-            <label className="block font-semibold mb-1">Postal Code</label>
+            <label className="block font-semibold mb-1">Postal Code</label>
             <input
               type="text"
               name="postalCode"
+              pattern="[0-9]{5}"
+              title="5‑digit postal code"
               value={user.contactInfo.address.postalCode}
               onChange={handleAddressChange}
               className="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300"
-              placeholder="ZIP/Postal Code"
+              placeholder="Postal Code"
             />
           </div>
 
-          {/* Country */}
+          {/* Country */}
           <div>
             <label className="block font-semibold mb-1">Country</label>
             <input
@@ -414,13 +439,14 @@ export default function UserProfile() {
           </div>
         </div>
 
-        {/* Submit Button */}
+        {/* Submit -------------------------------------------------------- */}
         <div className="mt-6">
           <button
             type="submit"
-            className="w-full bg-gray-800 text-white py-2 rounded hover:bg-gray-700 transition-colors"
+            disabled={loading}
+            className="w-full bg-gray-800 text-white py-2 rounded hover:bg-gray-700 transition-colors disabled:opacity-60"
           >
-            {loading ? "Saving..." : "Save"}
+            {loading ? "Saving…" : "Save"}
           </button>
         </div>
       </form>

@@ -11,7 +11,20 @@ import { toast } from "react-toastify";
 
 Modal.setAppElement("#root");
 
+/* ------------------------------------------------------------------ */
+/* Helper: extract a reliable ID from any service object              */
+/* ------------------------------------------------------------------ */
+const getId = (obj) =>
+  obj?._id ||
+  obj?.id ||
+  obj?.extraServiceId || // just in case backend uses another key
+  obj?.serviceId ||
+  undefined;
+
 export default function AllExtraServices() {
+  /* ------------------------------------------------------------------ */
+  /* State                                                              */
+  /* ------------------------------------------------------------------ */
   const [extraServices, setExtraServices] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -26,76 +39,91 @@ export default function AllExtraServices() {
     maxPrice: "",
   });
 
-  // Move user parsing outside of component body to prevent unnecessary re-renders
+  /* ------------------------------------------------------------------ */
+  /* Tailor ID                                                          */
+  /* ------------------------------------------------------------------ */
   const [userId] = useState(() => {
     const user = JSON.parse(localStorage.getItem("user"));
     return user?._id;
   });
 
+  /* ------------------------------------------------------------------ */
+  /* Fetch services                                                     */
+  /* ------------------------------------------------------------------ */
   useEffect(() => {
     const fetchExtraServices = async () => {
       if (!userId) return;
-
       setLoading(true);
-      const response = await getListOfExtraServices(userId);
-      if (response.success) {
-        setExtraServices(response.extraServices.slice().reverse());
-      } else {
-        setMessage(response.message);
-      }
+      const res = await getListOfExtraServices(userId);
+      if (res.success) {
+        setExtraServices(
+          res.extraServices
+            .filter(Boolean)
+            .map((s) => ({ ...s, _id: getId(s) }))
+            .reverse()
+        );
+      } else setMessage(res.message);
       setLoading(false);
     };
-
     fetchExtraServices();
   }, [userId]);
 
-  // EDIT HANDLERS
+  /* ------------------------------------------------------------------ */
+  /* Edit handlers                                                      */
+  /* ------------------------------------------------------------------ */
   const openEditModal = (service) => {
-    setSelectedService(service);
+    setSelectedService({ ...service, _id: getId(service) });
     setModalEditOpen(true);
   };
   const closeEditModal = () => {
     setSelectedService(null);
     setModalEditOpen(false);
   };
-  const handleChange = (field, value) => {
+  const handleChange = (field, value) =>
     setSelectedService((prev) => ({ ...prev, [field]: value }));
-  };
   const handleUpdate = async () => {
-    if (
-      !selectedService.serviceName ||
-      !selectedService.minPrice ||
-      !selectedService.maxPrice
-    ) {
+    if (!selectedService) return;
+
+    const { serviceName, minPrice, maxPrice } = selectedService;
+    if (!serviceName || !minPrice || !maxPrice) {
       toast.error("Service name and price range are required.");
+      return;
+    }
+    if (Number(maxPrice) < Number(minPrice)) {
+      toast.error("Maximum price cannot be less than minimum price.");
       return;
     }
 
     const payload = {
-      serviceName: selectedService.serviceName,
+      serviceName,
       description: selectedService.description,
-      minPrice: selectedService.minPrice,
-      maxPrice: selectedService.maxPrice,
+      minPrice,
+      maxPrice,
     };
 
-    const response = await updateExtraService(selectedService._id, payload);
-    if (!response.success) {
+    const id = getId(selectedService);
+    if (!id) {
+      toast.error("Unable to determine service ID. Please refresh.");
+      return;
+    }
+
+    const res = await updateExtraService(id, payload);
+    if (!res.success) {
       toast.error("Failed to update extra service");
       return;
     }
 
     toast.success("Extra service updated successfully!");
-    setExtraServices((prev) =>
-      prev.map((s) =>
-        s._id === selectedService._id ? response.extraService : s
-      )
-    );
+    const updated = { ...res.extraService, _id: getId(res.extraService) || id };
+    setExtraServices((prev) => prev.map((s) => (getId(s) === id ? updated : s)));
     closeEditModal();
   };
 
-  // DELETE HANDLERS
+  /* ------------------------------------------------------------------ */
+  /* Delete handlers                                                    */
+  /* ------------------------------------------------------------------ */
   const openDeleteModal = (service) => {
-    setSelectedService(service);
+    setSelectedService({ ...service, _id: getId(service) });
     setModalDeleteOpen(true);
   };
   const closeDeleteModal = () => {
@@ -103,63 +131,62 @@ export default function AllExtraServices() {
     setModalDeleteOpen(false);
   };
   const handleDelete = async () => {
-    const response = await deleteExtraService(selectedService._id);
-    if (!response.success) {
+    const id = getId(selectedService);
+    if (!id) {
+      toast.error("Unable to determine service ID. Please refresh.");
+      return;
+    }
+    const res = await deleteExtraService(id);
+    if (!res.success) {
       toast.error("Failed to delete extra service");
       return;
     }
-
     toast.success("Extra service deleted successfully!");
-    setExtraServices((prev) =>
-      prev.filter((s) => s._id !== selectedService._id)
-    );
+    setExtraServices((prev) => prev.filter((s) => getId(s) !== id));
     closeDeleteModal();
   };
 
-  // ADD HANDLERS
-  const openAddModal = () => {
-    setModalAddOpen(true);
-  };
+  /* ------------------------------------------------------------------ */
+  /* Add handlers                                                       */
+  /* ------------------------------------------------------------------ */
+  const openAddModal = () => setModalAddOpen(true);
   const closeAddModal = () => {
-    setNewService({
-      serviceName: "",
-      description: "",
-      minPrice: "",
-      maxPrice: "",
-    });
+    setNewService({ serviceName: "", description: "", minPrice: "", maxPrice: "" });
     setModalAddOpen(false);
   };
-  const handleNewServiceChange = (field, value) => {
+  const handleNewServiceChange = (field, value) =>
     setNewService((prev) => ({ ...prev, [field]: value }));
-  };
   const handleAddService = async () => {
-    if (
-      !newService.serviceName ||
-      !newService.description ||
-      !newService.minPrice ||
-      !newService.maxPrice
-    ) {
+    const { serviceName, description, minPrice, maxPrice } = newService;
+    if (!serviceName || !description || !minPrice || !maxPrice) {
       toast.error("All fields are required");
       return;
     }
+    if (Number(maxPrice) < Number(minPrice)) {
+      toast.error("Maximum price cannot be less than minimum price");
+      return;
+    }
 
-    const response = await addExtraService(newService);
-    if (!response.success) {
+    const res = await addExtraService(newService);
+    if (!res.success) {
       toast.error("Failed to add extra service");
       return;
     }
 
     toast.success("Extra service added successfully!");
-    setExtraServices((prev) => [response.extraService, ...prev]);
+    const added = { ...res.extraService, _id: getId(res.extraService) };
+    setExtraServices((prev) => [added, ...prev]);
     closeAddModal();
   };
 
-  if (loading) {
-    return <div className="text-center py-8">Loading...</div>;
-  }
+  /* ------------------------------------------------------------------ */
+  /* UI                                                                  */
+  /* ------------------------------------------------------------------ */
+  if (loading) return <div className="text-center py-8">Loading...</div>;
 
   return (
     <>
+      {/* Conditional empty states */}
       {message === "Tailor profile not found." ? (
         <div className="flex items-center justify-center h-screen">
           <div className="text-center">
@@ -211,7 +238,7 @@ export default function AllExtraServices() {
           <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {extraServices.map((service) => (
               <div
-                key={service._id}
+                key={getId(service)}
                 className="bg-white border border-gray-200 rounded-lg shadow p-4 flex flex-col"
               >
                 <h2 className="text-xl font-bold text-gray-800 mb-2">
@@ -266,9 +293,7 @@ export default function AllExtraServices() {
                 <input
                   type="text"
                   value={selectedService.serviceName}
-                  onChange={(e) =>
-                    handleChange("serviceName", e.target.value)
-                  }
+                  onChange={(e) => handleChange("serviceName", e.target.value)}
                   className="w-full p-2 border border-gray-300 rounded mt-1 focus:outline-none focus:ring-2 focus:ring-gray-500"
                 />
               </div>
@@ -278,9 +303,7 @@ export default function AllExtraServices() {
                 </label>
                 <textarea
                   value={selectedService.description}
-                  onChange={(e) =>
-                    handleChange("description", e.target.value)
-                  }
+                  onChange={(e) => handleChange("description", e.target.value)}
                   className="w-full p-2 border border-gray-300 rounded mt-1 focus:outline-none focus:ring-2 focus:ring-gray-500"
                   rows="3"
                 />
@@ -293,9 +316,7 @@ export default function AllExtraServices() {
                   <input
                     type="number"
                     value={selectedService.minPrice}
-                    onChange={(e) =>
-                      handleChange("minPrice", e.target.value)
-                    }
+                    onChange={(e) => handleChange("minPrice", e.target.value)}
                     className="w-full p-2 border border-gray-300 rounded mt-1 focus:outline-none focus:ring-2 focus:ring-gray-500"
                   />
                 </div>
@@ -306,9 +327,7 @@ export default function AllExtraServices() {
                   <input
                     type="number"
                     value={selectedService.maxPrice}
-                    onChange={(e) =>
-                      handleChange("maxPrice", e.target.value)
-                    }
+                    onChange={(e) => handleChange("maxPrice", e.target.value)}
                     className="w-full p-2 border border-gray-300 rounded mt-1 focus:outline-none focus:ring-2 focus:ring-gray-500"
                   />
                 </div>
@@ -346,8 +365,7 @@ export default function AllExtraServices() {
               Confirm Deletion
             </h2>
             <p className="text-gray-700 mb-6">
-              Are you sure you want to delete “{selectedService.serviceName}
-              ”?
+              Are you sure you want to delete “{selectedService.serviceName}”?
             </p>
             <div className="flex justify-end space-x-4">
               <button
@@ -413,6 +431,7 @@ export default function AllExtraServices() {
                 </label>
                 <input
                   type="number"
+                  min="0"
                   value={newService.minPrice}
                   onChange={(e) =>
                     handleNewServiceChange("minPrice", e.target.value)
@@ -426,6 +445,7 @@ export default function AllExtraServices() {
                 </label>
                 <input
                   type="number"
+                  min="0"
                   value={newService.maxPrice}
                   onChange={(e) =>
                     handleNewServiceChange("maxPrice", e.target.value)

@@ -75,6 +75,16 @@ export async function removePortfolioFromTailor(portfolioId) {
   }
 }
 
+export async function updatePortfolio(portfolioId, portfolioData) {
+try {
+    const response = await axios.put(`/tailor/portfolio/${portfolioId}`, portfolioData, protectedConfig);
+    return response.data;
+  }
+  catch (error) {
+    return error.response?.data || { success: false, message: error.message };
+  }
+}
+
 export async function updateService(serviceId, serviceData) {
   try {
     const response = await axios.put(`/tailor/service/${serviceId}`, serviceData, protectedConfig);

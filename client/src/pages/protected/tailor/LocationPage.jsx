@@ -224,7 +224,7 @@ export default function LocationPicker({ initialLocation, onSave }) {
           })
         }
         disabled={!location}
-        className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg disabled:opacity-50"
+        className="mt-4 w-full bg-[#111827] hover:bg-[#111827] text-white py-2 rounded-lg disabled:opacity-50"
       >
         Save Location
       </button>
