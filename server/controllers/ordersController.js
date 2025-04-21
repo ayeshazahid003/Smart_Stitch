@@ -300,7 +300,11 @@ export const getOrdersByTailor = async (req, res) => {
 export const updateOrderStatus = async (req, res) => {
   try {
     const { id: orderId } = req.params;
-    const { status, design, shippingAddress, measurement } = req.body;
+    let { status, design, shippingAddress, measurement } = req.body;
+    if (shippingAddress) {
+      shippingAddress._id = new mongoose.Types.ObjectId();
+    }
+    console.log(measurement,"--------");
 
     const order = await Order.findById(orderId)
       .populate("customerId", "username email")
@@ -315,7 +319,7 @@ export const updateOrderStatus = async (req, res) => {
     order.status = status;
     order.design = design || order.design;
     order.shippingAddress = shippingAddress || order.shippingAddress;
-    order.measurement = measurement || order.measurement;
+    order.measurement = measurement.data || order.measurement;
     await order.save();
 
     // Handle paid status - send email with invoice

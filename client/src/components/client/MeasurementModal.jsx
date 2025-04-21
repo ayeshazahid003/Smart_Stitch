@@ -25,7 +25,7 @@ const MeasurementModal = ({
 
       {/* Tab Header */}
       <div className="flex space-x-4 mb-6">
-        <button
+        {/* <button
           type="button"
           onClick={() => setMeasurementTab("select")}
           className={`px-4 py-2 rounded-md transition ${
@@ -35,7 +35,7 @@ const MeasurementModal = ({
           }`}
         >
           Select Existing
-        </button>
+        </button> */}
         <button
           type="button"
           onClick={() => setMeasurementTab("new")}

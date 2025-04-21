@@ -29,14 +29,15 @@ function CheckoutPage() {
   const navigate = useNavigate();
   const { user } = useUser();
 
-  // Add addresses state
+  // Address state
   const [addresses, setAddresses] = useState([]);
 
+  // Order & flow state
   const [orderData, setOrderData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState(2);
 
-  // Address and delivery states
+  // Delivery & address
   const [selectedAddressId, setSelectedAddressId] = useState(null);
   const [isAddingNewAddress, setIsAddingNewAddress] = useState(false);
   const [deliveryMethod, setDeliveryMethod] = useState("delivery");
@@ -50,22 +51,14 @@ function CheckoutPage() {
     phone: "",
   });
   const [instructions, setInstructions] = useState("");
+
+  // Measurement & payment
   const [isMeasurementModalOpen, setIsMeasurementModalOpen] = useState(false);
-  const [selectedMeasurement, setSelectedMeasurement] = useState(null);
-  const [paymentMethod, setPaymentMethod] = useState("card");
-
-  // Design and media states
-  const [designImages, setDesignImages] = useState([]);
-  const [fabric, setFabric] = useState("");
-  const [color, setColor] = useState("");
-  const [style, setStyle] = useState("");
-  const [customDescription, setCustomDescription] = useState("");
-  const [measurementTab, setMeasurementTab] = useState("existing");
-  const [tempSelectedMeasurementId, setTempSelectedMeasurementId] =
-    useState(null);
-
-  // New state variables
   const [existingMeasurements, setExistingMeasurements] = useState([]);
+  const [tempSelectedMeasurementId, setTempSelectedMeasurementId] =
+    useState("");
+  const [selectedMeasurement, setSelectedMeasurement] = useState(null);
+  const [measurementTab, setMeasurementTab] = useState("new");
   const [newMeasurement, setNewMeasurement] = useState({
     name: "",
     height: "",
@@ -83,11 +76,20 @@ function CheckoutPage() {
       ankle: "",
     },
   });
+  const [paymentMethod, setPaymentMethod] = useState("card");
+
+  // Design, voucher & pricing
+  const [designImages, setDesignImages] = useState([]);
+  const [fabric, setFabric] = useState("");
+  const [color, setColor] = useState("");
+  const [style, setStyle] = useState("");
+  const [customDescription, setCustomDescription] = useState("");
   const [coupon, setCoupon] = useState("");
   const [isApplyingVoucher, setIsApplyingVoucher] = useState(false);
   const [appliedVoucher, setAppliedVoucher] = useState(null);
   const [voucherError, setVoucherError] = useState("");
 
+  // Fetch user & order data
   useEffect(() => {
     const fetchData = async () => {
       if (!orderId) {
@@ -102,37 +104,36 @@ function CheckoutPage() {
           getOrderById(orderId),
         ]);
 
+        // addresses
         if (userResponse.success) {
-          // Set addresses
-          const userAddresses = userResponse.user.contactInfo?.addresses || [];
+          const userAddresses =
+            userResponse.user.contactInfo?.addresses || [];
           setAddresses(userAddresses);
 
-          // Set default address if available
           if (userResponse.user.contactInfo?.address) {
-            setSelectedAddressId(userResponse.user.contactInfo.address._id);
-            // If addresses array is empty but there's a default address, add it
+            const addr = userResponse.user.contactInfo.address;
+            setSelectedAddressId(addr._id);
             if (userAddresses.length === 0) {
-              setAddresses([userResponse.user.contactInfo.address]);
+              setAddresses([addr]);
             }
           }
 
-          // Set measurements
+          // measurements: store them & pre‑select first one (as full object)
           if (userResponse.user.measurements?.length > 0) {
             setExistingMeasurements(userResponse.user.measurements);
-            setTempSelectedMeasurementId(userResponse.user.measurements[0]._id);
+            setSelectedMeasurement(userResponse.user.measurements[0]);
           }
         }
 
-        console.log("orderResponse", orderResponse);
-
+        // order
         if (orderResponse.success) {
           setOrderData(orderResponse.order);
         } else {
           toast.error("Failed to fetch order details");
           navigate("/");
         }
-      } catch (error) {
-        console.error("Error fetching data:", error);
+      } catch (err) {
+        console.error("Error fetching data:", err);
         toast.error("Failed to load checkout data");
         navigate("/");
       } finally {
@@ -143,167 +144,134 @@ function CheckoutPage() {
     fetchData();
   }, [orderId, navigate]);
 
-  const openMeasurementModal = () => setIsMeasurementModalOpen(true);
-  const closeMeasurementModal = () => setIsMeasurementModalOpen(false);
-
+  // Helpers: next step, open/close modal, design files
   const handleNextStep = (e) => {
     e.preventDefault();
-    setStep((prev) => prev + 1);
+    setStep((s) => s + 1);
   };
+  const openMeasurementModal = () => setIsMeasurementModalOpen(true);
+  const closeMeasurementModal = () => setIsMeasurementModalOpen(false);
+  const handleDesignImagesChange = (e) =>
+    setDesignImages(Array.from(e.target.files));
 
-  const handleDesignImagesChange = async (e) => {
-    const files = Array.from(e.target.files);
-    setDesignImages(files);
-  };
-
+  // Place order / create Stripe session / COD
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
-
     if (!orderData || !user || !selectedAddressId) {
       toast.error(
         selectedAddressId
-          ? "Missing order data or user not logged in"
+          ? "Missing data or not logged in"
           : "Please select a shipping address"
       );
       return;
     }
 
     try {
-      const selectedAddress = addresses.find(
-        (addr) => addr._id === selectedAddressId
-      );
-
-      // First update the order with design details and shipping address
-      const orderUpdateData = {
+      const addr = addresses.find((a) => a._id === selectedAddressId);
+      const payload = {
         design: {
-          designImage: [], // This will be handled by file upload
-          customization: {
-            fabric,
-            color,
-            style,
-            description: customDescription,
-          },
-          media: [], // This will be handled by file upload
+          designImage: [],
+          customization: { fabric, color, style, description: customDescription },
+          media: [],
         },
-        shippingAddress: selectedAddress,
+        shippingAddress: addr,
         measurement: selectedMeasurement,
         status: "pending_payment",
       };
 
-      // Update order with initial details
-      const response = await updateOrderStatus(orderId, orderUpdateData);
-
-      if (response.success) {
+      const resp = await updateOrderStatus(orderId, payload);
+      if (resp.success) {
         if (paymentMethod === "card") {
           const stripe = await stripePromise;
-          const session = await createCheckoutSession(orderId, total * 100);
-
+          const session = await createCheckoutSession(
+            orderId,
+            total * 100
+          );
           const result = await stripe.redirectToCheckout({
             sessionId: session.id,
           });
-
-          if (result.error) {
-            toast.error(result.error.message);
-          }
-        } else if (paymentMethod === "cod") {
-          // For COD, directly update order to completed
+          if (result.error) toast.error(result.error.message);
+        } else {
           await updateOrderStatus(orderId, { status: "completed" });
           toast.success("Order placed successfully!");
           navigate("/order-placed");
         }
       } else {
-        toast.error(response.message || "Failed to place order");
+        toast.error(resp.message || "Failed to place order");
       }
-    } catch (error) {
-      console.error("Error placing order:", error);
+    } catch (err) {
+      console.error("Error placing order:", err);
       toast.error("Failed to place order");
     }
   };
 
-  // Constants for calculations
-  const shippingCost = 200.0;
-  const TAX_RATE = 0.1; // 10% tax
-
-  // Calculate totals from order data
-  const calculateTotals = () => {
-    const baseSubtotal = orderData?.pricing?.subtotal || 0;
-    const extraServicesTotal =
-      orderData?.extraServices?.reduce(
-        (sum, service) => sum + service.price,
-        0
-      ) || 0;
-
-    const subtotal = baseSubtotal + extraServicesTotal;
-    const voucherDiscount = appliedVoucher
-      ? (subtotal * appliedVoucher.discount) / 100
-      : 0;
-    const discountedSubtotal = subtotal - voucherDiscount;
-    const tax = discountedSubtotal * TAX_RATE;
-    const total = discountedSubtotal + shippingCost + tax;
-
-    return {
-      subtotal,
-      extraServicesTotal,
-      voucherDiscount,
-      tax,
-      total,
-    };
-  };
-
+  // Pricing calc
+  const SHIPPING_COST = 200;
+  const TAX_RATE = 0.1;
   const { subtotal, extraServicesTotal, voucherDiscount, tax, total } =
-    calculateTotals();
+    (() => {
+      const base = orderData?.pricing?.subtotal || 0;
+      const extra =
+        orderData?.extraServices?.reduce((s, x) => s + x.price, 0) || 0;
+      const sub = base + extra;
+      const vDisc = appliedVoucher
+        ? (sub * appliedVoucher.discount) / 100
+        : 0;
+      const discSub = sub - vDisc;
+      const t = discSub * TAX_RATE;
+      const tot = discSub + SHIPPING_COST + t;
+      return {
+        subtotal: sub,
+        extraServicesTotal: extra,
+        voucherDiscount: vDisc,
+        tax: t,
+        total: tot,
+      };
+    })();
 
+  // Apply voucher
   const handleVoucherApply = async () => {
     if (!coupon.trim()) {
       setVoucherError("Please enter a voucher code");
       return;
     }
-
     if (appliedVoucher) {
-      setVoucherError("A voucher has already been applied");
+      setVoucherError("Voucher already applied");
       return;
     }
-
     try {
       setIsApplyingVoucher(true);
       setVoucherError("");
-
-      const response = await verifyVoucherByTitle(coupon, orderData.tailorId);
-
-      if (response.success) {
-        const updatedOrder = await updateOrderStatus(orderId, {
-          voucherId: response.voucher._id,
+      const resp = await verifyVoucherByTitle(coupon, orderData.tailorId);
+      if (resp.success) {
+        const updated = await updateOrderStatus(orderId, {
+          voucherId: resp.voucher._id,
           status: "pending_payment",
         });
-
-        if (updatedOrder.success) {
-          setAppliedVoucher(response.voucher);
+        if (updated.success) {
+          setAppliedVoucher(resp.voucher);
           toast.success(
-            `Voucher applied successfully! ${response.voucher.discount}% discount added.`
+            `Voucher applied: ${resp.voucher.discount}% discount`
           );
-
-          // Calculate new totals with voucher
-          const discountAmount = (subtotal * response.voucher.discount) / 100;
-          const discountedSubtotal = subtotal - discountAmount;
-          const newTax = discountedSubtotal * TAX_RATE;
-          const newTotal = discountedSubtotal + shippingCost + newTax;
-
-          // Update order data with new pricing
-          setOrderData({
-            ...orderData,
+          // recompute new pricing
+          const disc = (subtotal * resp.voucher.discount) / 100;
+          const newSub = subtotal - disc;
+          const newTax = newSub * TAX_RATE;
+          setOrderData((o) => ({
+            ...o,
             pricing: {
-              ...orderData.pricing,
-              subtotal: subtotal,
-              voucherDiscount: discountAmount,
+              ...o.pricing,
+              subtotal,
+              voucherDiscount: disc,
               tax: newTax,
-              total: newTotal,
+              total: newSub + SHIPPING_COST + newTax,
             },
-          });
+          }));
         }
       }
-    } catch (error) {
+    } catch (err) {
       setVoucherError(
-        error.response?.data?.message || "Failed to apply voucher"
+        err.response?.data?.message || "Failed to apply voucher"
       );
     } finally {
       setIsApplyingVoucher(false);
@@ -313,90 +281,67 @@ function CheckoutPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-lg text-gray-600">Loading checkout details...</p>
+        <p className="text-lg text-gray-600">
+          Loading checkout details...
+        </p>
       </div>
     );
   }
 
-  // Helper to determine step circle styling
-  const getCircleStyle = (circleStep) => {
-    if (step > circleStep) {
-      // completed
-      return "w-8 h-8 rounded-full flex items-center justify-center bg-green-600 text-white";
-    } else if (step === circleStep) {
-      // active
-      return "w-8 h-8 rounded-full flex items-center justify-center bg-white border-2 border-green-600 text-green-600";
-    } else {
-      // upcoming
-      return "w-8 h-8 rounded-full flex items-center justify-center bg-white border-2 border-gray-300 text-gray-400";
-    }
-  };
-
-  // Helper to determine connector line color
-  const getConnectorStyle = (connectorAfterStep) => {
-    // If our current step is greater than the connector step, it’s completed (green)
-    // otherwise it's gray
-    return step > connectorAfterStep
+  // Progress bar helpers
+  const getCircleStyle = (i) =>
+    step > i
+      ? "w-8 h-8 rounded-full flex items-center justify-center bg-green-600 text-white"
+      : step === i
+      ? "w-8 h-8 rounded-full flex items-center justify-center bg-white border-2 border-green-600 text-green-600"
+      : "w-8 h-8 rounded-full flex items-center justify-center bg-white border-2 border-gray-300 text-gray-400";
+  const getConnectorStyle = (i) =>
+    step > i
       ? "flex-auto border-t-2 border-green-600 mx-2"
       : "flex-auto border-t-2 border-gray-300 mx-2";
-  };
 
-  // Function for measurement handling
-  const handleSaveMeasurement = async () => {
-    if (measurementTab === "existing" && tempSelectedMeasurementId) {
-      const selected = existingMeasurements.find(
-        (m) => m.id === tempSelectedMeasurementId
-      );
-      setSelectedMeasurement(selected);
+  // Save measurement (modal)
+  const handleSaveMeasurement = () => {
+    if (measurementTab === "existing" && selectedMeasurement) {
+      // already set when clicked
     } else if (measurementTab === "new" && newMeasurement.name) {
-      // Here you would typically save the new measurement to your backend
-      const newMeasurementWithId = { ...newMeasurement, id: Date.now() };
-      setSelectedMeasurement(newMeasurementWithId);
+      const newMeas = {
+        ...newMeasurement,
+        _id: Date.now().toString(),
+      };
+      setSelectedMeasurement(newMeas);
     }
     closeMeasurementModal();
   };
 
-  const handleAddNewAddress = async () => {
+  // Add address
+  const handleAddNewAddress = () => {
     if (
       !newAddress.name ||
       !newAddress.addressLine1 ||
       !newAddress.city ||
       !newAddress.postalCode
     ) {
-      toast.error("Please fill in all required address fields");
+      toast.error("Fill all required address fields");
       return;
     }
-
-    try {
-      // Create a new address object with an _id
-      const newAddressWithId = {
-        ...newAddress,
-        _id: Date.now().toString(), // Temporary ID for demo
-      };
-
-      // Update addresses state
-      setAddresses((prev) => [...prev, newAddressWithId]);
-
-      // Update selected address
-      setSelectedAddressId(newAddressWithId._id);
-
-      // Reset form and close it
-      setIsAddingNewAddress(false);
-      setNewAddress({
-        name: "",
-        addressLine1: "",
-        addressLine2: "",
-        city: "",
-        state: "",
-        postalCode: "",
-        phone: "",
-      });
-
-      toast.success("Address added successfully");
-    } catch (error) {
-      console.error("Error adding address:", error);
-      toast.error("Failed to add address");
-    }
+    const addr = {
+      ...newAddress,
+      _id: Date.now().toString(),
+    };
+    setAddresses((a) => [...a, addr]);
+    setSelectedAddressId(addr._id);
+    setIsAddingNewAddress(false);
+    setNewAddress({
+      name: "",
+      addressLine1: "",
+      addressLine2: "",
+      city: "",
+      state: "",
+      postalCode: "",
+      phone: "",
+    });
+    toast.success("Address added");
   };
 
   return (
@@ -411,14 +356,13 @@ function CheckoutPage() {
           <h1 className="text-2xl font-bold text-gray-800">Checkout</h1>
         </div>
 
-        {/* 4-Step Dynamic Progress Bar */}
+        {/* Progress Bar */}
         <div className="p-6 bg-gray-50">
           <div className="flex items-center justify-center mb-6">
-            {/* Step 1: Cart */}
+            {/* Step 1 */}
             <div className="flex items-center">
               <div className={getCircleStyle(1)}>
                 {step > 1 ? (
-                  // If completed, show check icon
                   <svg
                     className="w-4 h-4"
                     fill="none"
@@ -433,7 +377,6 @@ function CheckoutPage() {
                     />
                   </svg>
                 ) : (
-                  // If active or upcoming, show step number
                   1
                 )}
               </div>
@@ -445,11 +388,9 @@ function CheckoutPage() {
                 Cart
               </span>
             </div>
-
-            {/* Connector after step 1 */}
             <div className={getConnectorStyle(1)} />
 
-            {/* Step 2: Details */}
+            {/* Step 2 */}
             <div className="flex items-center">
               <div className={getCircleStyle(2)}>
                 {step > 2 ? (
@@ -466,8 +407,6 @@ function CheckoutPage() {
                       d="M5 13l4 4L19 7"
                     />
                   </svg>
-                ) : step === 2 ? (
-                  2
                 ) : (
                   2
                 )}
@@ -480,11 +419,9 @@ function CheckoutPage() {
                 Details
               </span>
             </div>
-
-            {/* Connector after step 2 */}
             <div className={getConnectorStyle(2)} />
 
-            {/* Step 3: Payment */}
+            {/* Step 3 */}
             <div className="flex items-center">
               <div className={getCircleStyle(3)}>
                 {step > 3 ? (
@@ -501,8 +438,6 @@ function CheckoutPage() {
                       d="M5 13l4 4L19 7"
                     />
                   </svg>
-                ) : step === 3 ? (
-                  3
                 ) : (
                   3
                 )}
@@ -515,11 +450,9 @@ function CheckoutPage() {
                 Payment
               </span>
             </div>
-
-            {/* Connector after step 3 */}
             <div className={getConnectorStyle(3)} />
 
-            {/* Step 4: Done */}
+            {/* Step 4 */}
             <div className="flex items-center">
               <div className={getCircleStyle(4)}>
                 {step >= 4 ? (
@@ -551,12 +484,12 @@ function CheckoutPage() {
           </div>
         </div>
 
-        {/* STEP 2: Shipping & Payment */}
+        {/* STEP 2: Details */}
         {step === 2 && (
           <form onSubmit={handleNextStep} className="p-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2 space-y-8">
-                {/* Delivery Method Selection */}
+                {/* Delivery Method */}
                 <div className="bg-white p-6 rounded-lg shadow-sm border">
                   <h2 className="text-xl font-semibold mb-4 text-[#111827]">
                     Delivery Method
@@ -587,7 +520,7 @@ function CheckoutPage() {
                   </div>
                 </div>
 
-                {/* Shipping Address - Only show if delivery is selected */}
+                {/* Shipping Address */}
                 {deliveryMethod === "delivery" && (
                   <div className="mb-8">
                     <h3 className="text-xl font-semibold mb-4">
@@ -606,12 +539,15 @@ function CheckoutPage() {
                           <input
                             type="radio"
                             name="address"
+                            value={address._id}
                             checked={selectedAddressId === address._id}
                             onChange={() => setSelectedAddressId(address._id)}
                             className="mt-1 mr-4"
                           />
                           <div>
-                            <div className="font-medium">{address.line1}</div>
+                            <div className="font-medium">
+                              {address.line1}
+                            </div>
                             {address.line2 && (
                               <div className="text-gray-600">
                                 {address.line2}
@@ -765,13 +701,15 @@ function CheckoutPage() {
 
                 {/* Measurement Section */}
                 <div className="mb-8">
-                  <h3 className="text-xl font-semibold mb-4">Measurements</h3>
+                  <h3 className="text-xl font-semibold mb-4">
+                    Measurements
+                  </h3>
                   <div className="space-y-4">
                     {existingMeasurements.map((measurement) => (
                       <label
                         key={measurement._id}
                         className={`flex items-start p-4 border rounded-lg cursor-pointer transition-all ${
-                          tempSelectedMeasurementId === measurement._id
+                          selectedMeasurement?._id === measurement._id
                             ? "border-indigo-600 bg-indigo-50"
                             : "border-gray-200"
                         }`}
@@ -780,20 +718,28 @@ function CheckoutPage() {
                           type="radio"
                           name="measurement"
                           checked={
-                            tempSelectedMeasurementId === measurement._id
+                            selectedMeasurement?._id === measurement._id
                           }
-                          onChange={() =>
-                            setTempSelectedMeasurementId(measurement._id)
-                          }
+                          onChange={() => setSelectedMeasurement(measurement)}
                           className="mt-1 mr-4"
                         />
                         <div>
-                          <div className="font-medium">{measurement.title}</div>
+                          <div className="font-medium">
+                            {measurement.title}
+                          </div>
                           <div className="grid grid-cols-2 gap-2 text-sm text-gray-600 mt-2">
-                            <div>Height: {measurement.data.height} cm</div>
-                            <div>Chest: {measurement.data.chest} cm</div>
-                            <div>Waist: {measurement.data.waist} cm</div>
-                            <div>Hips: {measurement.data.hips} cm</div>
+                            <div>
+                              Height: {measurement.data.height} cm
+                            </div>
+                            <div>
+                              Chest: {measurement.data.chest} cm
+                            </div>
+                            <div>
+                              Waist: {measurement.data.waist} cm
+                            </div>
+                            <div>
+                              Hips: {measurement.data.hips} cm
+                            </div>
                           </div>
                         </div>
                       </label>
@@ -804,7 +750,7 @@ function CheckoutPage() {
                       className="flex items-center space-x-2 text-[#111827] hover:underline"
                     >
                       <PlusCircle className="w-5 h-5" />
-                      <span>Select / Add Measurement</span>
+                      <span>Checkout with New Measurement</span>
                     </button>
                   </div>
                 </div>
@@ -827,7 +773,7 @@ function CheckoutPage() {
                       <CreditCard className="w-5 h-5 mr-2" />
                       Pay by Card
                     </button>
-                    <button
+                    {/* <button
                       type="button"
                       onClick={() => setPaymentMethod("cod")}
                       className={`flex items-center px-4 py-2 border rounded-md transition ${
@@ -838,7 +784,7 @@ function CheckoutPage() {
                     >
                       <DollarSign className="w-5 h-5 mr-2" />
                       Cash on Delivery
-                    </button>
+                    </button> */}
                   </div>
                   {paymentMethod === "card" && (
                     <div className="mt-4 p-4 border border-gray-300 rounded-md text-gray-700">
@@ -873,7 +819,7 @@ function CheckoutPage() {
                       className={`w-full border ${
                         voucherError ? "border-red-300" : "border-gray-300"
                       } rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#111827]`}
-                      disabled={appliedVoucher || isApplyingVoucher}
+                      disabled={!!appliedVoucher || isApplyingVoucher}
                     />
                     {voucherError && (
                       <p className="text-red-500 text-sm mt-1">
@@ -884,7 +830,7 @@ function CheckoutPage() {
                   <button
                     type="button"
                     onClick={handleVoucherApply}
-                    disabled={appliedVoucher || isApplyingVoucher}
+                    disabled={!!appliedVoucher || isApplyingVoucher}
                     className={`bg-[#111827] text-white px-4 py-2 rounded-md hover:bg-[#1f2937] transition ${
                       (appliedVoucher || isApplyingVoucher) &&
                       "opacity-50 cursor-not-allowed"
@@ -893,33 +839,33 @@ function CheckoutPage() {
                     {isApplyingVoucher ? "Applying..." : "Apply"}
                   </button>
                 </div>
+
                 <div className="space-y-4 max-h-64 overflow-auto">
-                  {orderData?.utilizedServices.map((service) => (
+                  {orderData?.utilizedServices.map((s) => (
                     <div
-                      key={service.id}
+                      key={s.id}
                       className="flex items-center space-x-4"
                     >
                       <img
-                        src={service.image || "/placeholder.svg"}
-                        alt={service.title}
+                        src={s.image || "/placeholder.svg"}
+                        alt={s.serviceName}
                         className="w-16 h-16 object-cover rounded"
                       />
                       <div className="flex-1">
                         <p className="font-medium text-gray-800">
-                          {service.serviceName}
+                          {s.serviceName}
                         </p>
                         <p className="text-sm text-gray-600">
-                          Qty: {service.quantity || 1}
+                          Qty: {s.quantity || 1}
                         </p>
                       </div>
                       <p className="font-medium text-gray-800">
-                        RS{" "}
-                        {(service.price * (service.quantity || 1)).toFixed(2)}
+                        RS {(s.price * (s.quantity || 1)).toFixed(2)}
                       </p>
                     </div>
                   ))}
                 </div>
-                {/* Negotiated Price Banner */}
+
                 <div className="mb-4 mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
                   <div className="flex items-center">
                     <span className="text-blue-700 font-medium">
@@ -938,13 +884,15 @@ function CheckoutPage() {
                   </div>
                   {appliedVoucher && (
                     <div className="flex justify-between text-green-600">
-                      <span>Voucher Discount ({appliedVoucher.discount}%)</span>
+                      <span>
+                        Voucher Discount ({appliedVoucher.discount}%)
+                      </span>
                       <span>- RS {voucherDiscount.toFixed(2)}</span>
                     </div>
                   )}
                   <div className="flex justify-between">
                     <span>Shipping</span>
-                    <span>RS {shippingCost.toFixed(2)}</span>
+                    <span>RS {SHIPPING_COST.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Tax (10%)</span>
@@ -955,6 +903,7 @@ function CheckoutPage() {
                     <span>RS {total.toFixed(2)}</span>
                   </div>
                 </div>
+
                 <button
                   type="submit"
                   className="mt-6 w-full bg-[#111827] text-white py-3 rounded-md hover:bg-[#1f2937] transition"
@@ -966,7 +915,7 @@ function CheckoutPage() {
           </form>
         )}
 
-        {/* STEP 3: Design, Media, and final Place Order */}
+        {/* STEP 3: Optional Design & Place Order */}
         {step === 3 && (
           <form onSubmit={handlePlaceOrder} className="p-6 space-y-8">
             <h2 className="text-2xl font-semibold mb-6 text-[#111827]">
@@ -1051,7 +1000,6 @@ function CheckoutPage() {
               </div>
             </div>
 
-            {/* Place Order Button */}
             <button
               type="submit"
               className="mt-6 w-full bg-[#111827] text-white py-3 rounded-md hover:bg-[#1f2937] transition"
@@ -1061,7 +1009,7 @@ function CheckoutPage() {
           </form>
         )}
 
-        {/* STEP 4: Done (Order Placed) */}
+        {/* STEP 4: Confirmation */}
         {step === 4 && (
           <div className="p-6 space-y-6">
             <h2 className="text-2xl font-semibold text-[#111827]">
@@ -1079,7 +1027,7 @@ function CheckoutPage() {
         )}
       </div>
 
-      {/* Measurement Modal Component */}
+      {/* Measurement Modal */}
       <MeasurementModal
         isOpen={isMeasurementModalOpen}
         onRequestClose={closeMeasurementModal}

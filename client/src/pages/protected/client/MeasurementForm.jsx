@@ -12,6 +12,8 @@ export default function MeasurementForm() {
   const { user, updateUserProfile } = useUser();
   const [loading, setLoading] = useState(true);
 
+  console.log("User in MeasurementForm:", user.measurements);
+
   const {
     control,
     register,
