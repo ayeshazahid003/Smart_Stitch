@@ -34,7 +34,7 @@ export default function Campaigns() {
     } catch (error) {
       console.error("Failed to load campaigns:", error);
     }
-  }, []);
+  }, [getTailorCampaigns]);
 
   useEffect(() => {
     loadCampaigns();
@@ -69,8 +69,26 @@ export default function Campaigns() {
     }
   };
 
+  // Ensure validUntil never precedes validFrom
+  const handleValidFromChange = (e) => {
+    const from = e.target.value;
+    setFormData((fd) => {
+      const updated = { ...fd, validFrom: from };
+      if (fd.validUntil && fd.validUntil < from) {
+        updated.validUntil = from;
+      }
+      return updated;
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // final check
+    if (formData.validUntil < formData.validFrom) {
+      alert("End date cannot be before start date.");
+      return;
+    }
+
     try {
       setIsLoading(true);
       const campaignData = {
@@ -156,7 +174,7 @@ export default function Campaigns() {
               setSelectedServices([]);
               setIsModalOpen(true);
             }}
-            className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
+            className="inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
           >
             Create Campaign
           </button>
@@ -171,40 +189,22 @@ export default function Campaigns() {
               <table className="min-w-full divide-y divide-gray-300">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th
-                      scope="col"
-                      className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
-                    >
+                    <th className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
                       Title
                     </th>
-                    <th
-                      scope="col"
-                      className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-                    >
+                    <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                       Type
                     </th>
-                    <th
-                      scope="col"
-                      className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-                    >
+                    <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                       Discount
                     </th>
-                    <th
-                      scope="col"
-                      className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-                    >
+                    <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                       Valid Period
                     </th>
-                    <th
-                      scope="col"
-                      className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-                    >
+                    <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                       Min. Order
                     </th>
-                    <th
-                      scope="col"
-                      className="relative py-3.5 pl-3 pr-4 sm:pr-6"
-                    >
+                    <th className="relative py-3.5 pl-3 pr-4 sm:pr-6">
                       <span className="sr-only">Actions</span>
                     </th>
                   </tr>
@@ -326,9 +326,7 @@ export default function Campaigns() {
                     Select Services
                   </label>
                   <div className="mt-2">
-                    <ServiceSelector
-                      onServicesSelected={handleServicesSelected}
-                    />
+                    <ServiceSelector onServicesSelected={handleServicesSelected} />
                   </div>
                 </div>
 
@@ -412,9 +410,7 @@ export default function Campaigns() {
                     <input
                       type="datetime-local"
                       value={formData.validFrom}
-                      onChange={(e) =>
-                        setFormData({ ...formData, validFrom: e.target.value })
-                      }
+                      onChange={handleValidFromChange}
                       className="mt-1 block w-full rounded-md border-gray-300 px-4 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                       required
                     />
@@ -430,6 +426,7 @@ export default function Campaigns() {
                       onChange={(e) =>
                         setFormData({ ...formData, validUntil: e.target.value })
                       }
+                      min={formData.validFrom}
                       className="mt-1 block w-full rounded-md border-gray-300 px-4 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                       required
                     />

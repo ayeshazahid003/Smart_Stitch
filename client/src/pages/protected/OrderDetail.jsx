@@ -81,18 +81,23 @@ const OrderDetail = () => {
         service.serviceName?.toLowerCase().includes("delivery")
       );
 
-    // Check payment method and status
-    const isEligiblePayment =
-      (order.paymentMethod === "card" || order.paymentMethod === "cod") &&
-      order.paymentStatus === "unpaid";
-
     // Check if shipping address is valid and sufficiently detailed
     const hasValidShippingAddress =
       order.shippingAddress &&
       order.shippingAddress.city &&
       order.shippingAddress.country &&
       order.shippingAddress.postalCode &&
-      (order.shippingAddress.line1 || order.shippingAddress.line2); // Need at least one address line
+      (order.shippingAddress.line1 || order.shippingAddress.line2);
+
+    // Tailors should always see the map if there's a delivery service & address
+    if (user?.role === "tailor") {
+      return hasDeliveryService && hasValidShippingAddress;
+    }
+
+    // For customers: check payment method and status as before
+    const isEligiblePayment =
+      (order.paymentMethod === "card" || order.paymentMethod === "cod") &&
+      order.paymentStatus === "unpaid";
 
     return isEligiblePayment && hasDeliveryService && hasValidShippingAddress;
   };
@@ -109,21 +114,17 @@ const OrderDetail = () => {
         order.shippingAddress.country,
       ]
         .filter((part) => part && part.trim() !== "")
-        .join(", "); // Filter out empty/whitespace parts
+        .join(", ");
 
       if (addressParts) {
         const encodedAddress = encodeURIComponent(addressParts);
         const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
-        // Open Google Maps in a new tab
         window.open(googleMapsUrl, "_blank", "noopener,noreferrer");
       } else {
-        // This case should ideally not happen if hasValidShippingAddress is true, but as a fallback:
         toast.error("Could not format shipping address for map view.");
-        // Fallback to checkout? Or just show error? Let's navigate as a fallback.
         navigate(`/checkout/${order._id}`);
       }
     } else {
-      // Default action: navigate to checkout
       navigate(`/checkout/${order._id}`);
     }
   };
@@ -133,9 +134,7 @@ const OrderDetail = () => {
     ? "View Delivery Route"
     : "Proceed to Checkout";
 
-  // Determine if the button should be shown based on original logic
-  // Tailor sees button if status is NOT pending (e.g., stiched, completed, etc.)
-  // Customer sees button ONLY if status IS pending
+  // Determine if the button should be shown
   const showButton =
     (user?.role === "tailor" && order.status !== "pending") ||
     (user?.role === "customer" && order.status === "pending");
@@ -160,7 +159,7 @@ const OrderDetail = () => {
           </div>
           <span
             className={`px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap ${
-              statusColors[order.status] || "bg-gray-100 text-gray-700" // Fallback color
+              statusColors[order.status] || "bg-gray-100 text-gray-700"
             }`}
           >
             {order.status ? order.status.toUpperCase() : "UNKNOWN"}
@@ -173,7 +172,6 @@ const OrderDetail = () => {
             🎨 Design Details
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Design Images */}
             {order.design?.designImage &&
               order.design.designImage.length > 0 && (
                 <div className="space-y-2">
@@ -191,7 +189,6 @@ const OrderDetail = () => {
                 </div>
               )}
 
-            {/* Media Files Section */}
             {order.design?.media && order.design.media.length > 0 && (
               <div className="space-y-2">
                 <h4 className="font-medium text-gray-700">Additional Media</h4>
@@ -225,7 +222,6 @@ const OrderDetail = () => {
               </div>
             )}
 
-            {/* Customization Details */}
             <div className="bg-gray-50 p-4 rounded-lg border">
               <h4 className="font-medium text-gray-700 mb-2">Customization</h4>
               <div className="space-y-1 text-sm text-gray-600">
@@ -256,32 +252,28 @@ const OrderDetail = () => {
             <h3 className="text-xl font-semibold text-gray-700 mb-3 border-b pb-2">
               📏 Measurements
             </h3>
-            {/* Upper Body */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 text-gray-600 text-sm mb-4">
               <p>
                 <strong>Height:</strong> {order.measurement.height || "N/A"} cm
               </p>
               <p>
-                <strong>Chest:</strong> {order.measurement.chest || "N/A"}{" "}
-                inches
+                <strong>Chest:</strong> {order.measurement.chest || "N/A"} inches
               </p>
               <p>
-                <strong>Waist:</strong> {order.measurement.waist || "N/A"}{" "}
-                inches
+                <strong>Waist:</strong> {order.measurement.waist || "N/A"} inches
               </p>
               <p>
                 <strong>Hips:</strong> {order.measurement.hips || "N/A"} inches
               </p>
               <p>
-                <strong>Shoulder:</strong> {order.measurement.shoulder || "N/A"}{" "}
-                inches
+                <strong>Shoulder:</strong>{" "}
+                {order.measurement.shoulder || "N/A"} inches
               </p>
               <p>
                 <strong>Neck:</strong> {order.measurement.neck || "N/A"} inches
               </p>
             </div>
 
-            {/* Lower Body Measurements */}
             {order.measurement.lowerBody && (
               <div>
                 <h4 className="text-md font-medium text-gray-700 mb-2">
@@ -338,12 +330,10 @@ const OrderDetail = () => {
 
         {/* Services & Pricing Section */}
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Services */}
           <div>
             <h3 className="text-xl font-semibold text-gray-700 mb-3 border-b pb-2">
               🛠 Services & Pricing
             </h3>
-            {/* Utilized Services */}
             <div className="mb-4">
               <h4 className="font-medium text-gray-700 mb-2">
                 Utilized Services
@@ -367,7 +357,6 @@ const OrderDetail = () => {
               </div>
             </div>
 
-            {/* Extra Services */}
             {order.extraServices && order.extraServices.length > 0 && (
               <div className="mb-4">
                 <h4 className="font-medium text-gray-700 mb-2">
@@ -390,7 +379,6 @@ const OrderDetail = () => {
             )}
           </div>
 
-          {/* Payment Info & Total */}
           <div className="bg-gray-50 p-4 rounded-lg border self-start">
             <h4 className="font-medium text-gray-700 mb-3">💰 Payment</h4>
             <div className="space-y-2 text-sm mb-4">
@@ -415,8 +403,6 @@ const OrderDetail = () => {
                 </span>
               </p>
             </div>
-
-            {/* Total Amount */}
             <div className="border-t pt-3 mt-3">
               <div className="flex justify-between items-baseline">
                 <p className="text-lg font-semibold text-gray-700">Total:</p>

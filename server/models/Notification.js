@@ -12,6 +12,11 @@ const NotificationSchema = new mongoose.Schema({
       "order_update",
       "promotion",
       "reminder",
+      "ORDER_PAID",
+      "ORDER_PLACED",
+      "ORDER_REJECTED",
+      "ORDER_ACCEPTED",
+
     ],
     required: true,
   },

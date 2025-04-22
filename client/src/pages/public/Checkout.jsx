@@ -117,7 +117,7 @@ function CheckoutPage() {
             }
           }
 
-          // measurements: store them & pre‑select first one (as full object)
+          // measurements
           if (userResponse.user.measurements?.length > 0) {
             setExistingMeasurements(userResponse.user.measurements);
             setSelectedMeasurement(userResponse.user.measurements[0]);
@@ -146,6 +146,19 @@ function CheckoutPage() {
   // Helpers: next step, open/close modal, design files
   const handleNextStep = (e) => {
     e.preventDefault();
+
+    // Step 2 validation: when adding new address, require saving first
+    if (step === 2) {
+      if (isAddingNewAddress) {
+        toast.error("Please fill in and save the new address before proceeding.");
+        return;
+      }
+      if (!selectedAddressId) {
+        toast.error("Please select a shipping address before proceeding.");
+        return;
+      }
+    }
+
     setStep((s) => s + 1);
   };
   const openMeasurementModal = () => setIsMeasurementModalOpen(true);
@@ -193,7 +206,6 @@ function CheckoutPage() {
           });
           if (result.error) toast.error(result.error.message);
         } else {
-          console.log("we are in the else");
           await updateOrderStatus(orderId, {
             status: "completed",
             paymentMethod: "cod",
@@ -276,30 +288,10 @@ function CheckoutPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-lg text-gray-600">Loading checkout details...</p>
-      </div>
-    );
-  }
-
-  // Progress bar helpers
-  const getCircleStyle = (i) =>
-    step > i
-      ? "w-8 h-8 rounded-full flex items-center justify-center bg-green-600 text-white"
-      : step === i
-      ? "w-8 h-8 rounded-full flex items-center justify-center bg-white border-2 border-green-600 text-green-600"
-      : "w-8 h-8 rounded-full flex items-center justify-center bg-white border-2 border-gray-300 text-gray-400";
-  const getConnectorStyle = (i) =>
-    step > i
-      ? "flex-auto border-t-2 border-green-600 mx-2"
-      : "flex-auto border-t-2 border-gray-300 mx-2";
-
   // Save measurement (modal)
   const handleSaveMeasurement = () => {
     if (measurementTab === "existing" && selectedMeasurement) {
-      // already set when clicked
+      // nothing
     } else if (measurementTab === "new" && newMeasurement.name) {
       const newMeas = {
         ...newMeasurement,
@@ -340,12 +332,35 @@ function CheckoutPage() {
     toast.success("Address added");
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-lg text-gray-600">Loading checkout details...</p>
+      </div>
+    );
+  }
+
+  // Progress bar helpers
+  const getCircleStyle = (i) =>
+    step > i
+      ? "w-8 h-8 rounded-full flex items-center justify-center bg-green-600 text-white"
+      : step === i
+      ? "w-8 h-8 rounded-full flex items-center justify-center bg-white border-2 border-green-600 text-green-600"
+      : "w-8 h-8 rounded-full flex items-center justify-center bg-white border-2 border-gray-300 text-gray-400";
+  const getConnectorStyle = (i) =>
+    step > i
+      ? "flex-auto border-t-2 border-green-600 mx-2"
+      : "flex-auto border-t-2 border-gray-300 mx-2";
+
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <div className="flex items-center cursor-pointer text-gray-600 hover:text-gray-800 transition-colors">
+          <div
+            onClick={() => navigate(-1)}
+            className="flex items-center cursor-pointer text-gray-600 hover:text-gray-800 transition-colors"
+          >
             <ArrowLeft className="w-5 h-5 mr-2" />
             <span className="text-sm font-medium">Back to Cart</span>
           </div>
@@ -709,12 +724,18 @@ function CheckoutPage() {
                         <input
                           type="radio"
                           name="measurement"
-                          checked={selectedMeasurement?._id === measurement._id}
-                          onChange={() => setSelectedMeasurement(measurement)}
+                          checked={
+                            selectedMeasurement?._id === measurement._id
+                          }
+                          onChange={() =>
+                            setSelectedMeasurement(measurement)
+                          }
                           className="mt-1 mr-4"
                         />
                         <div>
-                          <div className="font-medium">{measurement.title}</div>
+                          <div className="font-medium">
+                            {measurement.title}
+                          </div>
                           <div className="grid grid-cols-2 gap-2 text-sm text-gray-600 mt-2">
                             <div>Height: {measurement.data.height} cm</div>
                             <div>Chest: {measurement.data.chest} cm</div>

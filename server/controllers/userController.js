@@ -247,6 +247,7 @@ export const updateUserProfile = async (req, res) => {
     user.name = name || user.name;
     user.role = role || user.role;
     user.contactInfo = contactInfo || user.contactInfo;
+    user.contactInfo.addresses = address ? [address] : user.contactInfo.addresses;
     user.contactInfo.address = address || user.contactInfo.address;
     user.profilePicture = uploadedImageUrl;
 
