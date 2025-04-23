@@ -5,7 +5,7 @@ const stripe = stripePackage(process.env.STRIPE_SECRET_KEY);
 
 export const createCheckoutSession = async (req, res) => {
   try {
-    const { orderId, amount, currency = "usd" } = req.body;
+    const { orderId, amount, currency = "pkr" } = req.body;
 
     if (!orderId || !amount) {
       return res.status(400).json({ error: "Missing required parameters" });
@@ -16,7 +16,7 @@ export const createCheckoutSession = async (req, res) => {
       line_items: [
         {
           price_data: {
-            currency,
+            currency: "pkr",
             product_data: {
               name: `Order #${orderId}`,
             },

@@ -28,7 +28,7 @@ const getNavigation = (role) => {
     { name: "Home", href: "/", icon: HomeIcon },
     { name: "Profile", href: "/user-profile", icon: UserIcon },
     { name: "Measurements", href: "/measurements", icon: CalendarIcon },
-    { name: "Offers", href: "/offers", icon: GiftIcon },
+    { name: "Requests", href: "/offers", icon: GiftIcon },
     { name: "Chats", href: "/chats", icon: ChatBubbleLeftRightIcon },
     { name: "Orders", href: "/orders", icon: ClipboardDocumentListIcon },
   ];
@@ -168,8 +168,9 @@ export default function CustomerLayout() {
           {/* Sidebar component, swap this element with another sidebar if you like */}
           <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-gray-900 px-6">
             <div className="flex h-16 shrink-0 items-center">
-            <h1 className="text-2xl font-ibarra font-bold italic text-white">Smart Stitch</h1>
-
+              <h1 className="text-2xl font-ibarra font-bold italic text-white">
+                Smart Stitch
+              </h1>
             </div>
             <nav className="flex flex-1 flex-col">
               <ul role="list" className="flex flex-1 flex-col gap-y-7">

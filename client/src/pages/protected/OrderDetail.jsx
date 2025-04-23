@@ -103,7 +103,7 @@ const OrderDetail = () => {
   };
 
   const handleProceed = () => {
-    if (shouldOpenMap()) {
+    if (user?.role === "tailor") {
       // Construct address string from available parts
       const addressParts = [
         order.shippingAddress.line1,
@@ -122,7 +122,7 @@ const OrderDetail = () => {
         window.open(googleMapsUrl, "_blank", "noopener,noreferrer");
       } else {
         toast.error("Could not format shipping address for map view.");
-        navigate(`/checkout/${order._id}`);
+        return;
       }
     } else {
       navigate(`/checkout/${order._id}`);
@@ -130,14 +130,15 @@ const OrderDetail = () => {
   };
 
   // Determine button text based on action
-  const buttonText = shouldOpenMap()
-    ? "View Delivery Route"
-    : "Proceed to Checkout";
+  const buttonText =
+    user?.role === "tailor" ? "View Delivery Route" : "Proceed to Checkout";
 
   // Determine if the button should be shown
   const showButton =
     (user?.role === "tailor" && order.status !== "pending") ||
     (user?.role === "customer" && order.status === "pending");
+
+  console.log("order measurement", order.customerId.measurements[0]);
 
   return (
     <div className="p-6 min-h-screen bg-gray-50">
@@ -247,34 +248,58 @@ const OrderDetail = () => {
         </div>
 
         {/* Measurement Section */}
-        {order.measurement && (
+        {(order?.customerId?.measurements || order.measurement) && (
           <div className="mt-6">
             <h3 className="text-xl font-semibold text-gray-700 mb-3 border-b pb-2">
               📏 Measurements
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 text-gray-600 text-sm mb-4">
               <p>
-                <strong>Height:</strong> {order.measurement.height || "N/A"} cm
+                <strong>Height:</strong>{" "}
+                {order?.customerId?.measurements[0]?.data?.height ||
+                  order.measurement.height ||
+                  "N/A"}{" "}
+                cm
               </p>
               <p>
-                <strong>Chest:</strong> {order.measurement.chest || "N/A"} inches
+                <strong>Chest:</strong>{" "}
+                {order?.customerId?.measurements[0]?.data?.chest ||
+                  order.measurement.chest ||
+                  "N/A"}{" "}
+                inches
               </p>
               <p>
-                <strong>Waist:</strong> {order.measurement.waist || "N/A"} inches
+                <strong>Waist:</strong>{" "}
+                {order?.customerId?.measurements[0]?.data?.waist ||
+                  order.measurement.waist ||
+                  "N/A"}{" "}
+                inches
               </p>
               <p>
-                <strong>Hips:</strong> {order.measurement.hips || "N/A"} inches
+                <strong>Hips:</strong>{" "}
+                {order?.customerId?.measurements[0]?.data?.hips ||
+                  order.measurement.hips ||
+                  "N/A"}{" "}
+                inches
               </p>
               <p>
                 <strong>Shoulder:</strong>{" "}
-                {order.measurement.shoulder || "N/A"} inches
+                {order?.customerId?.measurements[0]?.data?.shoulder ||
+                  order.measurement.shoulder ||
+                  "N/A"}{" "}
+                inches
               </p>
               <p>
-                <strong>Neck:</strong> {order.measurement.neck || "N/A"} inches
+                <strong>Neck:</strong>{" "}
+                {order?.customerId?.measurements[0]?.data?.neck ||
+                  order.measurement.neck ||
+                  "N/A"}{" "}
+                inches
               </p>
             </div>
 
-            {order.measurement.lowerBody && (
+            {(order?.measurement?.lowerBody ||
+              order?.customerId?.measurements[0]?.data?.lowerBody) && (
               <div>
                 <h4 className="text-md font-medium text-gray-700 mb-2">
                   Lower Body
@@ -282,23 +307,43 @@ const OrderDetail = () => {
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 text-gray-600 text-sm">
                   <p>
                     <strong>Length:</strong>{" "}
-                    {order.measurement.lowerBody.length || "N/A"} inches
+                    {order?.customerId?.measurements[0]?.data?.lowerBody
+                      ?.length ||
+                      order.measurement.lowerBody.length ||
+                      "N/A"}{" "}
+                    inches
                   </p>
                   <p>
                     <strong>Waist:</strong>{" "}
-                    {order.measurement.lowerBody.waist || "N/A"} inches
+                    {order?.customerId?.measurements[0]?.data?.lowerBody
+                      ?.waist ||
+                      order.measurement.lowerBody.waist ||
+                      "N/A"}{" "}
+                    inches
                   </p>
                   <p>
                     <strong>Inseam:</strong>{" "}
-                    {order.measurement.lowerBody.inseam || "N/A"} inches
+                    {order?.customerId?.measurements[0]?.data?.lowerBody
+                      ?.inseam ||
+                      order.measurement.lowerBody.inseam ||
+                      "N/A"}{" "}
+                    inches
                   </p>
                   <p>
                     <strong>Thigh:</strong>{" "}
-                    {order.measurement.lowerBody.thigh || "N/A"} inches
+                    {order?.customerId?.measurements[0]?.data?.lowerBody
+                      ?.thigh ||
+                      order.measurement.lowerBody.thigh ||
+                      "N/A"}{" "}
+                    inches
                   </p>
                   <p>
                     <strong>Ankle:</strong>{" "}
-                    {order.measurement.lowerBody.ankle || "N/A"} inches
+                    {order?.customerId?.measurements[0]?.data?.lowerBody
+                      ?.ankle ||
+                      order.measurement.lowerBody.ankle ||
+                      "N/A"}{" "}
+                    inches
                   </p>
                 </div>
               </div>

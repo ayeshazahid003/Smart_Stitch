@@ -91,7 +91,6 @@ createRoot(document.getElementById("root")).render(
               <Route path="/tailor/:id" element={<TailorProfile />} />
               <Route path="/checkout/:id" element={<Checkout />} />
               <Route path="/order-placed" element={<OrderPlaced />} />
-              <Route path="chats" element={<Chat />} />
               <Route path="location" element={<LocationPicker />} />
 
               {/* Auth Routes */}
@@ -111,6 +110,7 @@ createRoot(document.getElementById("root")).render(
                   <Route path="measurements" element={<MeasurementForm />} />
                   <Route path="offers" element={<Offers />} />
                   <Route path="orders" element={<AllOrders />} />
+                  <Route path="chats" element={<Chat />} />
                   {/* <Route path="orders" element={<OrderDetails />} /> */}
                   <Route path="/campaigns" element={<Campaigns />} />
                   <Route path="/vouchers" element={<Vouchers />} />

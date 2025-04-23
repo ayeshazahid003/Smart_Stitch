@@ -164,7 +164,7 @@ export default function Offers() {
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">
-        {user?.role === "tailor" ? "Customer Offers" : "My Offers to Tailors"}
+        {user?.role === "tailor" ? "Customer Offers" : "My Requests to Tailors"}
       </h1>
 
       <div className="grid gap-6">
@@ -273,9 +273,7 @@ export default function Offers() {
               </div>
 
               {/* Action buttons */}
-              {(offer.status === "pending" ||
-                offer.status === "negotiating" ||
-                offer.status.includes("accepted_by")) && (
+              {offer.status !== "accepted" && (
                 <div className="space-x-2 ml-4">
                   {user?.role === "tailor" ? (
                     <>
@@ -316,7 +314,7 @@ export default function Offers() {
                     </>
                   ) : (
                     <>
-                      {!offer.status.includes("accepted_by_customer") && (
+                      {offer.status == "accepted_by_tailor" && (
                         <button
                           onClick={() =>
                             handleAcceptOffer(
@@ -330,26 +328,25 @@ export default function Offers() {
                           Accept
                         </button>
                       )}
-                      {!offer.status.includes("accepted") && (
-                        <>
-                          <button
-                            onClick={() => setSelectedOffer(offer)}
-                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                            disabled={isSubmitting}
-                          >
-                            Counter Offer
-                          </button>
-                          <button
-                            onClick={() =>
-                              handleStatusUpdate(offer._id, "cancelled")
-                            }
-                            className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-                            disabled={isSubmitting}
-                          >
-                            Cancel
-                          </button>
-                        </>
-                      )}
+
+                      <>
+                        <button
+                          onClick={() => setSelectedOffer(offer)}
+                          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                          disabled={isSubmitting}
+                        >
+                          Counter Offer
+                        </button>
+                        <button
+                          onClick={() =>
+                            handleStatusUpdate(offer._id, "cancelled")
+                          }
+                          className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                          disabled={isSubmitting}
+                        >
+                          Cancel
+                        </button>
+                      </>
                     </>
                   )}
                 </div>
