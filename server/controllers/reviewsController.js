@@ -10,13 +10,10 @@ export const addReview = async (req, res) => {
     // Check if the customer has an order with the particular tailor
     const order = await Order.findOne({ _id: orderId, customerId, tailorId });
     if (!order) {
-      return res
-        .status(403)
-        .json({
-          success: false,
-          message:
-            "You can only review a tailor if you have an order with them.",
-        });
+      return res.status(403).json({
+        success: false,
+        message: "You can only review a tailor if you have an order with them.",
+      });
     }
 
     // Create a new review
@@ -45,13 +42,11 @@ export const addReview = async (req, res) => {
 
     await tailorProfile.save();
 
-    res
-      .status(201)
-      .json({
-        success: true,
-        message: "Review added successfully.",
-        review: savedReview,
-      });
+    res.status(201).json({
+      success: true,
+      message: "Review added successfully.",
+      review: savedReview,
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: "Server error.", error });
   }
@@ -70,25 +65,21 @@ export const updateReview = async (req, res) => {
     }
 
     if (review.customerId.toString() !== req.user._id.toString()) {
-      return res
-        .status(403)
-        .json({
-          success: false,
-          message: "Unauthorized to update this review.",
-        });
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized to update this review.",
+      });
     }
 
     review.rating = rating || review.rating;
     review.comment = comment || review.comment;
 
     const updatedReview = await review.save();
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: "Review updated successfully.",
-        review: updatedReview,
-      });
+    res.status(200).json({
+      success: true,
+      message: "Review updated successfully.",
+      review: updatedReview,
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: "Server error.", error });
   }
@@ -128,6 +119,8 @@ export const deleteReview = async (req, res) => {
   try {
     const { id } = req.params;
 
+    console.log("Deleting review with ID:", id);
+
     const review = await Review.findById(id);
     if (!review) {
       return res
@@ -136,12 +129,10 @@ export const deleteReview = async (req, res) => {
     }
 
     if (review.customerId.toString() !== req.user._id.toString()) {
-      return res
-        .status(403)
-        .json({
-          success: false,
-          message: "Unauthorized to delete this review.",
-        });
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized to delete this review.",
+      });
     }
 
     const tailorProfile = await TailorProfile.findOne({
@@ -168,11 +159,12 @@ export const deleteReview = async (req, res) => {
       await tailorProfile.save();
     }
 
-    await review.remove();
+    await review.deleteOne();
     res
       .status(200)
       .json({ success: true, message: "Review deleted successfully." });
   } catch (error) {
+    console.error("Error deleting review:", error);
     res.status(500).json({ success: false, message: "Server error.", error });
   }
 };
