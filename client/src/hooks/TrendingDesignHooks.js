@@ -34,6 +34,19 @@ export async function getAllTrendingDesigns() {
   }
 }
 
+// Get featured trending designs (GET /trending-designs/featured)
+export async function getFeaturedTrendingDesigns() {
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/trending-designs/featured`,
+      protectedConfig
+    );
+    return response.data;
+  } catch (error) {
+    return error.response?.data || { success: false, message: error.message };
+  }
+}
+
 // Get a single trending design by ID (GET /trending-designs/:id)
 export async function getTrendingDesignById(id) {
   try {

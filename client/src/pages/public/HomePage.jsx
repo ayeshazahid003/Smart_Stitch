@@ -1,84 +1,23 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router"; // or "react-router" if you're using v5
-import Header from "../../components/client/Header"; // Your existing navbar
+import Header from "../../components/client/Header";
 import HeroSection from "../../components/client/HeroSection";
-import FeatureSection from "../../components/client/FeatureSection";
 import BespokeSection from "../../components/client/BespokeSection";
-import NewsSection from "../../components/client/NewsSection";
 import Footer from "../../components/client/Footer";
 import serviceBg from "../../assets/dottedbgqa.png";
-import eveningGown from "../../assets/eveinggown.jpg";
-import weddingdress from "../../assets/ClassicWeddingDress.jpg";
-import casualwear from "../../assets/0079280_170_b.jpg";
-import kurta from "../../assets/kurta.jpg";
-import luxury from "../../assets/luxury.jpg";
-import office from "../../assets/office.jpg";
-import tailor from "../../assets/tailor.png";
+import { getFeaturedTrendingDesigns } from "../../hooks/TrendingDesignHooks";
+
+import { useUser } from "../../context/UserContext";
+import { toast } from "react-toastify";
+import axios from "axios";
+import { BASE_URL } from "../../lib/constants";
 import HomePageBlog from "./HomePageBlog";
 import TailorFeatureSection from "./TailorFeatureSection";
-// Dummy Data
-const tailors = [
-  {
-    id: 1,
-    name: "Ahmed Tailors",
-    rating: 4.8,
-    image: tailor,
-  },
-  {
-    id: 2,
-    name: "Elegant Stitches",
-    rating: 4.5,
-    image: tailor,
-  },
-  {
-    id: 3,
-    name: "Modern Cuts",
-    rating: 4.7,
-    image: tailor,
-  },
-  {
-    id: 4,
-    name: "Classic Designs",
-    rating: 4.6,
-    image: tailor,
-  },
-];
+// Import icons for like and download functionality
+import { HeartIcon, ArrowDownTrayIcon } from "@heroicons/react/24/outline";
+import { HeartIcon as HeartSolidIcon } from "@heroicons/react/24/solid";
 
-// Dummy data for Trending Designs
-const trendingDesigns = [
-  {
-    id: 1,
-    title: "Elegant Evening Gown",
-    image: eveningGown,
-  },
-  {
-    id: 2,
-    title: "Classic Wedding Dress",
-    image: weddingdress,
-  },
-  {
-    id: 3,
-    title: "Modern Casual Wear",
-    image: casualwear,
-  },
-  {
-    id: 4,
-    title: "Traditional Embroidered Kurta",
-    image: kurta,
-  },
-  {
-    id: 5,
-    title: "Luxury Party Outfit",
-    image: luxury,
-  },
-  {
-    id: 6,
-    title: "Chic Office Attire",
-    image: office,
-  },
-];
-
-// Example FAQ data:
+// Example FAQ data
 const faqData = [
   {
     question: "Can I customise or alter any of your designs?",
@@ -102,7 +41,7 @@ const faqData = [
   },
 ];
 
-//services
+// Services data
 const services = [
   {
     title: "Custom Tailoring",
@@ -128,6 +67,133 @@ const services = [
 
 export default function HomePage() {
   const [openFAQ, setOpenFAQ] = useState(-1);
+  const [trendingDesigns, setTrendingDesigns] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [likedDesigns, setLikedDesigns] = useState({});
+  const { user } = useUser();
+
+  useEffect(() => {
+    // Fetch featured trending designs
+    const fetchFeaturedDesigns = async () => {
+      setLoading(true);
+      try {
+        const designs = await getFeaturedTrendingDesigns();
+
+        if (Array.isArray(designs)) {
+          // Sort by display order before displaying
+          const sortedDesigns = [...designs].sort(
+            (a, b) => a.displayOrder - b.displayOrder
+          );
+          setTrendingDesigns(sortedDesigns);
+        } else {
+          console.error("Failed to fetch designs", designs);
+          toast.error("Failed to load trending designs");
+        }
+      } catch (error) {
+        console.error("Error fetching trending designs:", error);
+        toast.error("Error loading trending designs");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFeaturedDesigns();
+  }, []);
+
+  const handleLikeDesign = async (designId) => {
+    if (!user) {
+      toast.info("Please log in to like designs");
+      return;
+    }
+
+    try {
+      // Toggle like state locally first for immediate UI feedback
+      const isCurrentlyLiked = likedDesigns[designId];
+      setLikedDesigns({
+        ...likedDesigns,
+        [designId]: !isCurrentlyLiked,
+      });
+
+      // Call API to update like status
+      await axios.post(
+        `${BASE_URL}/trending-designs/${designId}/${
+          isCurrentlyLiked ? "unlike" : "like"
+        }`,
+        {},
+        {
+          withCredentials: true,
+        }
+      );
+
+      // Update design in local state to reflect new like count
+      setTrendingDesigns((prevDesigns) =>
+        prevDesigns.map((design) => {
+          if (design._id === designId) {
+            return {
+              ...design,
+              numberOfLikes: isCurrentlyLiked
+                ? Math.max(0, design.numberOfLikes - 1)
+                : design.numberOfLikes + 1,
+            };
+          }
+          return design;
+        })
+      );
+    } catch (error) {
+      console.error("Error liking design:", error);
+      toast.error("Failed to update like status");
+
+      // Revert the optimistic update
+      setLikedDesigns({
+        ...likedDesigns,
+        [designId]: !likedDesigns[designId],
+      });
+    }
+  };
+
+  const handleDownloadDesign = async (designId, designImage) => {
+    if (!user) {
+      toast.info("Please log in to download designs");
+      return;
+    }
+
+    try {
+      // Call API to increment download count
+      await axios.post(
+        `${BASE_URL}/trending-designs/${designId}/download`,
+        {},
+        {
+          withCredentials: true,
+        }
+      );
+
+      // Download the image
+      const link = document.createElement("a");
+      link.href = designImage;
+      link.download = `design-${designId}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Update design in local state to reflect new download count
+      setTrendingDesigns((prevDesigns) =>
+        prevDesigns.map((design) => {
+          if (design._id === designId) {
+            return {
+              ...design,
+              numberOfDownloads: design.numberOfDownloads + 1,
+            };
+          }
+          return design;
+        })
+      );
+
+      toast.success("Design downloaded successfully");
+    } catch (error) {
+      console.error("Error downloading design:", error);
+      toast.error("Failed to download design");
+    }
+  };
 
   const toggleFAQ = (index) => {
     setOpenFAQ(index === openFAQ ? -1 : index);
@@ -167,7 +233,7 @@ export default function HomePage() {
         <div className="mx-16 px-6 md:px-12 lg:px-16 flex flex-col md:flex-row items-center md:items-start">
           {/* Left Column */}
           <div className="md:w-1/2 text-left">
-            <h2 className="text-4xl text-[#020535] md:text-5xl font-sans text-gray-900 leading-tight">
+            <h2 className="text-4xl md:text-5xl font-sans text-[#020535] leading-tight">
               Individuality of your design.
             </h2>
             <h3
@@ -205,7 +271,7 @@ export default function HomePage() {
       {/* Enhanced Services Section */}
       <section
         className="py-16 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${serviceBg})` }} // ✅ Set your image path here
+        style={{ backgroundImage: `url(${serviceBg})` }}
       >
         <div className="max-w-6xl mx-auto px-6">
           <h3
@@ -264,25 +330,78 @@ export default function HomePage() {
           Trending Designs
         </h3>
 
-        <div className="max-w-screen-lg mx-auto grid grid-cols-1 md:grid-cols-3 gap-10 justify-items-center">
-          {trendingDesigns.map((design) => (
-            <div
-              key={design.id}
-              className="relative w-64 h-80 bg-[#F3F1F5] rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300"
-            >
-              <img
-                src={design.image}
-                alt={design.title}
-                className="w-full h-full object-cover transform hover:scale-110 transition-transform duration-300"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#9760F4] to-transparent opacity-0 hover:opacity-90 transition-opacity duration-300 flex items-end justify-center p-3">
-                <p className="text-white text-lg font-semibold text-center">
-                  {design.title}
-                </p>
+        {loading ? (
+          <div className="flex justify-center">
+            <div className="w-16 h-16 border-4 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        ) : trendingDesigns.length === 0 ? (
+          <p className="text-center text-gray-500">
+            No trending designs available
+          </p>
+        ) : (
+          <div className="max-w-screen-lg mx-auto grid grid-cols-1 md:grid-cols-3 gap-10 justify-items-center">
+            {trendingDesigns.map((design) => (
+              <div
+                key={design._id}
+                className="relative w-64 h-80 bg-[#F3F1F5] rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300"
+              >
+                <img
+                  src={design.designImage[0]}
+                  alt={design.description}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#9760F4] to-transparent opacity-0 hover:opacity-95 transition-opacity duration-300 flex flex-col justify-between p-4">
+                  <div className="flex justify-end space-x-2">
+                    <button
+                      onClick={() =>
+                        handleDownloadDesign(design._id, design.designImage[0])
+                      }
+                      className="bg-white p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors"
+                      disabled={!user}
+                      title={user ? "Download design" : "Login to download"}
+                    >
+                      <ArrowDownTrayIcon className="h-5 w-5 text-[#4d1ae5]" />
+                    </button>
+                    <button
+                      onClick={() => handleLikeDesign(design._id)}
+                      className="bg-white p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors"
+                      disabled={!user}
+                      title={
+                        user
+                          ? likedDesigns[design._id]
+                            ? "Unlike"
+                            : "Like design"
+                          : "Login to like"
+                      }
+                    >
+                      {likedDesigns[design._id] ? (
+                        <HeartSolidIcon className="h-5 w-5 text-red-500" />
+                      ) : (
+                        <HeartIcon className="h-5 w-5 text-[#4d1ae5]" />
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="text-white">
+                    <p className="text-lg font-semibold mb-1">
+                      {design.description}
+                    </p>
+                    <div className="flex justify-between items-center text-sm">
+                      <div className="flex items-center">
+                        <HeartSolidIcon className="h-4 w-4 mr-1 text-red-400" />
+                        <span>{design.numberOfLikes || 0}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <ArrowDownTrayIcon className="h-4 w-4 mr-1 text-blue-400" />
+                        <span>{design.numberOfDownloads || 0}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </section>
 
       <BespokeSection />

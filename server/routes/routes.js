@@ -300,6 +300,11 @@ router.get(
   trendingDesignController.getAllTrendingDesigns
 );
 router.get(
+  "/trending-designs/featured",
+  protect,
+  trendingDesignController.getFeaturedTrendingDesigns
+);
+router.get(
   "/trending-designs/:id",
   protect,
   PlatformAdminPermission,
@@ -316,6 +321,23 @@ router.delete(
   protect,
   PlatformAdminPermission,
   trendingDesignController.deleteTrendingDesign
+);
+
+// New routes for trending designs interactions
+router.post(
+  "/trending-designs/:id/like",
+  protect,
+  trendingDesignController.likeDesign
+);
+router.post(
+  "/trending-designs/:id/unlike",
+  protect,
+  trendingDesignController.unlikeDesign
+);
+router.post(
+  "/trending-designs/:id/download",
+  protect,
+  trendingDesignController.downloadDesign
 );
 
 export default router;

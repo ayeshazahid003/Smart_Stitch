@@ -23,6 +23,8 @@ export default function TrendingDesignPage() {
     description: "",
     popularityScore: 0,
     image: null,
+    feature: true,
+    displayOrder: 0,
   });
   const [imagePreview, setImagePreview] = useState(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -87,6 +89,8 @@ export default function TrendingDesignPage() {
       description: "",
       popularityScore: 0,
       image: null,
+      feature: true,
+      displayOrder: 0,
     });
     setImagePreview(null);
     setIsModalOpen(true);
@@ -97,6 +101,8 @@ export default function TrendingDesignPage() {
     setFormData({
       description: design.description || "",
       popularityScore: design.popularityScore || 0,
+      feature: design.feature !== undefined ? design.feature : true,
+      displayOrder: design.displayOrder || 0,
       image: null,
     });
     // Set image preview from the first image in the designImage array
@@ -115,6 +121,8 @@ export default function TrendingDesignPage() {
       description: "",
       popularityScore: 0,
       image: null,
+      feature: true,
+      displayOrder: 0,
     });
     setImagePreview(null);
   };
@@ -234,15 +242,65 @@ export default function TrendingDesignPage() {
               </div>
               <div className="p-4">
                 <div className="flex justify-between items-center mb-2">
-                  <div className="flex items-center">
+                  <div className="flex items-center space-x-2">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                       Popularity: {design.popularityScore || 0}
                     </span>
+                    {design.feature ? (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        Featured
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        Not Featured
+                      </span>
+                    )}
                   </div>
                 </div>
                 <p className="text-gray-600 text-sm line-clamp-2 mb-4">
                   {design.description}
                 </p>
+                <div className="flex flex-wrap items-center justify-between mb-3">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center text-sm text-gray-500">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4 mr-1"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                        />
+                      </svg>
+                      {design.numberOfLikes || 0} likes
+                    </div>
+                    <div className="flex items-center text-sm text-gray-500">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4 mr-1"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                        />
+                      </svg>
+                      {design.numberOfDownloads || 0} downloads
+                    </div>
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    Order: {design.displayOrder || 0}
+                  </div>
+                </div>
                 <div className="flex justify-end space-x-2">
                   <button
                     onClick={() => openEditModal(design)}
@@ -335,6 +393,47 @@ export default function TrendingDesignPage() {
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         required
                       />
+                    </div>
+
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Display Order
+                      </label>
+                      <input
+                        type="number"
+                        name="displayOrder"
+                        value={formData.displayOrder}
+                        onChange={handleInputChange}
+                        min="0"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Lower numbers will appear first
+                      </p>
+                    </div>
+
+                    <div className="mb-4">
+                      <div className="flex items-center">
+                        <input
+                          id="feature"
+                          name="feature"
+                          type="checkbox"
+                          checked={formData.feature}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              feature: e.target.checked,
+                            })
+                          }
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <label
+                          htmlFor="feature"
+                          className="ml-2 block text-sm text-gray-700"
+                        >
+                          Feature this design
+                        </label>
+                      </div>
                     </div>
 
                     <div className="mb-4">

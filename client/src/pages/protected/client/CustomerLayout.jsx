@@ -51,6 +51,7 @@ const getNavigation = (role) => {
 
   const platformAdminNav = [
     { name: "Blogs", href: "/platform-admin/blogs", icon: SparklesIcon },
+    { name: "Trending Designs", href: "/trending-designs", icon: SparklesIcon },
     // { name: "Dashboard", href: "/admin", icon: HomeIcon },
     // { name: "Users", href: "/users", icon: UserIcon },
     // { name: "Tailors", href: "/tailors", icon: BriefcaseIcon },
