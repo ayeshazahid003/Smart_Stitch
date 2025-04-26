@@ -301,7 +301,6 @@ router.get(
 );
 router.get(
   "/trending-designs/featured",
-  protect,
   trendingDesignController.getFeaturedTrendingDesigns
 );
 router.get(
