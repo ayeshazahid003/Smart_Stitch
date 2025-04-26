@@ -257,6 +257,7 @@ function CheckoutPage() {
       setIsApplyingVoucher(true);
       setVoucherError("");
       const resp = await verifyVoucherByTitle(coupon, orderData.tailorId);
+      console.log("Voucher response:", resp);
       if (resp.success) {
         const updated = await updateOrderStatus(orderId, {
           voucherId: resp.voucher._id,
@@ -281,7 +282,11 @@ function CheckoutPage() {
           }));
         }
       }
+      else {
+        setVoucherError(resp.message || "Invalid voucher code");
+      }
     } catch (err) {
+      toast.error()
       setVoucherError(err.response?.data?.message || "Failed to apply voucher");
     } finally {
       setIsApplyingVoucher(false);
