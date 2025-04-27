@@ -167,7 +167,9 @@ export default function OrderPlaced() {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => navigate("/requests")}
+            onClick={() =>
+              navigate(`/order-details/${searchParams.get("order_id")}`)
+            }
             className="w-full inline-flex items-center justify-center px-6 py-3 bg-[#111827] text-white rounded-lg shadow-lg focus:outline-none focus:ring-2 focus:ring-[#111827] focus:ring-offset-2 transition-colors hover:brightness-90"
           >
             <Package className="mr-2" size={20} />
