@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Fragment } from "react";
 import { useParams, useNavigate } from "react-router";
 import { getOrderById } from "../../hooks/orderHooks";
+import { createRefundRequest } from "../../hooks/RefundRequest";
 import { useUser } from "../../context/UserContext";
 import { toast } from "react-toastify";
+import { Dialog, Transition } from "@headlessui/react";
 
 const statusColors = {
   pending: "bg-yellow-100 text-yellow-700",
@@ -14,6 +16,9 @@ const statusColors = {
 const OrderDetail = () => {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
+  const [refundReason, setRefundReason] = useState("");
+  const [submittingRefund, setSubmittingRefund] = useState(false);
   const { orderId } = useParams();
   const { user } = useUser();
   const navigate = useNavigate();
@@ -126,6 +131,57 @@ const OrderDetail = () => {
       }
     } else {
       navigate(`/checkout/${order._id}`);
+    }
+  };
+
+  // Check if customer can request a refund for this order
+  const canRequestRefund = () => {
+    return (
+      user?.role === "customer" &&
+      order.paymentStatus === "paid" &&
+      (order.status === "delivered" || order.status === "completed") &&
+      order.paymentStatus !== "refunded" &&
+      order.paymentStatus !== "refund_requested"
+    );
+  };
+
+  // Handle opening the refund modal
+  const openRefundModal = () => {
+    setRefundReason("");
+    setIsRefundModalOpen(true);
+  };
+
+  // Handle submitting a refund request
+  const handleRefundSubmit = async () => {
+    if (!refundReason.trim()) {
+      toast.error("Please provide a reason for your refund request");
+      return;
+    }
+
+    setSubmittingRefund(true);
+    try {
+      const response = await createRefundRequest({
+        orderId: order._id,
+        reason: refundReason,
+      });
+
+      if (response._id) {
+        toast.success("Refund request submitted successfully");
+        setIsRefundModalOpen(false);
+
+        // Refresh order details to update status
+        const updatedOrder = await getOrderById(orderId);
+        if (updatedOrder.success) {
+          setOrder(updatedOrder.order);
+        }
+      } else {
+        toast.error(response.error || "Failed to submit refund request");
+      }
+    } catch (error) {
+      console.error("Error submitting refund request:", error);
+      toast.error("An error occurred while submitting your refund request");
+    } finally {
+      setSubmittingRefund(false);
     }
   };
 
@@ -476,7 +532,92 @@ const OrderDetail = () => {
             </button>
           </div>
         )}
+
+        {/* Refund Request Button - For customers with paid & delivered orders */}
+        {canRequestRefund() && (
+          <div className="mt-6 text-center">
+            <button
+              onClick={openRefundModal}
+              className="px-8 py-3 bg-red-600 text-white font-semibold rounded-lg shadow hover:bg-red-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+            >
+              Request Refund
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* Refund Request Modal */}
+      {isRefundModalOpen && (
+        <div className="fixed z-10 inset-0 overflow-y-auto">
+          {/* Background overlay */}
+          <div
+            className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+            onClick={() => setIsRefundModalOpen(false)}
+          ></div>
+
+          {/* Modal container */}
+          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            {/* Modal content */}
+            <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+              <div>
+                <div className="mt-3 text-center sm:mt-5">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900">
+                    Request a Refund
+                  </h3>
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-500">
+                      Please provide a reason for your refund request. Our team
+                      will review your request and process it accordingly.
+                    </p>
+                  </div>
+
+                  <div className="mt-4">
+                    <textarea
+                      rows={4}
+                      name="refundReason"
+                      id="refundReason"
+                      className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                      placeholder="Please explain why you are requesting a refund..."
+                      value={refundReason}
+                      onChange={(e) => setRefundReason(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="mt-4 bg-gray-50 p-4 rounded-md">
+                    <h4 className="text-sm font-medium text-gray-900">
+                      Order Details
+                    </h4>
+                    <p className="mt-1 text-sm text-gray-500">
+                      Order ID: {order._id}
+                    </p>
+                    <p className="mt-1 text-sm text-gray-500">
+                      Total Amount: ₨{order.pricing?.total}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
+                <button
+                  type="button"
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:col-start-2 sm:text-sm"
+                  onClick={handleRefundSubmit}
+                  disabled={submittingRefund}
+                >
+                  {submittingRefund ? "Submitting..." : "Submit Request"}
+                </button>
+                <button
+                  type="button"
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:col-start-1 sm:text-sm"
+                  onClick={() => setIsRefundModalOpen(false)}
+                  disabled={submittingRefund}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

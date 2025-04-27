@@ -21,8 +21,25 @@ export default function OrderPlaced() {
         const sessionId = searchParams.get("session_id");
         const orderId = searchParams.get("order_id");
 
-        if (!sessionId || !orderId) {
+        if (!orderId) {
           throw new Error("Missing session_id or order_id");
+        }
+
+        if (orderId && !sessionId) {
+          // if order id is present but the session id is not,  then it means the order was placed with COD option
+          await updateOrderStatus(orderId, {
+            status: "placed",
+            paymentStatus: "pending",
+            paymentMethod: "cod",
+          });
+          // Show confetti effect
+          confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+          });
+          setShowConfetti(true);
+          return;
         }
 
         // Verify the stripe session

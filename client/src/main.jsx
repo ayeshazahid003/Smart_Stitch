@@ -62,6 +62,7 @@ import AboutPage from "./pages/public/AboutPage";
 import BlogPage from "./pages/public/BlogPage";
 import ContactUs from "./pages/public/ContactUsPage";
 import LocationPicker from "./pages/protected/tailor/LocationPage";
+import RefundRequests from "./pages/protected/platform_admin/RefundRequests";
 
 // ScrollToTop component
 function ScrollToTop() {
@@ -115,6 +116,7 @@ createRoot(document.getElementById("root")).render(
                   <Route path="/campaigns" element={<Campaigns />} />
                   <Route path="/vouchers" element={<Vouchers />} />
                   <Route path="tailor/orders" element={<TailorOrders />} />
+                  <Route path="refund-requests" element={<RefundRequests />} />
                   <Route
                     path="/platform-admin/blogs"
                     element={<BlogListingPage />}

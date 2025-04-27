@@ -13,6 +13,7 @@ import * as paymentController from "../controllers/paymentController.js";
 import * as blogController from "../controllers/BlogController.js";
 import * as imageController from "../controllers/imageController.js";
 import * as trendingDesignController from "../controllers/trendingDesignController.js";
+import * as refundRequestController from "../controllers/RefundRequestController.js";
 import { protect } from "../middlewares/authMiddleware.js";
 import { PlatformAdminPermission } from "../middlewares/platformAdminMiddleware.js";
 
@@ -337,6 +338,59 @@ router.post(
   "/trending-designs/:id/download",
   protect,
   trendingDesignController.downloadDesign
+);
+
+// Refund Request Routes
+// Create a new refund request (customer only)
+router.post(
+  "/refund-requests",
+  protect,
+  refundRequestController.createRefundRequest
+);
+
+// Get all refund requests (platform admin only)
+router.get(
+  "/refund-requests/admin",
+  protect,
+  PlatformAdminPermission,
+  refundRequestController.getAllRefundRequests
+);
+
+// Get all refund requests for the current user
+router.get(
+  "/refund-requests/user",
+  protect,
+  refundRequestController.getUserRefundRequests
+);
+
+// Get a single refund request by ID
+router.get(
+  "/refund-requests/:id",
+  protect,
+  refundRequestController.getRefundRequestById
+);
+
+// Update a refund request (reason only - for customers)
+router.put(
+  "/refund-requests/:id",
+  protect,
+  refundRequestController.updateRefundRequest
+);
+
+// Update refund request status (platform admin only)
+router.patch(
+  "/refund-requests/:id/status",
+  protect,
+  PlatformAdminPermission,
+  refundRequestController.updateRefundStatus
+);
+
+// Process a refund (platform admin only)
+router.post(
+  "/refund-requests/:id/process",
+  protect,
+  PlatformAdminPermission,
+  refundRequestController.processRefund
 );
 
 export default router;
