@@ -34,6 +34,12 @@ router.post(
   protect,
   tailorProfileController.createTailorProfile
 );
+
+router.get(
+  "/tailor/dashboard",
+  protect,
+  tailorProfileController.getTailorDashboard
+);
 // Add this new route for getting all services in one request
 router.get(
   "/tailor/:tailorId/all-services",

@@ -1,5 +1,7 @@
 import TailorProfile from "../models/TailorProfile.js";
 import Campaign from "../models/Campaign.js";
+import mongoose from "mongoose";
+import Order from "../models/Order.js";
 import {
   uploadMultipleFiles,
   uploadSingleFile,
@@ -403,7 +405,6 @@ export const removePortfolioFromTailor = async (req, res) => {
 
 export const updatePortfolio = async (req, res) => {
   try {
-
     const { portfolioId } = req.params; // Portfolio ID passed as a route parameter
     const { name, description, date, image } = req.body;
     const tailorId = req.user._id; // Get the tailorId from the authenticated user
@@ -454,8 +455,7 @@ export const updatePortfolio = async (req, res) => {
       message: "Portfolio entry updated successfully.",
       portfolioEntry,
     });
-  }
-  catch (error) {
+  } catch (error) {
     console.error("Error removing portfolio entry:", error);
     res.status(500).json({
       success: false,
@@ -1143,5 +1143,179 @@ export const getTailorProfileById = async (req, res) => {
   } catch (error) {
     console.error("Error fetching tailor profile:", error);
     return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const getTailorDashboard = async (req, res) => {
+  try {
+    const tailorId = req.user._id; // Get tailor ID from authenticated user
+
+    // Find the tailor profile
+    const tailorProfile = await TailorProfile.findOne({ tailorId }).lean();
+
+    if (!tailorProfile) {
+      return res.status(404).json({
+        message: "Tailor profile not found.",
+        success: false,
+      });
+    }
+
+    // Aggregate order data
+    const orderStats = await Order.aggregate([
+      { $match: { tailorId: new mongoose.Types.ObjectId(tailorId) } },
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 },
+          totalAmount: { $sum: "$pricing.total" },
+        },
+      },
+    ]);
+
+    // Format order stats
+    const formattedOrderStats = {
+      total: { count: 0, amount: 0 },
+      active: { count: 0, amount: 0 },
+      completed: { count: 0, amount: 0 },
+      refunded: { count: 0, amount: 0 },
+    };
+
+    orderStats.forEach((stat) => {
+      if (stat._id === "completed") {
+        formattedOrderStats.completed = {
+          count: stat.count,
+          amount: stat.totalAmount,
+        };
+        formattedOrderStats.total.count += stat.count;
+        formattedOrderStats.total.amount += stat.totalAmount;
+      } else if (
+        [
+          "pending",
+          "in progress",
+          "placed",
+          "stiched",
+          "ready for pickup",
+        ].includes(stat._id)
+      ) {
+        formattedOrderStats.active.count += stat.count;
+        formattedOrderStats.active.amount += stat.totalAmount;
+        formattedOrderStats.total.count += stat.count;
+        formattedOrderStats.total.amount += stat.totalAmount;
+      } else if (stat._id === "refunded") {
+        formattedOrderStats.refunded = {
+          count: stat.count,
+          amount: stat.totalAmount,
+        };
+        formattedOrderStats.total.count += stat.count;
+      }
+    });
+
+    // Get recent orders (limit to 5)
+    const recentOrders = await Order.find({ tailorId })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .populate("customerId", "name")
+      .lean();
+
+    // Calculate sales trend data
+    const currentDate = new Date();
+    const oneWeekAgo = new Date(currentDate);
+    oneWeekAgo.setDate(currentDate.getDate() - 7);
+
+    const oneMonthAgo = new Date(currentDate);
+    oneMonthAgo.setMonth(currentDate.getMonth() - 1);
+
+    const oneYearAgo = new Date(currentDate);
+    oneYearAgo.setFullYear(currentDate.getFullYear() - 1);
+
+    // Weekly sales trend
+    const weeklySales = await Order.aggregate([
+      {
+        $match: {
+          tailorId: new mongoose.Types.ObjectId(tailorId),
+          createdAt: { $gte: oneWeekAgo },
+          status: { $nin: ["refunded", "cancelled", "failed"] },
+        },
+      },
+      {
+        $group: {
+          _id: { $dayOfWeek: "$createdAt" },
+          sales: { $sum: "$pricing.total" },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+
+    // Monthly sales trend
+    const monthlySales = await Order.aggregate([
+      {
+        $match: {
+          tailorId: new mongoose.Types.ObjectId(tailorId),
+          createdAt: { $gte: oneMonthAgo },
+          status: { $nin: ["refunded", "cancelled", "failed"] },
+        },
+      },
+      {
+        $group: {
+          _id: { $week: "$createdAt" },
+          sales: { $sum: "$pricing.total" },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+
+    // Yearly sales trend
+    const yearlySales = await Order.aggregate([
+      {
+        $match: {
+          tailorId: new mongoose.Types.ObjectId(tailorId),
+          createdAt: { $gte: oneYearAgo },
+          status: { $nin: ["refunded", "cancelled", "failed"] },
+        },
+      },
+      {
+        $group: {
+          _id: { $month: "$createdAt" },
+          sales: { $sum: "$pricing.total" },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+
+    // Get average rating
+    const avgRating = tailorProfile.rating || 0;
+
+    return res.status(200).json({
+      success: true,
+      dashboardData: {
+        shopDetails: {
+          name: tailorProfile.shopName,
+          location: tailorProfile.shopLocation,
+          image: tailorProfile.shopImages?.[0] || null,
+        },
+        orderStats: formattedOrderStats,
+        avgRating,
+        recentOrders: recentOrders.map((order) => ({
+          id: order._id,
+          customer: order.customerId?.name || "Unknown Customer",
+          date: order.createdAt,
+          status: order.status,
+          amount: order.pricing.total,
+          image: order.design?.designImage?.[0] || null,
+        })),
+        salesTrend: {
+          weekly: weeklySales.map((day) => day.sales),
+          monthly: monthlySales.map((week) => week.sales),
+          yearly: yearlySales.map((month) => month.sales),
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching tailor dashboard data:", error);
+    return res.status(500).json({
+      message: "Internal server error.",
+      error: error.message,
+      success: false,
+    });
   }
 };
