@@ -187,9 +187,6 @@ const TailorDashboard = () => {
             >
               All Orders
             </button>
-            <button className="px-5 py-2 bg-[#111827] text-white rounded-md shadow hover:bg-gray-800 transition">
-              Payouts
-            </button>
           </div>
         </div>
 
@@ -198,25 +195,25 @@ const TailorDashboard = () => {
           {[
             {
               label: "Total Orders",
-              value: `$${orderStats.total.amount.toFixed(2)}`,
+              value: `Rs.${orderStats.total.amount.toFixed(2)}`,
               count: orderStats.total.count,
               icon: ArchiveBoxIcon,
             },
             {
               label: "Active Orders",
-              value: `$${orderStats.active.amount.toFixed(2)}`,
+              value: `Rs.${orderStats.active.amount.toFixed(2)}`,
               count: orderStats.active.count,
               icon: ArchiveBoxIcon,
             },
             {
               label: "Completed Orders",
-              value: `$${orderStats.completed.amount.toFixed(2)}`,
+              value: `Rs.${orderStats.completed.amount.toFixed(2)}`,
               count: orderStats.completed.count,
               icon: ArchiveBoxIcon,
             },
             {
               label: "Refunded Orders",
-              value: `$${orderStats.refunded.amount.toFixed(2)}`,
+              value: `Rs.${orderStats.refunded.amount.toFixed(2)}`,
               count: orderStats.refunded.count,
               icon: ArchiveBoxIcon,
             },
@@ -332,7 +329,7 @@ const TailorDashboard = () => {
                           {order.status}
                         </span>
                       </td>
-                      <td className="px-4 py-2">${order.amount.toFixed(2)}</td>
+                      <td className="px-4 py-2">Rs.{order.amount.toFixed(2)}</td>
                       <td className="px-4 py-2">
                         {order.image ? (
                           <img
