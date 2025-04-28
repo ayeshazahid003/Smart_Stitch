@@ -2,6 +2,8 @@ import Review from "../models/Review.js";
 import TailorProfile from "../models/TailorProfile.js";
 import Order from "../models/Order.js";
 
+
+
 export const addReview = async (req, res) => {
   try {
     const { orderId, tailorId, rating, comment } = req.body;
@@ -13,6 +15,14 @@ export const addReview = async (req, res) => {
       return res.status(403).json({
         success: false,
         message: "You can only review a tailor if you have an order with them.",
+      });
+    }
+
+    // Ensure rating is a valid number before proceeding
+    if (isNaN(rating) || rating < 1 || rating > 5) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid rating. Please provide a rating between 1 and 5.",
       });
     }
 
@@ -34,11 +44,20 @@ export const addReview = async (req, res) => {
         .json({ success: false, message: "Tailor profile not found." });
     }
 
+    // Ensure the profile rating calculation is valid
+    const totalReviews = tailorProfile.reviews.length + 1;
+    
+    const newRating = (
+      (tailorProfile.rating * tailorProfile.reviews.length + rating) /
+      totalReviews
+    ).toFixed(2); // Keep the rating to 2 decimal places
+
+
+    console.log("New rating calculated:", newRating);
+
     tailorProfile.reviews.push(savedReview._id);
-    tailorProfile.rating = (
-      (tailorProfile.rating * (tailorProfile.reviews.length - 1) + rating) /
-      tailorProfile.reviews.length
-    ).toFixed(2);
+    tailorProfile.rating = Number(newRating); // Ensure rating is a number
+
 
     await tailorProfile.save();
 
@@ -48,6 +67,7 @@ export const addReview = async (req, res) => {
       review: savedReview,
     });
   } catch (error) {
+    console.error("Error adding review:", error);
     res.status(500).json({ success: false, message: "Server error.", error });
   }
 };
@@ -81,6 +101,7 @@ export const updateReview = async (req, res) => {
       review: updatedReview,
     });
   } catch (error) {
+    console.error("Error updating review:", error);
     res.status(500).json({ success: false, message: "Server error.", error });
   }
 };

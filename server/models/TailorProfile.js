@@ -45,7 +45,7 @@ const TailorProfileSchema = new mongoose.Schema({
   experience: { type: Number }, // Optional
   isVerified: { type: Boolean, default: false }, // Optional
   verificationToken: { type: String }, // Optional
-  rating: { type: Number }, // Optional
+  rating: { type: Number, default:0 }, // Optional
   reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: "Review" }], // Optional
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
