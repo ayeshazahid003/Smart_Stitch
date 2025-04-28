@@ -17,11 +17,10 @@ function MessageList({ messages, currentUserId }) {
       {/* Example date separator */}
       <div className="flex justify-center">
         <span className="bg-blue-200 text-xs px-3 py-1 rounded-full">
-          Today
         </span>
       </div>
 
-      <div className="flex flex-col gap-2 mt-4">
+      <div className="flex flex-col gap-2 mt-4 scrollbar-none">
         {messages.map((msg, index) => {
           // Determine the sender id whether it's a string or an object
           const senderId =

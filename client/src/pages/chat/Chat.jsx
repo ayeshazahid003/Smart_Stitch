@@ -1,27 +1,25 @@
 // src/pages/chat/Chat.js
 
-import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router';
-import Sidebar from './Sidebar';
-import ChatWindow from './ChatWindow';
-import { getUserChats, getChatParticipants } from '../../hooks/chatHooks';
-import { useSocket } from '../../context/SocketContext';
+import React, { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router";
+import Sidebar from "./Sidebar";
+import ChatWindow from "./ChatWindow";
+import { getUserChats, getChatParticipants } from "../../hooks/chatHooks";
+import { useSocket } from "../../context/SocketContext";
 
 // Minimal normalization: keep participants as objects
 function normalizeChat(chat) {
-  chat.id = chat._id || chat.id;
-  // If the server has already populated "participants", do NOT overwrite them.
-  // Just ensure there's an 'id' for the chat itself.
-  // Also, fix timestamps if needed:
-  if (Array.isArray(chat.messages)) {
-    chat.messages = chat.messages.map((m) => {
-      if (!m.timestamp && m.createdAt) {
-        m.timestamp = m.createdAt;
-      }
-      return m;
-    });
-  }
-  return chat;
+  return {
+    ...chat,
+    id: chat._id || chat.id,
+    participants: chat.participants, // leave as is
+    messages: Array.isArray(chat.messages)
+      ? chat.messages.map((m) => ({
+          ...m,
+          timestamp: m.timestamp || m.createdAt,
+        }))
+      : [],
+  };
 }
 
 export default function Chat() {
@@ -31,16 +29,14 @@ export default function Chat() {
   const socket = getSocket(); // Get the socket instance from context
   const navigate = useNavigate();
 
-  const user = JSON.parse(localStorage.getItem('user')); // Logged-in user data
+  const user = JSON.parse(localStorage.getItem("user")); // Logged-in user data
 
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!user || !user._id) {
-      navigate('/login', { replace: true });
+      navigate("/login", { replace: true });
     }
   }, [user, navigate]);
-
-  console.log('Socket:', socket);
 
   const [chats, setChats] = useState([]);
   const [participants, setParticipants] = useState([]);
@@ -49,19 +45,17 @@ export default function Chat() {
 
   // 1) Fetch chats & participants on mount
   useEffect(() => {
-    if (!user || !user._id) return; // guard
+    if (!user || !user._id) return;
     fetchChats();
     fetchChatParticipants();
-    console.log('Incoming chat:', incomingChat);
-  }, [user, incomingChat]);
-
+  }, [user]);
   // 2) Join the chat room and listen for messages when selected
   useEffect(() => {
     if (!socket || !selectedChat) return;
 
-    socket.emit('joinChat', selectedChat.id);
+    socket.emit("joinChat", selectedChat.id);
 
-    socket.on('messageReceived', (data) => {
+    socket.on("messageReceived", (data) => {
       if (data.chatId === selectedChat.id) {
         // Only from other participants (we used socket.broadcast on server)
         setMessages((prev) => [...prev, data.message]);
@@ -69,7 +63,7 @@ export default function Chat() {
     });
 
     return () => {
-      socket.off('messageReceived');
+      socket.off("messageReceived");
     };
   }, [socket, selectedChat]);
 
@@ -77,13 +71,13 @@ export default function Chat() {
   useEffect(() => {
     if (!socket) return;
 
-    socket.on('newMessageNotification', (data) => {
-      console.log('New message notification:', data);
+    socket.on("newMessageNotification", (data) => {
+      console.log("New message notification:", data);
       // Optionally refresh chat list or show a toast
     });
 
     return () => {
-      socket.off('newMessageNotification');
+      socket.off("newMessageNotification");
     };
   }, [socket]);
 
@@ -129,10 +123,10 @@ export default function Chat() {
 
         setChats(updatedChats);
       } else {
-        console.error('Failed to fetch chats:', response.message);
+        console.error("Failed to fetch chats:", response.message);
       }
     } catch (error) {
-      console.error('An error occurred while fetching chats:', error);
+      console.error("An error occurred while fetching chats:", error);
     }
   };
 
@@ -143,10 +137,10 @@ export default function Chat() {
       if (response.success) {
         setParticipants(response.chatParticipants);
       } else {
-        console.error('Failed to fetch participants:', response.message);
+        console.error("Failed to fetch participants:", response.message);
       }
     } catch (error) {
-      console.error('An error occurred while fetching participants:', error);
+      console.error("An error occurred while fetching participants:", error);
     }
   };
 
@@ -165,8 +159,8 @@ export default function Chat() {
     };
 
     if (socket && selectedChat) {
-      console.log('Sending message:', newMessage);
-      socket.emit('sendMessage', {
+      console.log("Sending message:", newMessage);
+      socket.emit("sendMessage", {
         chatId: selectedChat.id,
         senderId: user._id,
         message: messageText,
@@ -184,7 +178,7 @@ export default function Chat() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-[88vh] overflow-hidden scrollbar-none bg-gray-100">
       <Sidebar
         contacts={chats}
         onSelectContact={handleSelectChat}

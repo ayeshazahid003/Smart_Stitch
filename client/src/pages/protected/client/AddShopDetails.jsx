@@ -14,10 +14,12 @@ export default function AddShopDetails() {
   const [address, setAddress] = useState("");
   const [markerPosition, setMarkerPosition] = useState(null);
   const [bio, setBio] = useState("");
+  const [experience, setExperience] = useState("");
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const phoneRegex = /^\+92\d{10}$/; // +92 followed by 10 digits
+  const numberRegex = /^\d+$/; // only digits
 
   /* -------------------------------------------------------------------- */
   /* Fetch existing shop details                                          */
@@ -31,6 +33,7 @@ export default function AddShopDetails() {
         setShopName(d.shopName || "");
         setPhoneNumber(d.phoneNumber || "");
         setBio(d.bio || "");
+        setExperience(d.experience != null ? String(d.experience) : "");
         if (d.shopLocation) {
           setAddress(d.shopLocation.address || "");
           if (d.shopLocation.coordinates) {
@@ -72,6 +75,12 @@ export default function AddShopDetails() {
     setPhoneNumber(cleaned);
   };
 
+  // Only allow digits for experience
+  const handleExperienceChange = ({ target: { value } }) => {
+    const cleaned = value.replace(/\D/g, "");
+    setExperience(cleaned);
+  };
+
   // Convert File to base64
   const fileToBase64 = async (file) => {
     if (typeof file === "string") return file;
@@ -104,11 +113,22 @@ export default function AddShopDetails() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!shopName || !phoneNumber || !address || !bio || !markerPosition || !images.length) {
+    if (
+      !shopName ||
+      !phoneNumber ||
+      !address ||
+      !bio ||
+      experience === "" ||
+      !markerPosition ||
+      !images.length
+    ) {
       return toast.error("All fields are required");
     }
     if (!phoneRegex.test(phoneNumber)) {
       return toast.error("Phone must start with +92 and contain 10 digits");
+    }
+    if (!numberRegex.test(experience)) {
+      return toast.error("Experience must be a number of years");
     }
 
     setLoading(true);
@@ -125,6 +145,7 @@ export default function AddShopDetails() {
         shopName,
         phoneNumber,
         bio,
+        experience: Number(experience),
         shopLocation: {
           address,
           coordinates: {
@@ -176,6 +197,20 @@ export default function AddShopDetails() {
             pattern="\+92[0-9]{10}"
             title="Phone number must start with +92 followed by 10 digits"
             inputMode="tel"
+          />
+        </div>
+
+        <div>
+          <label className="block font-medium text-gray-700 mb-1">Experience (years)</label>
+          <input
+            type="number"
+            min="0"
+            step="1"
+            className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500"
+            value={experience}
+            onChange={handleExperienceChange}
+            placeholder="Enter years of experience"
+            inputMode="numeric"
           />
         </div>
 

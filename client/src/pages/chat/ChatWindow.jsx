@@ -7,7 +7,7 @@ import MessageInput from "./MessageInput";
 function ChatWindow({ contact, messages, onSendMessage, currentUserId }) {
   if (!contact) {
     return (
-      <div className="w-full flex flex-col bg-gray-50 h-full shadow-md items-center justify-center">
+      <div className="w-full flex flex-col bg-gray-50 min-h-screen shadow-md items-center justify-center">
         <p className="text-gray-500">Please select a user to view chats.</p>
       </div>
     );
@@ -17,8 +17,6 @@ function ChatWindow({ contact, messages, onSendMessage, currentUserId }) {
   const otherParticipant = contact.participants?.find(
     (p) => p._id !== currentUserId
   );
-
-  console.log("Other participant:", otherParticipant);
   const name =
     otherParticipant?.name ||
     contact.name ||
@@ -29,9 +27,9 @@ function ChatWindow({ contact, messages, onSendMessage, currentUserId }) {
     "https://via.placeholder.com/40";
 
   return (
-    <div className="w-full flex flex-col bg-gray-50 h-full shadow-md">
+    <div className="w-full flex flex-col h-[92vh] bg-gray-50 flex-1 shadow-md scrollbar-none">
       {/* Chat Header */}
-      <div className="flex items-center justify-between p-4 bg-white border-b shadow-sm">
+      <div className="flex-none flex items-center justify-between p-4 bg-white border-b shadow-sm">
         <div className="flex items-center gap-3">
           <img
             src={avatar}
@@ -40,7 +38,7 @@ function ChatWindow({ contact, messages, onSendMessage, currentUserId }) {
           />
           <div>
             <p className="font-semibold text-gray-800 text-lg">{name}</p>
-            {/* If you had lastSeen, you could show it here */}
+            {/* optional lastSeen here */}
           </div>
         </div>
         <button className="p-2 rounded-full hover:bg-gray-100 transition">
@@ -54,7 +52,7 @@ function ChatWindow({ contact, messages, onSendMessage, currentUserId }) {
       </div>
 
       {/* Input Section */}
-      <div className="p-4 bg-white border-t shadow-md">
+      <div className="flex-none p-4 bg-white border-t shadow-md">
         <MessageInput onSendMessage={onSendMessage} />
       </div>
     </div>

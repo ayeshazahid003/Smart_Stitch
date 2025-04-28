@@ -9,7 +9,7 @@ import crypto from "crypto";
 
 export const createTailorProfile = async (req, res) => {
   try {
-    const { shopName, shopImages, shopLocation, bio, phoneNumber } = req.body;
+    const { shopName, shopImages, shopLocation, bio, phoneNumber, experience } = req.body;
 
     const tailorId = req.user._id;
 
@@ -57,6 +57,7 @@ export const createTailorProfile = async (req, res) => {
       tailorProfile.shopImages = shopImageUrls;
       tailorProfile.shopLocation = shopLocation;
       tailorProfile.bio = bio;
+      tailorProfile.experience = experience,
       tailorProfile.updatedAt = Date.now();
 
       await tailorProfile.save();
@@ -79,6 +80,7 @@ export const createTailorProfile = async (req, res) => {
         bio,
         isVerified: true, // Adjust verification status as needed
         verificationToken,
+        experience
       });
 
       const savedProfile = await tailorProfile.save();
