@@ -38,7 +38,7 @@ export default function Campaigns() {
 
   useEffect(() => {
     loadCampaigns();
-  }, [loadCampaigns]);
+  }, []);
 
   const handleEdit = (campaign) => {
     setEditingCampaign(campaign);

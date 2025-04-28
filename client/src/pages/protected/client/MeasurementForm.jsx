@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MeasurementsArraySchema } from "../../../validation/UserProfile";
@@ -6,31 +7,29 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useUser } from "../../../context/UserContext";
 import { toast } from "react-toastify";
-import { useState, useEffect } from "react";
 
 export default function MeasurementForm() {
   const { user, updateUserProfile } = useUser();
   const [loading, setLoading] = useState(true);
 
-  console.log("User in MeasurementForm:", user.measurements);
-
   const {
     control,
     register,
     handleSubmit,
+    setError,
     formState: { errors },
     reset,
   } = useForm({
     resolver: zodResolver(MeasurementsArraySchema),
-    defaultValues: {
-      measurements: [],
-    },
+    defaultValues: { measurements: [] },
   });
 
   useEffect(() => {
     if (user) {
       reset({
-        measurements: Array.isArray(user.measurements) ? user.measurements : [],
+        measurements: Array.isArray(user.measurements)
+          ? user.measurements
+          : [],
       });
       setLoading(false);
     }
@@ -41,20 +40,53 @@ export default function MeasurementForm() {
     name: "measurements",
   });
 
-  //   console.log("Measurements", user?.measurements);
-  console.log("error", errors);
   const onSubmit = async (data) => {
+    // 1) Negative‐value check
+    let hasError = false;
+
+    data.measurements.forEach((m, idx) => {
+      // top‐level numeric fields
+      Object.entries(m.data || {}).forEach(([key, raw]) => {
+        const num = Number(raw);
+        if (!isNaN(num) && num < 0) {
+          setError(
+            `measurements.${idx}.data.${key}`,
+            { type: "manual", message: "Cannot be negative" },
+            { shouldFocus: true }
+          );
+          hasError = true;
+        }
+      });
+
+      // lowerBody sub‐fields
+      const lb = m.data.lowerBody || {};
+      Object.entries(lb).forEach(([key, raw]) => {
+        const num = Number(raw);
+        if (!isNaN(num) && num < 0) {
+          setError(
+            `measurements.${idx}.data.lowerBody.${key}`,
+            { type: "manual", message: "Cannot be negative" },
+            { shouldFocus: true }
+          );
+          hasError = true;
+        }
+      });
+    });
+
+    if (hasError) {
+      toast.error("Please fix the negative values before saving.");
+      return;
+    }
+
+    // 2) If all clear, persist
     try {
-      console.log("Submitted Data:", data);
-      // send user data as well along with the measurements
-      //   await updateUserProfile({ measurements: data.measurements });
       await updateUserProfile({
         ...user,
         measurements: data.measurements,
       });
       toast.success("Measurements updated successfully");
-    } catch (error) {
-      console.error("Error updating measurements:", error);
+    } catch (err) {
+      console.error("Error updating measurements:", err);
       toast.error("Failed to update measurements");
     }
   };
@@ -65,7 +97,6 @@ export default function MeasurementForm() {
 
   return (
     <div className="max-w-2xl mx-auto p-6 bg-white rounded-md shadow-md">
-      {/* <h2 className="text-lg font-semibold mb-4">Update Measurements</h2> */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Measurements</h3>
@@ -100,202 +131,77 @@ export default function MeasurementForm() {
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                <div>
-                  <Label
-                    htmlFor={`measurements.${index}.data.height`}
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Height
-                  </Label>
-                  <Input
-                    id={`measurements.${index}.data.height`}
-                    type="number"
-                    {...register(`measurements.${index}.data.height`)}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-                  />
-                </div>
-                <div>
-                  <Label
-                    htmlFor={`measurements.${index}.data.chest`}
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Chest
-                  </Label>
-                  <Input
-                    id={`measurements.${index}.data.chest`}
-                    type="number"
-                    {...register(`measurements.${index}.data.chest`)}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-                  />
-                </div>
-                <div>
-                  <Label
-                    htmlFor={`measurements.${index}.data.waist`}
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Waist
-                  </Label>
-                  <Input
-                    id={`measurements.${index}.data.waist`}
-                    type="number"
-                    {...register(`measurements.${index}.data.waist`)}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-                  />
-                </div>
-                <div>
-                  <Label
-                    htmlFor={`measurements.${index}.data.hips`}
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Hips
-                  </Label>
-                  <Input
-                    id={`measurements.${index}.data.hips`}
-                    type="number"
-                    {...register(`measurements.${index}.data.hips`)}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-                  />
-                </div>
-                <div>
-                  <Label
-                    htmlFor={`measurements.${index}.data.shoulder`}
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Shoulder
-                  </Label>
-                  <Input
-                    id={`measurements.${index}.data.shoulder`}
-                    type="number"
-                    {...register(`measurements.${index}.data.shoulder`)}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-                  />
-                </div>
-                <div>
-                  <Label
-                    htmlFor={`measurements.${index}.data.wrist`}
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Wrist
-                  </Label>
-                  <Input
-                    id={`measurements.${index}.data.wrist`}
-                    type="number"
-                    {...register(`measurements.${index}.data.wrist`)}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-                  />
-                </div>
-                <div>
-                  <Label
-                    htmlFor={`measurements.${index}.data.sleeves`}
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Sleeves
-                  </Label>
-                  <Input
-                    id={`measurements.${index}.data.sleeves`}
-                    type="number"
-                    {...register(`measurements.${index}.data.sleeves`)}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-                  />
-                </div>
-                <div>
-                  <Label
-                    htmlFor={`measurements.${index}.data.neck`}
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Neck
-                  </Label>
-                  <Input
-                    id={`measurements.${index}.data.neck`}
-                    type="number"
-                    {...register(`measurements.${index}.data.neck`)}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-                  />
-                </div>
+                {[
+                  "height",
+                  "chest",
+                  "waist",
+                  "hips",
+                  "shoulder",
+                  "wrist",
+                  "sleeves",
+                  "neck",
+                ].map((part) => (
+                  <div key={part}>
+                    <Label
+                      htmlFor={`measurements.${index}.data.${part}`}
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      {part.charAt(0).toUpperCase() + part.slice(1)}
+                    </Label>
+                    <Input
+                      id={`measurements.${index}.data.${part}`}
+                      type="number"
+                      min={0}
+                      {...register(
+                        `measurements.${index}.data.${part}`,
+                        { valueAsNumber: true }
+                      )}
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+                    />
+                    {errors.measurements?.[index]?.data?.[part] && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.measurements[index].data[part].message}
+                      </p>
+                    )}
+                  </div>
+                ))}
               </div>
               <div className="space-y-4">
                 <h4 className="text-md font-semibold">Lower Body</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label
-                      htmlFor={`measurements.${index}.data.lowerBody.length`}
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      Length
-                    </Label>
-                    <Input
-                      id={`measurements.${index}.data.lowerBody.length`}
-                      type="number"
-                      {...register(
-                        `measurements.${index}.data.lowerBody.length`
-                      )}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-                    />
-                  </div>
-                  <div>
-                    <Label
-                      htmlFor={`measurements.${index}.data.lowerBody.waist`}
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      Waist
-                    </Label>
-                    <Input
-                      id={`measurements.${index}.data.lowerBody.waist`}
-                      type="number"
-                      {...register(
-                        `measurements.${index}.data.lowerBody.waist`
-                      )}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-                    />
-                  </div>
-                  <div>
-                    <Label
-                      htmlFor={`measurements.${index}.data.lowerBody.inseam`}
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      Inseam
-                    </Label>
-                    <Input
-                      id={`measurements.${index}.data.lowerBody.inseam`}
-                      type="number"
-                      {...register(
-                        `measurements.${index}.data.lowerBody.inseam`
-                      )}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-                    />
-                  </div>
-                  <div>
-                    <Label
-                      htmlFor={`measurements.${index}.data.lowerBody.thigh`}
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      Thigh
-                    </Label>
-                    <Input
-                      id={`measurements.${index}.data.lowerBody.thigh`}
-                      type="number"
-                      {...register(
-                        `measurements.${index}.data.lowerBody.thigh`
-                      )}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-                    />
-                  </div>
-                  <div>
-                    <Label
-                      htmlFor={`measurements.${index}.data.lowerBody.ankle`}
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      Ankle
-                    </Label>
-                    <Input
-                      id={`measurements.${index}.data.lowerBody.ankle`}
-                      type="number"
-                      {...register(
-                        `measurements.${index}.data.lowerBody.ankle`
-                      )}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-                    />
-                  </div>
+                  {["length", "waist", "inseam", "thigh", "ankle"].map(
+                    (part) => (
+                      <div key={part}>
+                        <Label
+                          htmlFor={`measurements.${index}.data.lowerBody.${part}`}
+                          className="block text-sm font-medium text-gray-700"
+                        >
+                          {part.charAt(0).toUpperCase() + part.slice(1)}
+                        </Label>
+                        <Input
+                          id={`measurements.${index}.data.lowerBody.${part}`}
+                          type="number"
+                          min={0}
+                          {...register(
+                            `measurements.${index}.data.lowerBody.${part}`,
+                            { valueAsNumber: true }
+                          )}
+                          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+                        />
+                        {errors.measurements?.[index]?.data?.lowerBody?.[
+                          part
+                        ] && (
+                          <p className="text-red-500 text-xs mt-1">
+                            {
+                              errors.measurements[index].data.lowerBody[
+                                part
+                              ].message
+                            }
+                          </p>
+                        )}
+                      </div>
+                    )
+                  )}
                 </div>
               </div>
             </div>
