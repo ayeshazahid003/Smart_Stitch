@@ -59,6 +59,17 @@ export default function Vouchers() {
   /* ------------------------------------------------------------------ */
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validate date range
+    if (formData.validFrom && formData.validUntil) {
+      const from = new Date(formData.validFrom);
+      const until = new Date(formData.validUntil);
+      if (from > until) {
+        toast.error("Start date must be before end date");
+        return;
+      }
+    }
+
     const data = { ...formData, discount: Number(formData.discount) };
     try {
       let res;
@@ -80,7 +91,9 @@ export default function Vouchers() {
       if (res?.success) {
         setIsModalOpen(false);
         resetForm();
-      } else toast.error(res.message || "Something went wrong");
+      } else {
+        toast.error(res.message || "Something went wrong");
+      }
     } catch {
       toast.error("Failed to save voucher");
     }
@@ -93,7 +106,9 @@ export default function Vouchers() {
       if (res.success) {
         setVouchers((v) => v.filter((x) => x._id !== id));
         toast.success("Voucher deleted!");
-      } else toast.error(res.message || "Failed to delete voucher");
+      } else {
+        toast.error(res.message || "Failed to delete voucher");
+      }
     } catch {
       toast.error("Error deleting voucher");
     }
@@ -112,7 +127,7 @@ export default function Vouchers() {
   };
 
   /* ------------------------------------------------------------------ */
-  /* UI                                                                  */
+  /* UI                                                                 */
   /* ------------------------------------------------------------------ */
   if (loading)
     return (
@@ -274,6 +289,7 @@ export default function Vouchers() {
                   <input
                     type="date"
                     value={formData.validFrom}
+                    max={formData.validUntil || undefined}
                     onChange={(e) =>
                       setFormData({ ...formData, validFrom: e.target.value })
                     }
@@ -288,6 +304,7 @@ export default function Vouchers() {
                   <input
                     type="date"
                     value={formData.validUntil}
+                    min={formData.validFrom || undefined}
                     onChange={(e) =>
                       setFormData({ ...formData, validUntil: e.target.value })
                     }
