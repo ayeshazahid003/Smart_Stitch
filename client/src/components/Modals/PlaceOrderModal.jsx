@@ -469,7 +469,7 @@ const PlaceOrderModal = ({
                 className="px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200 disabled:bg-blue-400"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Placing Offer..." : "Place Offer"}
+                {isSubmitting ? "Placing Order..." : "Place Order"}
               </button>
             </div>
           </form>
