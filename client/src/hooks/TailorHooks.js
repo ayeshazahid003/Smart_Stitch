@@ -1,16 +1,20 @@
-import axios from 'axios';
+import axios from "axios";
 
-axios.defaults.baseURL = 'http://localhost:5000';
+axios.defaults.baseURL = "http://localhost:5000";
 
 // Config to use for protected routes
 const protectedConfig = {
-  withCredentials: true
+  withCredentials: true,
 };
 
 // POST /tailor/profile-creation
 export async function createTailorProfile(profileData) {
   try {
-    const response = await axios.post('/tailor/profile-creation', profileData, protectedConfig);
+    const response = await axios.post(
+      "/tailor/profile-creation",
+      profileData,
+      protectedConfig
+    );
     return response.data;
   } catch (error) {
     return error.response?.data || { success: false, message: error.message };
@@ -18,18 +22,19 @@ export async function createTailorProfile(profileData) {
 }
 export async function getTailorShop() {
   try {
-    const response = await axios.get('/tailor/get-profile', protectedConfig);
+    const response = await axios.get("/tailor/get-profile", protectedConfig);
     return response.data;
   } catch (error) {
     return error.response?.data || { success: false, message: error.message };
   }
 }
 
-
 export async function verifyTailor({ token, tailorId }) {
   try {
     const response = await axios.post(
-      `/tailor/verify-profile?token=${encodeURIComponent(token)}&tailorId=${encodeURIComponent(tailorId)}`,
+      `/tailor/verify-profile?token=${encodeURIComponent(
+        token
+      )}&tailorId=${encodeURIComponent(tailorId)}`,
       {},
       protectedConfig
     );
@@ -41,7 +46,11 @@ export async function verifyTailor({ token, tailorId }) {
 
 export async function addServiceToTailor(serviceData) {
   try {
-    const response = await axios.post('/tailor/add-service', serviceData, protectedConfig);
+    const response = await axios.post(
+      "/tailor/add-service",
+      serviceData,
+      protectedConfig
+    );
     return response.data;
   } catch (error) {
     return error.response?.data || { success: false, message: error.message };
@@ -50,7 +59,11 @@ export async function addServiceToTailor(serviceData) {
 
 export async function addPortfolioEntry(portfolioData) {
   try {
-    const response = await axios.post('/tailor/add-portfolio', portfolioData, protectedConfig);
+    const response = await axios.post(
+      "/tailor/add-portfolio",
+      portfolioData,
+      protectedConfig
+    );
     return response.data;
   } catch (error) {
     return error.response?.data || { success: false, message: error.message };
@@ -59,7 +72,10 @@ export async function addPortfolioEntry(portfolioData) {
 
 export async function removeServiceFromTailor(serviceId) {
   try {
-    const response = await axios.delete(`/tailor/service/${serviceId}`, protectedConfig);
+    const response = await axios.delete(
+      `/tailor/service/${serviceId}`,
+      protectedConfig
+    );
     return response.data;
   } catch (error) {
     return error.response?.data || { success: false, message: error.message };
@@ -68,7 +84,10 @@ export async function removeServiceFromTailor(serviceId) {
 
 export async function removePortfolioFromTailor(portfolioId) {
   try {
-    const response = await axios.delete(`/tailor/portfolio/${portfolioId}`, protectedConfig);
+    const response = await axios.delete(
+      `/tailor/portfolio/${portfolioId}`,
+      protectedConfig
+    );
     return response.data;
   } catch (error) {
     return error.response?.data || { success: false, message: error.message };
@@ -76,18 +95,25 @@ export async function removePortfolioFromTailor(portfolioId) {
 }
 
 export async function updatePortfolio(portfolioId, portfolioData) {
-try {
-    const response = await axios.put(`/tailor/portfolio/${portfolioId}`, portfolioData, protectedConfig);
+  try {
+    const response = await axios.put(
+      `/tailor/portfolio/${portfolioId}`,
+      portfolioData,
+      protectedConfig
+    );
     return response.data;
-  }
-  catch (error) {
+  } catch (error) {
     return error.response?.data || { success: false, message: error.message };
   }
 }
 
 export async function updateService(serviceId, serviceData) {
   try {
-    const response = await axios.put(`/tailor/service/${serviceId}`, serviceData, protectedConfig);
+    const response = await axios.put(
+      `/tailor/service/${serviceId}`,
+      serviceData,
+      protectedConfig
+    );
     return response.data;
   } catch (error) {
     return error.response?.data || { success: false, message: error.message };
@@ -96,7 +122,11 @@ export async function updateService(serviceId, serviceData) {
 
 export async function addExtraService(extraServiceData) {
   try {
-    const response = await axios.post('/tailor/extra-service', extraServiceData, protectedConfig);
+    const response = await axios.post(
+      "/tailor/extra-service",
+      extraServiceData,
+      protectedConfig
+    );
     return response.data;
   } catch (error) {
     return error.response?.data || { success: false, message: error.message };
@@ -105,7 +135,11 @@ export async function addExtraService(extraServiceData) {
 
 export async function updateExtraService(extraServiceId, extraServiceData) {
   try {
-    const response = await axios.put(`/tailor/extra-service/${extraServiceId}`, extraServiceData, protectedConfig);
+    const response = await axios.put(
+      `/tailor/extra-service/${extraServiceId}`,
+      extraServiceData,
+      protectedConfig
+    );
     return response.data;
   } catch (error) {
     return error.response?.data || { success: false, message: error.message };
@@ -114,7 +148,10 @@ export async function updateExtraService(extraServiceId, extraServiceData) {
 
 export async function deleteExtraService(extraServiceId) {
   try {
-    const response = await axios.delete(`/tailor/extra-service/${extraServiceId}`, protectedConfig);
+    const response = await axios.delete(
+      `/tailor/extra-service/${extraServiceId}`,
+      protectedConfig
+    );
     return response.data;
   } catch (error) {
     return error.response?.data || { success: false, message: error.message };
@@ -123,7 +160,11 @@ export async function deleteExtraService(extraServiceId) {
 
 export async function updateTailorProfile(profileData) {
   try {
-    const response = await axios.put('/tailors/profile', profileData, protectedConfig);
+    const response = await axios.put(
+      "/tailors/profile",
+      profileData,
+      protectedConfig
+    );
     return response.data;
   } catch (error) {
     return error.response?.data || { success: false, message: error.message };
@@ -132,7 +173,7 @@ export async function updateTailorProfile(profileData) {
 
 export async function deleteTailorProfile() {
   try {
-    const response = await axios.delete('/tailors/profile', protectedConfig);
+    const response = await axios.delete("/tailors/profile", protectedConfig);
     return response.data;
   } catch (error) {
     return error.response?.data || { success: false, message: error.message };
@@ -168,7 +209,9 @@ export async function getListOfPortfolio(tailorId) {
 
 export async function searchTailorsByPartialService(serviceName) {
   try {
-    const response = await axios.get(`/tailors/search/service?serviceName=${encodeURIComponent(serviceName)}`);
+    const response = await axios.get(
+      `/tailors/search/service?serviceName=${encodeURIComponent(serviceName)}`
+    );
     return response.data;
   } catch (error) {
     return error.response?.data || { success: false, message: error.message };
@@ -177,7 +220,9 @@ export async function searchTailorsByPartialService(serviceName) {
 
 export async function getAllServicesBySearch(search) {
   try {
-    const response = await axios.get(`/services?search=${encodeURIComponent(search)}`);
+    const response = await axios.get(
+      `/services?search=${encodeURIComponent(search)}`
+    );
     return response.data;
   } catch (error) {
     return error.response?.data || { success: false, message: error.message };
@@ -195,8 +240,8 @@ export async function getTailorProfile(tailorId) {
 
 export async function getAllTailors(page = 1, limit = 10) {
   try {
-    const response = await axios.get('/tailors', {
-      params: { page, limit }
+    const response = await axios.get("/tailors", {
+      params: { page, limit },
     });
     return response.data;
   } catch (error) {
@@ -206,8 +251,8 @@ export async function getAllTailors(page = 1, limit = 10) {
 
 export async function searchTailors(query) {
   try {
-    const response = await axios.get('/tailors/search', {
-      params: { query }
+    const response = await axios.get("/tailors/search", {
+      params: { query },
     });
     return response.data;
   } catch (error) {
@@ -218,6 +263,15 @@ export async function searchTailors(query) {
 export async function getTailorById(tailorId) {
   try {
     const response = await axios.get(`/tailor/${tailorId}`);
+    return response.data;
+  } catch (error) {
+    return error.response?.data || { success: false, message: error.message };
+  }
+}
+
+export async function getTailorDashboardData() {
+  try {
+    const response = await axios.get("/tailor/dashboard", protectedConfig);
     return response.data;
   } catch (error) {
     return error.response?.data || { success: false, message: error.message };
