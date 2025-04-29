@@ -68,9 +68,7 @@ export default function Header() {
                 <Menu.Button className="flex items-center text-sm">
                   <img
                     className="h-8 w-8 rounded-full"
-                    src={`https://picsum.photos/200?random=${Math.floor(
-                      Math.random() * 1000
-                    )}`}
+                    src={user.profilePicture || "https://res.cloudinary.com/dlhwfesiz/image/upload/v1736518152/cg_jw6pdr.png"}
                     alt="User avatar"
                   />
                 </Menu.Button>
