@@ -372,7 +372,9 @@ export default function Offers() {
                           {nego.by.name} - ₨{nego.amount}
                           {nego.accepted && (
                             <span className="ml-2 text-green-600">
-                              ✓ Accepted
+                              {`✓ Accepted By ${
+                                user.role == "tailor" ? "Customer" : "Tailor"
+                              }`}
                             </span>
                           )}
                         </p>

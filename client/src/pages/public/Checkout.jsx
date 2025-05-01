@@ -150,7 +150,9 @@ function CheckoutPage() {
     // Step 2 validation: when adding new address, require saving first
     if (step === 2) {
       if (isAddingNewAddress) {
-        toast.error("Please fill in and save the new address before proceeding.");
+        toast.error(
+          "Please fill in and save the new address before proceeding."
+        );
         return;
       }
       if (!selectedAddressId) {
@@ -196,6 +198,9 @@ function CheckoutPage() {
         status: "pending_payment",
       };
 
+      console.log("payment method", paymentMethod);
+      console.log("payload", payload);
+
       const resp = await updateOrderStatus(orderId, payload);
       if (resp.success) {
         if (paymentMethod === "card") {
@@ -204,6 +209,7 @@ function CheckoutPage() {
           const result = await stripe.redirectToCheckout({
             sessionId: session.id,
           });
+          console.log("Checkout result:", result);
           if (result.error) toast.error(result.error.message);
         } else {
           await updateOrderStatus(orderId, {
@@ -281,12 +287,11 @@ function CheckoutPage() {
             },
           }));
         }
-      }
-      else {
+      } else {
         setVoucherError(resp.message || "Invalid voucher code");
       }
     } catch (err) {
-      toast.error()
+      toast.error();
       setVoucherError(err.response?.data?.message || "Failed to apply voucher");
     } finally {
       setIsApplyingVoucher(false);
@@ -729,18 +734,12 @@ function CheckoutPage() {
                         <input
                           type="radio"
                           name="measurement"
-                          checked={
-                            selectedMeasurement?._id === measurement._id
-                          }
-                          onChange={() =>
-                            setSelectedMeasurement(measurement)
-                          }
+                          checked={selectedMeasurement?._id === measurement._id}
+                          onChange={() => setSelectedMeasurement(measurement)}
                           className="mt-1 mr-4"
                         />
                         <div>
-                          <div className="font-medium">
-                            {measurement.title}
-                          </div>
+                          <div className="font-medium">{measurement.title}</div>
                           <div className="grid grid-cols-2 gap-2 text-sm text-gray-600 mt-2">
                             <div>Height: {measurement.data.height} cm</div>
                             <div>Chest: {measurement.data.chest} cm</div>
@@ -750,6 +749,39 @@ function CheckoutPage() {
                         </div>
                       </label>
                     ))}
+                    {measurementTab === "new" && newMeasurement.name && (
+                      <label
+                        key={newMeasurement._id}
+                        className={`flex items-start p-4 border rounded-lg cursor-pointer transition-all ${
+                          selectedMeasurement?._id === newMeasurement._id
+                            ? "border-indigo-600 bg-indigo-50"
+                            : "border-gray-200"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="newMeasurement"
+                          checked={
+                            measurementTab === "new" && newMeasurement.name
+                          }
+                          onChange={() =>
+                            setSelectedMeasurement(newMeasurement)
+                          }
+                          className="mt-1 mr-4"
+                        />
+                        <div>
+                          <div className="font-medium">
+                            {newMeasurement.title}
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-sm text-gray-600 mt-2">
+                            <div>Height: {newMeasurement.height} cm</div>
+                            <div>Chest: {newMeasurement.chest} cm</div>
+                            <div>Waist: {newMeasurement.waist} cm</div>
+                            <div>Hips: {newMeasurement.hips} cm</div>
+                          </div>
+                        </div>
+                      </label>
+                    )}
                     <button
                       type="button"
                       onClick={openMeasurementModal}

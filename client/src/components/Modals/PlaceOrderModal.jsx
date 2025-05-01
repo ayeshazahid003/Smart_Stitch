@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { X, Plus, Minus } from "lucide-react";
+import { X, Plus, Minus, Calendar } from "lucide-react";
 import { useUser } from "../../context/UserContext";
 import { useNavigate } from "react-router";
 import { useCreateOffer } from "../../hooks/orderHooks";
@@ -24,10 +24,17 @@ const PlaceOrderModal = ({
   const [selectedExtraServices, setSelectedExtraServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [customOfferAmount, setCustomOfferAmount] = useState("");
+  const [requiredDate, setRequiredDate] = useState("");
 
   const { user } = useUser();
   const navigate = useNavigate();
   const { createOffer } = useCreateOffer();
+
+  const getTomorrowDate = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split("T")[0];
+  };
 
   // Fetch tailor services
   useEffect(() => {
@@ -196,6 +203,10 @@ const PlaceOrderModal = ({
       setError("Please enter a valid offer amount");
       return;
     }
+    if (!requiredDate) {
+      setError("Please select a required completion date");
+      return;
+    }
 
     try {
       setIsSubmitting(true);
@@ -211,6 +222,7 @@ const PlaceOrderModal = ({
           quantity: service.quantity,
           price: service.price,
         })),
+        requiredDate: new Date(requiredDate).toISOString(),
         extraServices: selectedExtraServices,
         totalItems: calculateTotalItems(),
       };
@@ -430,6 +442,31 @@ const PlaceOrderModal = ({
                 rows={4}
                 required
               />
+            </div>
+            <div>
+              <label
+                htmlFor="requiredDate"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Required Completion Date
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                  <Calendar className="h-4 w-4 text-gray-500" />
+                </div>
+                <input
+                  type="date"
+                  id="requiredDate"
+                  value={requiredDate}
+                  onChange={(e) => setRequiredDate(e.target.value)}
+                  min={getTomorrowDate()}
+                  className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                  required
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Please select when you need your order to be completed
+              </p>
             </div>
 
             <div className="border-t pt-4">

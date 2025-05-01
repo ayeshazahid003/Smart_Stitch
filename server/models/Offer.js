@@ -89,6 +89,10 @@ const offerSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    requiredDate: {
+      type: Date,
+      required: true,
+    },
     orderId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Order",

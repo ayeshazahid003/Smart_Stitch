@@ -330,11 +330,28 @@ export const getOrdersByUser = async (req, res) => {
 export const updateOrderStatus = async (req, res) => {
   try {
     const { id: orderId } = req.params;
-    let { status, design, shippingAddress, measurement } = req.body;
+    let {
+      status,
+      design,
+      shippingAddress,
+      measurement,
+      paymentMethod = "card",
+      paymentStatus = "pending",
+    } = req.body;
     if (shippingAddress) {
       shippingAddress._id = new mongoose.Types.ObjectId();
     }
     console.log(measurement, "--------");
+
+    // console.log("orderId", orderId);
+    // console.log("status", status);
+    // console.log("design", design);
+    // console.log("shippingAddress", shippingAddress);
+    // console.log("measurement", measurement);
+    // console.log("paymentMethod", paymentMethod);
+    // console.log("paymentStatus", paymentStatus);
+
+    // return;
 
     const order = await Order.findById(orderId)
       .populate("customerId", "username email")
@@ -349,7 +366,9 @@ export const updateOrderStatus = async (req, res) => {
     order.status = status;
     order.design = design || order.design;
     order.shippingAddress = shippingAddress || order.shippingAddress;
-    order.measurement = measurement?.data || order.measurement;
+    order.measurement = measurement?.data || measurement || order.measurement;
+    order.paymentMethod = paymentMethod;
+    order.paymentStatus = paymentStatus;
     await order.save();
 
     console.log("order", order);

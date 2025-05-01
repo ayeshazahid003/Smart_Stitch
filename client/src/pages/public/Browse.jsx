@@ -11,6 +11,10 @@ export default function Browse() {
   const [searchTerm, setSearchTerm] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("ALL");
+  const [userLocation, setUserLocation] = useState(null);
+  const [locationError, setLocationError] = useState("");
+  const [isNearMeActive, setIsNearMeActive] = useState(false);
+  const [loadingLocation, setLoadingLocation] = useState(false);
   const navigate = useNavigate();
   const { fetchTailors, loading, error, data } = useTailors();
 
@@ -19,14 +23,61 @@ export default function Browse() {
     fetchTailors({});
   }, []);
 
-  // Update tailors when category changes
+  // Update tailors when category or location filtering changes
   useEffect(() => {
-    if (selectedCategory !== "ALL") {
+    if (isNearMeActive && userLocation) {
+      fetchTailors({
+        query: selectedCategory !== "ALL" ? selectedCategory : "",
+        latitude: userLocation.latitude,
+        longitude: userLocation.longitude,
+        maxDistance: 10, // in kilometers, adjust as needed
+      });
+    } else if (selectedCategory !== "ALL") {
       fetchTailors({ query: selectedCategory });
     } else {
       fetchTailors({});
     }
-  }, [selectedCategory]);
+  }, [selectedCategory, isNearMeActive, userLocation]);
+
+  const getUserLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation is not supported by your browser");
+      return;
+    }
+
+    setLoadingLocation(true);
+    setLocationError("");
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserLocation({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        });
+        setIsNearMeActive(true);
+        setLoadingLocation(false);
+      },
+      (error) => {
+        setLocationError("Unable to retrieve your location");
+        setIsNearMeActive(false);
+        setLoadingLocation(false);
+        console.error("Geolocation error:", error);
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+    );
+  };
+
+  const toggleNearMe = () => {
+    if (isNearMeActive) {
+      setIsNearMeActive(false);
+    } else {
+      if (userLocation) {
+        setIsNearMeActive(true);
+      } else {
+        getUserLocation();
+      }
+    }
+  };
 
   const categories = [
     "ALL",
@@ -112,21 +163,63 @@ export default function Browse() {
         </h1>
       </div>
 
-      {/* Categories Filter */}
-      <div className="flex justify-center gap-6 py-3 overflow-x-auto">
-        {categories.map((category, index) => (
+      {/* Categories Filter and Near Me Button */}
+      <div className="flex flex-col items-center mb-4">
+        <div className="flex justify-center gap-6 py-3 overflow-x-auto">
+          {categories.map((category, index) => (
+            <button
+              key={index}
+              className={`px-4 py-2 font-semibold whitespace-nowrap ${
+                selectedCategory === category
+                  ? "text-black border-b-2 border-black"
+                  : "text-gray-600 hover:text-black"
+              }`}
+              onClick={() => setSelectedCategory(category)}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-4 flex items-center">
           <button
-            key={index}
-            className={`px-4 py-2 font-semibold whitespace-nowrap ${
-              selectedCategory === category
-                ? "text-black border-b-2 border-black"
-                : "text-gray-600 hover:text-black"
+            onClick={toggleNearMe}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full ${
+              isNearMeActive
+                ? "bg-black text-white"
+                : "bg-gray-200 text-gray-800 hover:bg-gray-300"
             }`}
-            onClick={() => setSelectedCategory(category)}
+            disabled={loadingLocation}
           >
-            {category}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-5 h-5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"
+              />
+            </svg>
+            {loadingLocation
+              ? "Getting location..."
+              : isNearMeActive
+              ? "Near Me (Active)"
+              : "Near Me"}
           </button>
-        ))}
+          {locationError && (
+            <p className="ml-3 text-red-500 text-sm">{locationError}</p>
+          )}
+        </div>
       </div>
 
       {/* Tailor Services Grid */}
@@ -153,7 +246,11 @@ export default function Browse() {
             />
           ))
         ) : (
-          <div className="col-span-full text-center py-8">No tailors found</div>
+          <div className="col-span-full text-center py-8">
+            {isNearMeActive
+              ? "No tailors found near your location"
+              : "No tailors found"}
+          </div>
         )}
       </div>
 

@@ -80,7 +80,14 @@ export async function getOrdersByTailor() {
 
 export const updateOrderStatus = async (orderId, updateData) => {
   try {
-    const { status, design, shippingAddress, measurement } = updateData;
+    const {
+      status,
+      design,
+      shippingAddress,
+      measurement,
+      paymentMethod,
+      paymentStatus,
+    } = updateData;
     const response = await axios.put(
       `${BASE_URL}/orders/${orderId}/status`,
       {
@@ -88,6 +95,8 @@ export const updateOrderStatus = async (orderId, updateData) => {
         design,
         shippingAddress,
         measurement,
+        paymentMethod,
+        paymentStatus,
       },
       { withCredentials: true }
     );

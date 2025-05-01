@@ -9,9 +9,36 @@ import {
 import { sendEmail } from "../helper/mail.js";
 import crypto from "crypto";
 
+// Helper function to calculate distance between two coordinates using Haversine formula
+const calculateDistance = (lat1, lon1, lat2, lon2) => {
+  // Convert latitude and longitude from degrees to radians
+  const radLat1 = (Math.PI * lat1) / 180;
+  const radLon1 = (Math.PI * lon1) / 180;
+  const radLat2 = (Math.PI * lat2) / 180;
+  const radLon2 = (Math.PI * lon2) / 180;
+
+  // Haversine formula
+  const dLat = radLat2 - radLat1;
+  const dLon = radLon2 - radLon1;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(radLat1) *
+      Math.cos(radLat2) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  // Earth radius in kilometers
+  const radius = 6371;
+
+  // Distance in kilometers
+  return radius * c;
+};
+
 export const createTailorProfile = async (req, res) => {
   try {
-    const { shopName, shopImages, shopLocation, bio, phoneNumber, experience } = req.body;
+    const { shopName, shopImages, shopLocation, bio, phoneNumber, experience } =
+      req.body;
 
     const tailorId = req.user._id;
 
@@ -59,8 +86,8 @@ export const createTailorProfile = async (req, res) => {
       tailorProfile.shopImages = shopImageUrls;
       tailorProfile.shopLocation = shopLocation;
       tailorProfile.bio = bio;
-      tailorProfile.experience = experience,
-      tailorProfile.updatedAt = Date.now();
+      (tailorProfile.experience = experience),
+        (tailorProfile.updatedAt = Date.now());
 
       await tailorProfile.save();
 
@@ -82,7 +109,7 @@ export const createTailorProfile = async (req, res) => {
         bio,
         isVerified: true, // Adjust verification status as needed
         verificationToken,
-        experience
+        experience,
       });
 
       const savedProfile = await tailorProfile.save();
@@ -852,7 +879,16 @@ export const updateTailorProfile = async (req, res) => {
 
 export const searchTailors = async (req, res) => {
   try {
-    const { query, minPrice, maxPrice, minRating, minExperience } = req.query;
+    const {
+      query,
+      minPrice,
+      maxPrice,
+      minRating,
+      minExperience,
+      latitude,
+      longitude,
+      maxDistance,
+    } = req.query;
 
     // Build the filter query
     let filterQuery = {};
@@ -878,6 +914,44 @@ export const searchTailors = async (req, res) => {
 
     // Get tailors matching the base criteria
     let tailors = await TailorProfile.find(filterQuery).lean();
+
+    // Location-based filtering
+    if (latitude && longitude && maxDistance) {
+      const userLat = parseFloat(latitude);
+      const userLng = parseFloat(longitude);
+      const maxDist = parseFloat(maxDistance);
+
+      // Calculate distance for each tailor and filter based on maxDistance
+      tailors = tailors.filter((tailor) => {
+        // Skip tailors without location coordinates
+        if (
+          !tailor.shopLocation ||
+          !tailor.shopLocation.coordinates ||
+          !tailor.shopLocation.coordinates.lat ||
+          !tailor.shopLocation.coordinates.lng
+        ) {
+          return false;
+        }
+
+        // Calculate distance between coordinates using the Haversine formula
+        const distance = calculateDistance(
+          userLat,
+          userLng,
+          tailor.shopLocation.coordinates.lat,
+          tailor.shopLocation.coordinates.lng
+        );
+
+        // Add distance to tailor object for sorting or displaying
+        tailor.distance = distance;
+
+        // Return true if within maxDistance
+        return distance <= maxDist;
+      });
+
+      // Sort tailors by distance (closest first)
+      tailors.sort((a, b) => a.distance - b.distance);
+    }
+
     console.log("Tailors found:", tailors);
 
     // Get active campaigns for all tailors
@@ -962,6 +1036,9 @@ export const searchTailors = async (req, res) => {
         rating: tailor.rating || 0,
         experience: tailor.experience || 0,
         location: tailor.shopLocation || "Location not provided",
+        distance: tailor.distance
+          ? parseFloat(tailor.distance.toFixed(2))
+          : null, // Distance in km, rounded to 2 decimal places
         priceRange: {
           min: minServicePrice,
           max: maxServicePrice,

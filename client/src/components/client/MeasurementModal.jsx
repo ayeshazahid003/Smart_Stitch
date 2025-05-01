@@ -1,6 +1,112 @@
 import React from "react";
 import ReactModal from "react-modal";
 
+// Update standard measurement data to match the expected structure
+const standardSizes = {
+  XS: {
+    height: 160,
+    chest: 84,
+    waist: 68,
+    hips: 90,
+    shoulder: 40,
+    wrist: 16,
+    sleeves: 56,
+    neck: 36,
+    lowerBody: {
+      length: 98,
+      waist: 68,
+      inseam: 76,
+      thigh: 54,
+      ankle: 36,
+    },
+  },
+  S: {
+    height: 165,
+    chest: 88,
+    waist: 73,
+    hips: 94,
+    shoulder: 42,
+    wrist: 16.5,
+    sleeves: 58,
+    neck: 37,
+    lowerBody: {
+      length: 100,
+      waist: 73,
+      inseam: 78,
+      thigh: 56,
+      ankle: 37,
+    },
+  },
+  M: {
+    height: 170,
+    chest: 96,
+    waist: 80,
+    hips: 100,
+    shoulder: 44,
+    wrist: 17,
+    sleeves: 60,
+    neck: 38,
+    lowerBody: {
+      length: 102,
+      waist: 80,
+      inseam: 80,
+      thigh: 58,
+      ankle: 38,
+    },
+  },
+  L: {
+    height: 175,
+    chest: 104,
+    waist: 88,
+    hips: 106,
+    shoulder: 46,
+    wrist: 17.5,
+    sleeves: 62,
+    neck: 39,
+    lowerBody: {
+      length: 104,
+      waist: 88,
+      inseam: 82,
+      thigh: 60,
+      ankle: 39,
+    },
+  },
+  XL: {
+    height: 180,
+    chest: 112,
+    waist: 96,
+    hips: 112,
+    shoulder: 48,
+    wrist: 18,
+    sleeves: 64,
+    neck: 40,
+    lowerBody: {
+      length: 106,
+      waist: 96,
+      inseam: 84,
+      thigh: 62,
+      ankle: 40,
+    },
+  },
+  XXL: {
+    height: 185,
+    chest: 120,
+    waist: 104,
+    hips: 118,
+    shoulder: 50,
+    wrist: 18.5,
+    sleeves: 66,
+    neck: 41,
+    lowerBody: {
+      length: 108,
+      waist: 104,
+      inseam: 86,
+      thigh: 64,
+      ankle: 41,
+    },
+  },
+};
+
 const MeasurementModal = ({
   isOpen,
   onRequestClose,
@@ -13,6 +119,26 @@ const MeasurementModal = ({
   setNewMeasurement,
   handleSaveMeasurement,
 }) => {
+  // Function to apply standard measurements
+  const applyStandardSize = (size) => {
+    setNewMeasurement({
+      ...newMeasurement,
+      ...standardSizes[size],
+      name: newMeasurement.name || `Standard ${size}`,
+    });
+  };
+
+  // Helper function to update nested lowerBody field
+  const updateLowerBody = (field, value) => {
+    setNewMeasurement({
+      ...newMeasurement,
+      lowerBody: {
+        ...(newMeasurement.lowerBody || {}),
+        [field]: value,
+      },
+    });
+  };
+
   return (
     <ReactModal
       isOpen={isOpen}
@@ -25,17 +151,6 @@ const MeasurementModal = ({
 
       {/* Tab Header */}
       <div className="flex space-x-4 mb-6">
-        {/* <button
-          type="button"
-          onClick={() => setMeasurementTab("select")}
-          className={`px-4 py-2 rounded-md transition ${
-            measurementTab === "select"
-              ? "bg-[#111827] text-white"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-          }`}
-        >
-          Select Existing
-        </button> */}
         <button
           type="button"
           onClick={() => setMeasurementTab("new")}
@@ -47,11 +162,23 @@ const MeasurementModal = ({
         >
           Add New
         </button>
+        <button
+          type="button"
+          onClick={() => setMeasurementTab("standard")}
+          className={`px-4 py-2 rounded-md transition ${
+            measurementTab === "standard"
+              ? "bg-[#111827] text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+          }`}
+        >
+          Standard Sizes
+        </button>
       </div>
 
       {/* Modal Content */}
       {measurementTab === "select" && (
         <div className="mb-6">
+          {/* Existing code for select tab */}
           {existingMeasurements.length > 0 ? (
             existingMeasurements.map((m) => (
               <label
@@ -79,6 +206,67 @@ const MeasurementModal = ({
         </div>
       )}
 
+      {measurementTab === "standard" && (
+        <div className="mb-6">
+          <p className="text-sm text-gray-600 mb-4">
+            Select a standard size to automatically fill the measurement fields.
+            You can adjust individual values after selecting.
+          </p>
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border border-gray-300 px-4 py-2">Size</th>
+                  <th className="border border-gray-300 px-4 py-2">Height</th>
+                  <th className="border border-gray-300 px-4 py-2">Chest</th>
+                  <th className="border border-gray-300 px-4 py-2">Waist</th>
+                  <th className="border border-gray-300 px-4 py-2">Hips</th>
+                  <th className="border border-gray-300 px-4 py-2">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(standardSizes).map(([size, measurements]) => (
+                  <tr key={size} className="hover:bg-gray-50">
+                    <td className="border border-gray-300 px-4 py-2 font-medium">
+                      {size}
+                    </td>
+                    <td className="border border-gray-300 px-4 py-2">
+                      {measurements.height} cm
+                    </td>
+                    <td className="border border-gray-300 px-4 py-2">
+                      {measurements.chest} cm
+                    </td>
+                    <td className="border border-gray-300 px-4 py-2">
+                      {measurements.waist} cm
+                    </td>
+                    <td className="border border-gray-300 px-4 py-2">
+                      {measurements.hips} cm
+                    </td>
+                    <td className="border border-gray-300 px-4 py-2">
+                      <button
+                        onClick={() => {
+                          applyStandardSize(size);
+                          setMeasurementTab("new"); // Switch to the new tab to show filled values
+                        }}
+                        className="bg-[#111827] text-white px-3 py-1 rounded-md text-sm hover:bg-[#1f2937] transition"
+                      >
+                        Use This Size
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <p className="text-xs text-gray-500 mt-4">
+            Note: These are standard measurements based on general sizing
+            charts. Individual fit may vary.
+          </p>
+        </div>
+      )}
+
       {measurementTab === "new" && (
         <div className="space-y-6 mb-6">
           <div>
@@ -87,7 +275,7 @@ const MeasurementModal = ({
             </label>
             <input
               type="text"
-              value={newMeasurement.name}
+              value={newMeasurement.name || ""}
               onChange={(e) =>
                 setNewMeasurement({
                   ...newMeasurement,
@@ -104,7 +292,7 @@ const MeasurementModal = ({
               </label>
               <input
                 type="number"
-                value={newMeasurement.height}
+                value={newMeasurement.height || ""}
                 onChange={(e) =>
                   setNewMeasurement({
                     ...newMeasurement,
@@ -120,7 +308,7 @@ const MeasurementModal = ({
               </label>
               <input
                 type="number"
-                value={newMeasurement.chest}
+                value={newMeasurement.chest || ""}
                 onChange={(e) =>
                   setNewMeasurement({
                     ...newMeasurement,
@@ -136,7 +324,7 @@ const MeasurementModal = ({
               </label>
               <input
                 type="number"
-                value={newMeasurement.waist}
+                value={newMeasurement.waist || ""}
                 onChange={(e) =>
                   setNewMeasurement({
                     ...newMeasurement,
@@ -152,7 +340,7 @@ const MeasurementModal = ({
               </label>
               <input
                 type="number"
-                value={newMeasurement.hips}
+                value={newMeasurement.hips || ""}
                 onChange={(e) =>
                   setNewMeasurement({
                     ...newMeasurement,
@@ -238,13 +426,8 @@ const MeasurementModal = ({
                 </label>
                 <input
                   type="number"
-                  value={newMeasurement.lowerBodyLength || ""}
-                  onChange={(e) =>
-                    setNewMeasurement({
-                      ...newMeasurement,
-                      lowerBodyLength: e.target.value,
-                    })
-                  }
+                  value={newMeasurement.lowerBody?.length || ""}
+                  onChange={(e) => updateLowerBody("length", e.target.value)}
                   className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#111827]"
                 />
               </div>
@@ -254,13 +437,8 @@ const MeasurementModal = ({
                 </label>
                 <input
                   type="number"
-                  value={newMeasurement.lowerBodyWaist || ""}
-                  onChange={(e) =>
-                    setNewMeasurement({
-                      ...newMeasurement,
-                      lowerBodyWaist: e.target.value,
-                    })
-                  }
+                  value={newMeasurement.lowerBody?.waist || ""}
+                  onChange={(e) => updateLowerBody("waist", e.target.value)}
                   className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#111827]"
                 />
               </div>
@@ -270,13 +448,8 @@ const MeasurementModal = ({
                 </label>
                 <input
                   type="number"
-                  value={newMeasurement.lowerBodyInseam || ""}
-                  onChange={(e) =>
-                    setNewMeasurement({
-                      ...newMeasurement,
-                      lowerBodyInseam: e.target.value,
-                    })
-                  }
+                  value={newMeasurement.lowerBody?.inseam || ""}
+                  onChange={(e) => updateLowerBody("inseam", e.target.value)}
                   className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#111827]"
                 />
               </div>
@@ -286,13 +459,8 @@ const MeasurementModal = ({
                 </label>
                 <input
                   type="number"
-                  value={newMeasurement.lowerBodyThigh || ""}
-                  onChange={(e) =>
-                    setNewMeasurement({
-                      ...newMeasurement,
-                      lowerBodyThigh: e.target.value,
-                    })
-                  }
+                  value={newMeasurement.lowerBody?.thigh || ""}
+                  onChange={(e) => updateLowerBody("thigh", e.target.value)}
                   className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#111827]"
                 />
               </div>
@@ -302,13 +470,8 @@ const MeasurementModal = ({
                 </label>
                 <input
                   type="number"
-                  value={newMeasurement.lowerBodyAnkle || ""}
-                  onChange={(e) =>
-                    setNewMeasurement({
-                      ...newMeasurement,
-                      lowerBodyAnkle: e.target.value,
-                    })
-                  }
+                  value={newMeasurement.lowerBody?.ankle || ""}
+                  onChange={(e) => updateLowerBody("ankle", e.target.value)}
                   className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#111827]"
                 />
               </div>
@@ -337,5 +500,4 @@ const MeasurementModal = ({
     </ReactModal>
   );
 };
-
 export default MeasurementModal;

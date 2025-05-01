@@ -304,7 +304,7 @@ const OrderDetail = () => {
         </div>
 
         {/* Measurement Section */}
-        {(order?.customerId?.measurements || order.measurement) && (
+        {(order.measurement || order?.customerId?.measurements) && (
           <div className="mt-6">
             <h3 className="text-xl font-semibold text-gray-700 mb-3 border-b pb-2">
               📏 Measurements
@@ -312,43 +312,43 @@ const OrderDetail = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 text-gray-600 text-sm mb-4">
               <p>
                 <strong>Height:</strong>{" "}
-                {order?.customerId?.measurements[0]?.data?.height ||
-                  order.measurement.height ||
+                {order.measurement.height ||
+                  order?.customerId?.measurements[0]?.data?.height ||
                   "N/A"}{" "}
                 cm
               </p>
               <p>
                 <strong>Chest:</strong>{" "}
-                {order?.customerId?.measurements[0]?.data?.chest ||
-                  order.measurement.chest ||
+                {order.measurement.chest ||
+                  order?.customerId?.measurements[0]?.data?.chest ||
                   "N/A"}{" "}
                 inches
               </p>
               <p>
                 <strong>Waist:</strong>{" "}
-                {order?.customerId?.measurements[0]?.data?.waist ||
-                  order.measurement.waist ||
+                {order.measurement.waist ||
+                  order?.customerId?.measurements[0]?.data?.waist ||
                   "N/A"}{" "}
                 inches
               </p>
               <p>
                 <strong>Hips:</strong>{" "}
-                {order?.customerId?.measurements[0]?.data?.hips ||
-                  order.measurement.hips ||
+                {order.measurement.hips ||
+                  order?.customerId?.measurements[0]?.data?.hips ||
                   "N/A"}{" "}
                 inches
               </p>
               <p>
                 <strong>Shoulder:</strong>{" "}
-                {order?.customerId?.measurements[0]?.data?.shoulder ||
-                  order.measurement.shoulder ||
+                {order.measurement.shoulder ||
+                  order?.customerId?.measurements[0]?.data?.shoulder ||
                   "N/A"}{" "}
                 inches
               </p>
               <p>
                 <strong>Neck:</strong>{" "}
-                {order?.customerId?.measurements[0]?.data?.neck ||
-                  order.measurement.neck ||
+                {order.measurement.neck ||
+                  order?.customerId?.measurements[0]?.data?.neck ||
                   "N/A"}{" "}
                 inches
               </p>
@@ -363,41 +363,41 @@ const OrderDetail = () => {
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 text-gray-600 text-sm">
                   <p>
                     <strong>Length:</strong>{" "}
-                    {order?.customerId?.measurements[0]?.data?.lowerBody
-                      ?.length ||
-                      order.measurement.lowerBody.length ||
+                    {order.measurement.lowerBody.length ||
+                      order?.customerId?.measurements[0]?.data?.lowerBody
+                        ?.length ||
                       "N/A"}{" "}
                     inches
                   </p>
                   <p>
                     <strong>Waist:</strong>{" "}
-                    {order?.customerId?.measurements[0]?.data?.lowerBody
-                      ?.waist ||
-                      order.measurement.lowerBody.waist ||
+                    {order.measurement.lowerBody.waist ||
+                      order?.customerId?.measurements[0]?.data?.lowerBody
+                        ?.waist ||
                       "N/A"}{" "}
                     inches
                   </p>
                   <p>
                     <strong>Inseam:</strong>{" "}
-                    {order?.customerId?.measurements[0]?.data?.lowerBody
-                      ?.inseam ||
-                      order.measurement.lowerBody.inseam ||
+                    {order.measurement.lowerBody.inseam ||
+                      order?.customerId?.measurements[0]?.data?.lowerBody
+                        ?.inseam ||
                       "N/A"}{" "}
                     inches
                   </p>
                   <p>
                     <strong>Thigh:</strong>{" "}
-                    {order?.customerId?.measurements[0]?.data?.lowerBody
-                      ?.thigh ||
-                      order.measurement.lowerBody.thigh ||
+                    {order.measurement.lowerBody.thigh ||
+                      order?.customerId?.measurements[0]?.data?.lowerBody
+                        ?.thigh ||
                       "N/A"}{" "}
                     inches
                   </p>
                   <p>
                     <strong>Ankle:</strong>{" "}
-                    {order?.customerId?.measurements[0]?.data?.lowerBody
-                      ?.ankle ||
-                      order.measurement.lowerBody.ankle ||
+                    {order.measurement.lowerBody.ankle ||
+                      order?.customerId?.measurements[0]?.data?.lowerBody
+                        ?.ankle ||
                       "N/A"}{" "}
                     inches
                   </p>
