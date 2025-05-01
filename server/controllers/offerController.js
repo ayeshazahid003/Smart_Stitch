@@ -23,6 +23,7 @@ export const createOffer = async (req, res) => {
       selectedServices,
       extraServices,
       totalItems,
+      requiredDate,
     } = req.body;
     const customerId = req.user._id;
 
@@ -34,6 +35,7 @@ export const createOffer = async (req, res) => {
       selectedServices,
       extraServices,
       totalItems,
+      requiredDate,
     });
 
     // Validate required fields
@@ -42,7 +44,8 @@ export const createOffer = async (req, res) => {
       !amount ||
       !description ||
       !selectedServices ||
-      !totalItems
+      !totalItems ||
+      !requiredDate
     ) {
       return res.status(400).json({
         success: false,
@@ -68,6 +71,7 @@ export const createOffer = async (req, res) => {
       extraServices: extraServices || [],
       totalItems,
       status: "pending",
+      requiredDate: new Date(requiredDate),
       negotiationHistory: [
         {
           amount,
