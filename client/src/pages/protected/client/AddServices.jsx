@@ -73,11 +73,10 @@ const AddServices = () => {
         setMaxPrice("");
         setImage(null);
         setMessage("");
-      }
-      else{
+      } else {
         toast.error("Failed to add service! please try again.");
         setLoading(false);
-      }    
+      }
     } catch (error) {
       toast.error("Failed to add service! please try again.");
       setLoading(false);
@@ -152,14 +151,27 @@ const AddServices = () => {
             <label htmlFor="type" className="block text-lg font-semibold">
               Service Type
             </label>
-            <input
-              type="text"
+            <select
               id="type"
               className="w-full p-3 mt-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter the type of service"
               value={type}
               onChange={(e) => setType(e.target.value)}
-            />
+            >
+              <option value="" disabled>
+                Select a service type
+              </option>
+              <option value="Men's Tailoring">Men's Tailoring</option>
+              <option value="Women's Tailoring">Women's Tailoring</option>
+              <option value="Alterations & Repairs">
+                Alterations & Repairs
+              </option>
+              <option value="Bespoke Suits">Bespoke Suits</option>
+              <option value="Traditional Wear">Traditional Wear</option>
+              <option value="Wedding Attire">Wedding Attire</option>
+              <option value="Leather & Denim Repairs">
+                Leather & Denim Repairs
+              </option>
+            </select>
           </div>
 
           {/* Description */}
