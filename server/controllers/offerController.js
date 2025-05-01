@@ -155,6 +155,8 @@ export const negotiateOffer = async (req, res) => {
       });
     }
 
+    console.log(req.user.role, "userRole ----------------");
+
     // Handle acceptance
     if (accept) {
       if (userRole === "tailor") {
@@ -163,13 +165,16 @@ export const negotiateOffer = async (req, res) => {
             ? "accepted"
             : "accepted_by_tailor";
 
+
+
+
         // Send real-time notification to customer about tailor's acceptance
         await createAndSendNotification({
           userId: offer.customer._id,
           type: "offer_accepted",
           message: `Your offer of ₨${
             amount || offer.amount
-          } has been accepted by ${offer.tailor.shopName}`,
+          } has been accepted by ${offer.tailor.name}`,
           relatedId: offer._id,
           onModel: "Offer",
         });
