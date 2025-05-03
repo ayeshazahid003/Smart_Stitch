@@ -66,6 +66,54 @@ export default function Search() {
   // For mobile collapsible sidebar
   const [showFilters, setShowFilters] = useState(false);
 
+  // Near Me functionality
+  const [userLocation, setUserLocation] = useState(null);
+  const [locationError, setLocationError] = useState("");
+  const [isNearMeActive, setIsNearMeActive] = useState(false);
+  const [loadingLocation, setLoadingLocation] = useState(false);
+
+  // Get user's location for "Near Me" feature
+  const getUserLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation is not supported by your browser");
+      return;
+    }
+
+    setLoadingLocation(true);
+    setLocationError("");
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserLocation({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        });
+        setIsNearMeActive(true);
+        setLoadingLocation(false);
+      },
+      (error) => {
+        setLocationError("Unable to retrieve your location");
+        setIsNearMeActive(false);
+        setLoadingLocation(false);
+        console.error("Geolocation error:", error);
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+    );
+  };
+
+  // Toggle Near Me functionality
+  const toggleNearMe = () => {
+    if (isNearMeActive) {
+      setIsNearMeActive(false);
+    } else {
+      if (userLocation) {
+        setIsNearMeActive(true);
+      } else {
+        getUserLocation();
+      }
+    }
+  };
+
   useEffect(() => {
     // Initial search with query parameter if it exists
     const initialQuery = searchParams.get("query") || "";
@@ -98,6 +146,13 @@ export default function Search() {
         params.minExperience = selectedRange.min;
       }
 
+      // Add location parameters if Near Me is active
+      if (isNearMeActive && userLocation) {
+        params.latitude = userLocation.latitude;
+        params.longitude = userLocation.longitude;
+        params.maxDistance = 10; // in kilometers, adjust as needed
+      }
+
       // Update search params in URL
       setSearchParams(params);
 
@@ -111,6 +166,9 @@ export default function Search() {
     selectedPriceIndexes,
     selectedRatingIndexes,
     selectedExperienceIndexes,
+    isNearMeActive,
+    userLocation,
+    setSearchParams,
   ]);
 
   // Precompute our filter ranges (with counts) using the fetched data
@@ -213,6 +271,50 @@ export default function Search() {
     return (
       <div className="md:w-64">
         <h2 className="text-xl font-semibold mb-4">Filters</h2>
+
+        {/* Near Me Filter */}
+        <div className="mb-6">
+          <h3 className="text-lg font-medium mb-2">Location</h3>
+          <div className="flex items-center">
+            <button
+              onClick={toggleNearMe}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full ${
+                isNearMeActive
+                  ? "bg-black text-white"
+                  : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+              }`}
+              disabled={loadingLocation}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="w-5 h-5"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"
+                />
+              </svg>
+              {loadingLocation
+                ? "Getting location..."
+                : isNearMeActive
+                ? "Near Me (Active)"
+                : "Near Me"}
+            </button>
+            {locationError && (
+              <p className="ml-3 text-red-500 text-sm">{locationError}</p>
+            )}
+          </div>
+        </div>
 
         {/* Price Filter */}
         <div className="mb-6">
