@@ -1,6 +1,6 @@
 // filepath: /home/najam-ul-hassn/Desktop/Smart_Stitch/client/src/pages/protected/platform_admin/RefundRequests.jsx
 import React, { useState, useEffect, Fragment } from "react";
-import { Dialog, Transition, Menu } from "@headlessui/react";
+import { Menu, Transition } from "@headlessui/react";
 import {
   XMarkIcon,
   CheckIcon,
@@ -363,236 +363,198 @@ export default function RefundRequests() {
       )}
 
       {/* Action Modal */}
-      <Transition.Root show={isModalOpen} as={Fragment}>
-        <Dialog
-          as="div"
-          className="fixed z-10 inset-0 overflow-y-auto"
-          onClose={setIsModalOpen}
-        >
-          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <Transition.Child
-              as={Fragment}
-              enter="ease-out duration-300"
-              enterFrom="opacity-0"
-              enterTo="opacity-100"
-              leave="ease-in duration-200"
-              leaveFrom="opacity-100"
-              leaveTo="opacity-0"
-            >
-              <Dialog.Overlay className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
-            </Transition.Child>
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-gray-500 bg-opacity-75"
+            onClick={() => setIsModalOpen(false)}
+          />
+          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full z-10 p-6">
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+              </button>
+            </div>
+            <div>
+              <div className="mt-3 text-center sm:mt-0 sm:text-left">
+                <h3 className="text-lg leading-6 font-medium text-gray-900">
+                  {action === "approve"
+                    ? "Approve Refund"
+                    : action === "partial"
+                    ? "Partial Refund Approval"
+                    : "Reject Refund"}
+                </h3>
+                <div className="mt-4">
+                  {currentRefundRequest && (
+                    <>
+                      <dl className="space-y-2 mb-5">
+                        <div>
+                          <dt className="text-sm font-medium text-gray-500">
+                            Customer
+                          </dt>
+                          <dd className="mt-1 text-sm text-gray-900">
+                            {currentRefundRequest.customer?.name || "Unknown"}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="text-sm font-medium text-gray-500">
+                            Order ID
+                          </dt>
+                          <dd className="mt-1 text-sm text-gray-900">
+                            {currentRefundRequest.order?._id}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="text-sm font-medium text-gray-500">
+                            Refund Reason
+                          </dt>
+                          <dd className="mt-1 text-sm text-gray-900">
+                            {currentRefundRequest.reason}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="text-sm font-medium text-gray-500">
+                            Requested Amount
+                          </dt>
+                          <dd className="mt-1 text-sm text-gray-900">
+                            {formatCurrency(currentRefundRequest.amount)}
+                          </dd>
+                        </div>
+                      </dl>
 
-            {/* This element is to trick the browser into centering the modal contents. */}
-            <span
-              className="hidden sm:inline-block sm:align-middle sm:h-screen"
-              aria-hidden="true"
-            >
-              &#8203;
-            </span>
-
-            <Transition.Child
-              as={Fragment}
-              enter="ease-out duration-300"
-              enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-              enterTo="opacity-100 translate-y-0 sm:scale-100"
-              leave="ease-in duration-200"
-              leaveFrom="opacity-100 translate-y-0 sm:scale-100"
-              leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-            >
-              <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
-                <div className="absolute top-0 right-0 pt-4 pr-4">
-                  <button
-                    type="button"
-                    className="bg-white rounded-md text-gray-400 hover:text-gray-500"
-                    onClick={() => setIsModalOpen(false)}
-                  >
-                    <span className="sr-only">Close</span>
-                    <XMarkIcon className="h-6 w-6" aria-hidden="true" />
-                  </button>
-                </div>
-                <div>
-                  <div className="mt-3 text-center sm:mt-0 sm:text-left">
-                    <Dialog.Title
-                      as="h3"
-                      className="text-lg leading-6 font-medium text-gray-900"
-                    >
-                      {action === "approve"
-                        ? "Approve Refund"
-                        : action === "partial"
-                        ? "Partial Refund Approval"
-                        : "Reject Refund"}
-                    </Dialog.Title>
-                    <div className="mt-4">
-                      {currentRefundRequest && (
-                        <>
-                          <dl className="space-y-2 mb-5">
-                            <div>
-                              <dt className="text-sm font-medium text-gray-500">
-                                Customer
-                              </dt>
-                              <dd className="mt-1 text-sm text-gray-900">
-                                {currentRefundRequest.customer?.name ||
-                                  "Unknown"}
-                              </dd>
+                      {action === "partial" && (
+                        <div className="mb-4">
+                          <label
+                            htmlFor="partialAmount"
+                            className="block text-sm font-medium text-gray-700"
+                          >
+                            Partial Refund Amount
+                          </label>
+                          <div className="mt-1 relative rounded-md shadow-sm">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                              <span className="text-gray-500 sm:text-sm">
+                                PKR
+                              </span>
                             </div>
-                            <div>
-                              <dt className="text-sm font-medium text-gray-500">
-                                Order ID
-                              </dt>
-                              <dd className="mt-1 text-sm text-gray-900">
-                                {currentRefundRequest.order?._id}
-                              </dd>
-                            </div>
-                            <div>
-                              <dt className="text-sm font-medium text-gray-500">
-                                Refund Reason
-                              </dt>
-                              <dd className="mt-1 text-sm text-gray-900">
-                                {currentRefundRequest.reason}
-                              </dd>
-                            </div>
-                            <div>
-                              <dt className="text-sm font-medium text-gray-500">
-                                Requested Amount
-                              </dt>
-                              <dd className="mt-1 text-sm text-gray-900">
-                                {formatCurrency(currentRefundRequest.amount)}
-                              </dd>
-                            </div>
-                          </dl>
-
-                          {action === "partial" && (
-                            <div className="mb-4">
-                              <label
-                                htmlFor="partialAmount"
-                                className="block text-sm font-medium text-gray-700"
-                              >
-                                Partial Refund Amount
-                              </label>
-                              <div className="mt-1 relative rounded-md shadow-sm">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                  <span className="text-gray-500 sm:text-sm">
-                                    PKR
-                                  </span>
-                                </div>
-                                <input
-                                  type="number"
-                                  name="partialAmount"
-                                  id="partialAmount"
-                                  className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-12 pr-12 sm:text-sm border-gray-300 rounded-md"
-                                  placeholder="0.00"
-                                  min="0"
-                                  max={currentRefundRequest.amount}
-                                  value={partialAmount}
-                                  onChange={(e) =>
-                                    setPartialAmount(
-                                      Math.min(
-                                        parseFloat(e.target.value) || 0,
-                                        currentRefundRequest.amount
-                                      )
-                                    )
-                                  }
-                                />
-                              </div>
-                            </div>
-                          )}
-
-                          <div className="mb-4">
-                            <label
-                              htmlFor="adminNotes"
-                              className="block text-sm font-medium text-gray-700"
-                            >
-                              Admin Notes
-                            </label>
-                            <textarea
-                              id="adminNotes"
-                              name="adminNotes"
-                              rows={3}
-                              className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
-                              placeholder="Add your notes about this decision"
-                              value={adminNotes}
-                              onChange={(e) => setAdminNotes(e.target.value)}
+                            <input
+                              type="number"
+                              name="partialAmount"
+                              id="partialAmount"
+                              className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-12 pr-12 sm:text-sm border-gray-300 rounded-md"
+                              placeholder="0.00"
+                              min="0"
+                              max={currentRefundRequest.amount}
+                              value={partialAmount}
+                              onChange={(e) =>
+                                setPartialAmount(
+                                  Math.min(
+                                    parseFloat(e.target.value) || 0,
+                                    currentRefundRequest.amount
+                                  )
+                                )
+                              }
                             />
                           </div>
+                        </div>
+                      )}
 
-                          <div className="bg-gray-50 p-4 rounded-md mt-4">
-                            <div className="flex items-start">
-                              <div className="flex-shrink-0">
-                                {action === "approve" ||
-                                action === "partial" ? (
-                                  <CheckIcon
-                                    className="h-6 w-6 text-green-400"
-                                    aria-hidden="true"
-                                  />
-                                ) : (
-                                  <ExclamationTriangleIcon
-                                    className="h-6 w-6 text-red-400"
-                                    aria-hidden="true"
-                                  />
-                                )}
-                              </div>
-                              <div className="ml-3">
-                                <h3 className="text-sm font-medium text-gray-800">
-                                  {action === "approve"
-                                    ? "Approve full refund?"
-                                    : action === "partial"
-                                    ? "Approve partial refund?"
-                                    : "Reject refund request?"}
-                                </h3>
-                                <div className="mt-2 text-sm text-gray-500">
-                                  <p>
-                                    {action === "approve"
-                                      ? `This will approve a full refund of ${formatCurrency(
-                                          currentRefundRequest.amount
-                                        )}`
-                                      : action === "partial"
-                                      ? `This will approve a partial refund of ${formatCurrency(
-                                          partialAmount
-                                        )}`
-                                      : "This will reject the refund request. The customer will be notified."}
-                                  </p>
-                                </div>
-                              </div>
+                      <div className="mb-4">
+                        <label
+                          htmlFor="adminNotes"
+                          className="block text-sm font-medium text-gray-700"
+                        >
+                          Admin Notes
+                        </label>
+                        <textarea
+                          id="adminNotes"
+                          name="adminNotes"
+                          rows={3}
+                          className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
+                          placeholder="Add your notes about this decision"
+                          value={adminNotes}
+                          onChange={(e) => setAdminNotes(e.target.value)}
+                        />
+                      </div>
+
+                      <div className="bg-gray-50 p-4 rounded-md mt-4">
+                        <div className="flex items-start">
+                          <div className="flex-shrink-0">
+                            {action === "approve" || action === "partial" ? (
+                              <CheckIcon
+                                className="h-6 w-6 text-green-400"
+                                aria-hidden="true"
+                              />
+                            ) : (
+                              <ExclamationTriangleIcon
+                                className="h-6 w-6 text-red-400"
+                                aria-hidden="true"
+                              />
+                            )}
+                          </div>
+                          <div className="ml-3">
+                            <h3 className="text-sm font-medium text-gray-800">
+                              {action === "approve"
+                                ? "Approve full refund?"
+                                : action === "partial"
+                                ? "Approve partial refund?"
+                                : "Reject refund request?"}
+                            </h3>
+                            <div className="mt-2 text-sm text-gray-500">
+                              <p>
+                                {action === "approve"
+                                  ? `This will approve a full refund of ${formatCurrency(
+                                      currentRefundRequest.amount
+                                    )}`
+                                  : action === "partial"
+                                  ? `This will approve a partial refund of ${formatCurrency(
+                                      partialAmount
+                                    )}`
+                                  : "This will reject the refund request. The customer will be notified."}
+                              </p>
                             </div>
                           </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
-                  <button
-                    type="button"
-                    className={`w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:col-start-2 sm:text-sm ${
-                      action === "reject"
-                        ? "bg-red-600 hover:bg-red-700 focus:ring-red-500"
-                        : "bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500"
-                    }`}
-                    onClick={handleSubmitAction}
-                    disabled={processing}
-                  >
-                    {processing
-                      ? "Processing..."
-                      : action === "approve"
-                      ? "Approve Refund"
-                      : action === "partial"
-                      ? "Approve Partial Refund"
-                      : "Reject Refund"}
-                  </button>
-                  <button
-                    type="button"
-                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:col-start-1 sm:text-sm"
-                    onClick={() => setIsModalOpen(false)}
-                    disabled={processing}
-                  >
-                    Cancel
-                  </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
-            </Transition.Child>
+            </div>
+            <div className="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
+              <button
+                type="button"
+                className={`w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:col-start-2 sm:text-sm ${
+                  action === "reject"
+                    ? "bg-red-600 hover:bg-red-700 focus:ring-red-500"
+                    : "bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500"
+                }`}
+                onClick={handleSubmitAction}
+                disabled={processing}
+              >
+                {processing
+                  ? "Processing..."
+                  : action === "approve"
+                  ? "Approve Refund"
+                  : action === "partial"
+                  ? "Approve Partial Refund"
+                  : "Reject Refund"}
+              </button>
+              <button
+                type="button"
+                className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:col-start-1 sm:text-sm"
+                onClick={() => setIsModalOpen(false)}
+                disabled={processing}
+              >
+                Cancel
+              </button>
+            </div>
           </div>
-        </Dialog>
-      </Transition.Root>
+        </div>
+      )}
     </div>
   );
 }

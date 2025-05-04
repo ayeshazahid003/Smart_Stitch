@@ -138,7 +138,8 @@ const OrderDetail = () => {
   const canRequestRefund = () => {
     return (
       user?.role === "customer" &&
-      order.paymentStatus === "paid" &&
+      (order.paymentStatus === "paid" ||
+        order?.paymentDetails?.paymentStatus === "paid") &&
       (order.status === "delivered" || order.status === "completed") &&
       order.paymentStatus !== "refunded" &&
       order.paymentStatus !== "refund_requested"
@@ -222,7 +223,6 @@ const OrderDetail = () => {
             {order.status ? order.status.toUpperCase() : "UNKNOWN"}
           </span>
         </div>
-
         {/* Design Section */}
         <div className="mt-4">
           <h3 className="text-xl font-semibold text-gray-700 mb-3 border-b pb-2">
@@ -302,7 +302,6 @@ const OrderDetail = () => {
             </div>
           </div>
         </div>
-
         {/* Measurement Section */}
         {(order.measurement || order?.customerId?.measurements) && (
           <div className="mt-6">
@@ -406,7 +405,6 @@ const OrderDetail = () => {
             )}
           </div>
         )}
-
         {/* Shipping Address Section */}
         {order.shippingAddress && (
           <div className="mt-6">
@@ -428,7 +426,6 @@ const OrderDetail = () => {
             </div>
           </div>
         )}
-
         {/* Services & Pricing Section */}
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
@@ -493,14 +490,20 @@ const OrderDetail = () => {
                 <span className="text-gray-600">Status:</span>
                 <span
                   className={`px-2 py-0.5 rounded text-xs font-medium ${
-                    order.paymentStatus === "paid"
+                    order?.paymentDetails?.paymentStatus === "paid"
                       ? "bg-green-100 text-green-700"
-                      : "bg-red-100 text-red-700"
+                      : order?.paymentDetails?.paymentStatus === "unpaid"
+                      ? "bg-red-100 text-red-700"
+                      : order.paymentStatus === "paid"
+                      ? "bg-green-100 text-green-700"
+                      : order.paymentStatus === "unpaid"
+                      ? "bg-red-100 text-red-700"
+                      : "bg-gray-100 text-gray-700"
                   }`}
                 >
-                  {order.paymentStatus
-                    ? order.paymentStatus.toUpperCase()
-                    : "N/A"}
+                  {order?.paymentDetails?.paymentStatus ||
+                    order.paymentStatus ||
+                    "N/A"}
                 </span>
               </p>
             </div>
@@ -514,13 +517,11 @@ const OrderDetail = () => {
             </div>
           </div>
         </div>
-
-        {/* Footer Section */}
+        {/* Footer Section */}}
         <div className="border-t pt-4 mt-6 flex flex-col sm:flex-row justify-between items-center text-xs text-gray-500 gap-2">
           <p>📅 Created: {new Date(order.createdAt).toLocaleString()}</p>
           <p>🔄 Last Updated: {new Date(order.updatedAt).toLocaleString()}</p>
         </div>
-
         {/* Action Button */}
         {showButton && (
           <div className="mt-6 text-center">
@@ -532,7 +533,6 @@ const OrderDetail = () => {
             </button>
           </div>
         )}
-
         {/* Refund Request Button - For customers with paid & delivered orders */}
         {canRequestRefund() && (
           <div className="mt-6 text-center">

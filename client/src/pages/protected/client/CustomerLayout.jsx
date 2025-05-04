@@ -31,6 +31,11 @@ const getNavigation = (role) => {
     { name: "Requests", href: "/offers", icon: GiftIcon },
     { name: "Chats", href: "/chats", icon: ChatBubbleLeftRightIcon },
     { name: "Orders", href: "/orders", icon: ClipboardDocumentListIcon },
+    {
+      name: "Refund Requests",
+      href: "/user-refund-requests",
+      icon: ClipboardDocumentListIcon,
+    },
   ];
 
   const tailorNav = [
@@ -52,6 +57,7 @@ const getNavigation = (role) => {
   const platformAdminNav = [
     { name: "Blogs", href: "/platform-admin/blogs", icon: SparklesIcon },
     { name: "Trending Designs", href: "/trending-designs", icon: SparklesIcon },
+    { name: "Refund Requests", href: "/refund-requests", icon: SparklesIcon },
     // { name: "Dashboard", href: "/admin", icon: HomeIcon },
     // { name: "Users", href: "/users", icon: UserIcon },
     // { name: "Tailors", href: "/tailors", icon: BriefcaseIcon },

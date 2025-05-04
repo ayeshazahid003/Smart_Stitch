@@ -335,8 +335,8 @@ export const updateOrderStatus = async (req, res) => {
       design,
       shippingAddress,
       measurement,
-      paymentMethod = "card",
-      paymentStatus = "pending",
+      paymentMethod,
+      paymentStatus,
     } = req.body;
     if (shippingAddress) {
       shippingAddress._id = new mongoose.Types.ObjectId();
@@ -367,8 +367,8 @@ export const updateOrderStatus = async (req, res) => {
     order.design = design || order.design;
     order.shippingAddress = shippingAddress || order.shippingAddress;
     order.measurement = measurement?.data || measurement || order.measurement;
-    order.paymentMethod = paymentMethod;
-    order.paymentStatus = paymentStatus;
+    order.paymentMethod = paymentMethod || order.paymentMethod;
+    order.paymentStatus = paymentStatus || order.paymentStatus;
     await order.save();
 
     console.log("order", order);

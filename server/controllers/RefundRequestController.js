@@ -21,7 +21,10 @@ export const createRefundRequest = async (req, res) => {
     }
 
     // Check if order is eligible for refund
-    if (order.paymentStatus !== "paid") {
+    if (
+      order.paymentStatus !== "paid" &&
+      order?.paymentDetails?.paymentStatus !== "paid"
+    ) {
       return res
         .status(400)
         .json({ error: "Order is not eligible for refund" });
