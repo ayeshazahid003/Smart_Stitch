@@ -346,7 +346,7 @@ export const updateOfferStatus = async (req, res) => {
         userId === offer.tailor._id ? offer.customer._id : offer.tailor._id;
       const senderName =
         userId === offer.tailor._id
-          ? offer.tailor.shopName
+          ? offer.tailor.name
           : offer.customer.name;
       const action = status === "rejected" ? "rejected" : "cancelled";
 

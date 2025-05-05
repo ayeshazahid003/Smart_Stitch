@@ -88,11 +88,11 @@ const OrderDetail = () => {
 
     // Check if shipping address is valid and sufficiently detailed
     const hasValidShippingAddress =
-      order.shippingAddress &&
-      order.shippingAddress.city &&
-      order.shippingAddress.country &&
-      order.shippingAddress.postalCode &&
-      (order.shippingAddress.line1 || order.shippingAddress.line2);
+      order?.shippingAddress &&
+      order?.shippingAddress?.city &&
+      order?.shippingAddress?.country &&
+      order?.shippingAddress?.postalCode &&
+      (order?.shippingAddress?.line1 || order.shippingAddress?.line2);
 
     // Tailors should always see the map if there's a delivery service & address
     if (user?.role === "tailor") {
@@ -246,7 +246,7 @@ const OrderDetail = () => {
                 </div>
               )}
 
-            {order.design?.media && order.design.media.length > 0 && (
+            {order.design?.media && order.design?.media?.length > 0 && (
               <div className="space-y-2">
                 <h4 className="font-medium text-gray-700">Additional Media</h4>
                 <div className="space-y-4">
@@ -311,42 +311,42 @@ const OrderDetail = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 text-gray-600 text-sm mb-4">
               <p>
                 <strong>Height:</strong>{" "}
-                {order.measurement.height ||
+                {order.measurement?.height ||
                   order?.customerId?.measurements[0]?.data?.height ||
                   "N/A"}{" "}
                 cm
               </p>
               <p>
                 <strong>Chest:</strong>{" "}
-                {order.measurement.chest ||
+                {order.measurement?.chest ||
                   order?.customerId?.measurements[0]?.data?.chest ||
                   "N/A"}{" "}
                 inches
               </p>
               <p>
                 <strong>Waist:</strong>{" "}
-                {order.measurement.waist ||
+                {order.measurement?.waist ||
                   order?.customerId?.measurements[0]?.data?.waist ||
                   "N/A"}{" "}
                 inches
               </p>
               <p>
                 <strong>Hips:</strong>{" "}
-                {order.measurement.hips ||
+                {order.measurement?.hips ||
                   order?.customerId?.measurements[0]?.data?.hips ||
                   "N/A"}{" "}
                 inches
               </p>
               <p>
                 <strong>Shoulder:</strong>{" "}
-                {order.measurement.shoulder ||
+                {order.measurement?.shoulder ||
                   order?.customerId?.measurements[0]?.data?.shoulder ||
                   "N/A"}{" "}
                 inches
               </p>
               <p>
                 <strong>Neck:</strong>{" "}
-                {order.measurement.neck ||
+                {order.measurement?.neck ||
                   order?.customerId?.measurements[0]?.data?.neck ||
                   "N/A"}{" "}
                 inches
@@ -370,7 +370,7 @@ const OrderDetail = () => {
                   </p>
                   <p>
                     <strong>Waist:</strong>{" "}
-                    {order.measurement.lowerBody.waist ||
+                    {order.measurement.lowerBody?.waist ||
                       order?.customerId?.measurements[0]?.data?.lowerBody
                         ?.waist ||
                       "N/A"}{" "}
@@ -378,7 +378,7 @@ const OrderDetail = () => {
                   </p>
                   <p>
                     <strong>Inseam:</strong>{" "}
-                    {order.measurement.lowerBody.inseam ||
+                    {order.measurement.lowerBody?.inseam ||
                       order?.customerId?.measurements[0]?.data?.lowerBody
                         ?.inseam ||
                       "N/A"}{" "}
@@ -386,7 +386,7 @@ const OrderDetail = () => {
                   </p>
                   <p>
                     <strong>Thigh:</strong>{" "}
-                    {order.measurement.lowerBody.thigh ||
+                    {order.measurement.lowerBody?.thigh ||
                       order?.customerId?.measurements[0]?.data?.lowerBody
                         ?.thigh ||
                       "N/A"}{" "}
@@ -394,7 +394,7 @@ const OrderDetail = () => {
                   </p>
                   <p>
                     <strong>Ankle:</strong>{" "}
-                    {order.measurement.lowerBody.ankle ||
+                    {order.measurement.lowerBody?.ankle ||
                       order?.customerId?.measurements[0]?.data?.lowerBody
                         ?.ankle ||
                       "N/A"}{" "}
@@ -413,16 +413,16 @@ const OrderDetail = () => {
             </h3>
             <div className="text-gray-600 bg-gray-50 p-4 rounded-lg border text-sm">
               {order.shippingAddress.line1 && (
-                <p>{order.shippingAddress.line1}</p>
+                <p>{order.shippingAddress?.line1}</p>
               )}
               {order.shippingAddress.line2 && (
-                <p>{order.shippingAddress.line2}</p>
+                <p>{order.shippingAddress?.line2}</p>
               )}
               <p>
-                {order.shippingAddress.city}, {order.shippingAddress.state}{" "}
-                {order.shippingAddress.postalCode}
+                {order.shippingAddress.city}, {order.shippingAddress?.state}{" "}
+                {order.shippingAddress?.postalCode}
               </p>
-              <p>{order.shippingAddress.country}</p>
+              <p>{order.shippingAddress?.country}</p>
             </div>
           </div>
         )}
@@ -517,7 +517,7 @@ const OrderDetail = () => {
             </div>
           </div>
         </div>
-        {/* Footer Section */}}
+        {/* Footer Section */}
         <div className="border-t pt-4 mt-6 flex flex-col sm:flex-row justify-between items-center text-xs text-gray-500 gap-2">
           <p>📅 Created: {new Date(order.createdAt).toLocaleString()}</p>
           <p>🔄 Last Updated: {new Date(order.updatedAt).toLocaleString()}</p>
