@@ -277,40 +277,46 @@ export default function Offers() {
                 <div className="space-x-2 ml-4">
                   {user?.role === "tailor" ? (
                     <>
-                      {!offer.status.includes("accepted_by_tailor") && (
-                        <button
-                          onClick={() =>
-                            handleAcceptOffer(
-                              offer._id,
-                              getLatestNegotiatedAmount(offer)
-                            )
-                          }
-                          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                          disabled={isSubmitting}
-                        >
-                          Accept
-                        </button>
-                      )}
-                      {!offer.status.includes("accepted") && (
-                        <>
-                          <button
-                            onClick={() => setSelectedOffer(offer)}
-                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                            disabled={isSubmitting}
-                          >
-                            Counter Offer
-                          </button>
+                      {!offer.status.includes("accepted_by_tailor") &&
+                        !offer.status.includes("cancelled") &&
+                        !offer.status.includes("rejected") && (
                           <button
                             onClick={() =>
-                              handleStatusUpdate(offer._id, "rejected")
+                              handleAcceptOffer(
+                                offer._id,
+                                getLatestNegotiatedAmount(offer)
+                              )
                             }
-                            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
                             disabled={isSubmitting}
                           >
-                            Reject
+                            Accept
                           </button>
-                        </>
-                      )}
+                        )}
+                      {!offer.status.includes("accepted") &&
+                        !offer.status.includes("cancelled") &&
+                        !offer.status.includes("rejected") && (
+                          <>
+                            <button
+                              onClick={() => setSelectedOffer(offer)}
+                              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                              disabled={isSubmitting}
+                            >
+                              Counter Offer
+                            </button>
+                            {!offer.status.includes("rejected") && (
+                              <button
+                                onClick={() =>
+                                  handleStatusUpdate(offer._id, "rejected")
+                                }
+                                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                                disabled={isSubmitting}
+                              >
+                                Reject
+                              </button>
+                            )}
+                          </>
+                        )}
                     </>
                   ) : (
                     <>
@@ -337,15 +343,18 @@ export default function Offers() {
                         >
                           Counter Offer
                         </button>
-                        <button
-                          onClick={() =>
-                            handleStatusUpdate(offer._id, "cancelled")
-                          }
-                          className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-                          disabled={isSubmitting}
-                        >
-                          Cancel
-                        </button>
+                        {!offer.status.includes("rejected") ||
+                          (!offer.status.includes("cancelled") && (
+                            <button
+                              onClick={() =>
+                                handleStatusUpdate(offer._id, "cancelled")
+                              }
+                              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                              disabled={isSubmitting}
+                            >
+                              Cancel
+                            </button>
+                          ))}
                       </>
                     </>
                   )}
