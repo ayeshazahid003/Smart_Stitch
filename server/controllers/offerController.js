@@ -165,9 +165,6 @@ export const negotiateOffer = async (req, res) => {
             ? "accepted"
             : "accepted_by_tailor";
 
-
-
-
         // Send real-time notification to customer about tailor's acceptance
         await createAndSendNotification({
           userId: offer.customer._id,
@@ -306,62 +303,63 @@ export const updateOfferStatus = async (req, res) => {
     }
 
     // Verify user has permission to update status
-    const isCustomer = offer.customer.toString() === userId.toString();
-    const isTailor = offer.tailor.toString() === userId.toString();
+    const isCustomer = offer.customer?._id.toString() === userId.toString();
+    const isTailor = offer.tailor?._id.toString() === userId.toString();
 
-    if (!isCustomer && !isTailor) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
-
-    // Validate status transitions
-    const validStatuses = ["rejected", "cancelled", "negotiating"];
-    if (!validStatuses.includes(status)) {
-      return res.status(400).json({ message: "Invalid status" });
-    }
-
-    // Only allow cancellation by the appropriate party
-    if (status === "cancelled") {
-      if (isCustomer) {
-        offer.status = status;
-      } else {
-        return res
-          .status(403)
-          .json({ message: "Only customers can cancel offers" });
+    if (isCustomer || isTailor) {
+      // Validate status transitions
+      const validStatuses = ["rejected", "cancelled", "negotiating"];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ message: "Invalid status" });
       }
-    } else if (status === "rejected") {
-      if (isTailor) {
-        offer.status = status;
+
+      // Only allow cancellation by the appropriate party
+      if (status === "cancelled") {
+        if (isCustomer) {
+          offer.status = status;
+        } else {
+          return res
+            .status(403)
+            .json({ message: "Only customers can cancel offers" });
+        }
+      } else if (status === "rejected") {
+        if (isTailor) {
+          offer.status = status;
+        } else {
+          return res
+            .status(403)
+            .json({ message: "Only tailors can reject offers" });
+        }
       } else {
-        return res
-          .status(403)
-          .json({ message: "Only tailors can reject offers" });
+        offer.status = status;
       }
-    } else {
-      offer.status = status;
+
+      // Send real-time notification about offer rejection/cancellation
+      if (status === "rejected" || status === "cancelled") {
+        const recipientId =
+          userId === offer.tailor._id ? offer.customer._id : offer.tailor._id;
+        const senderName =
+          userId === offer.tailor._id ? offer.tailor.name : offer.customer.name;
+        const action = status === "rejected" ? "rejected" : "cancelled";
+
+        await createAndSendNotification({
+          userId: recipientId,
+          type: `offer_${action}`,
+          message: `${senderName} has ${action} the offer`,
+          relatedId: offer._id,
+          onModel: "Offer",
+        });
+      }
+
+      await offer.save();
+
+      res.json({ success: true, offer });
+
+      return;
     }
-
-    // Send real-time notification about offer rejection/cancellation
-    if (status === "rejected" || status === "cancelled") {
-      const recipientId =
-        userId === offer.tailor._id ? offer.customer._id : offer.tailor._id;
-      const senderName =
-        userId === offer.tailor._id
-          ? offer.tailor.name
-          : offer.customer.name;
-      const action = status === "rejected" ? "rejected" : "cancelled";
-
-      await createAndSendNotification({
-        userId: recipientId,
-        type: `offer_${action}`,
-        message: `${senderName} has ${action} the offer`,
-        relatedId: offer._id,
-        onModel: "Offer",
-      });
-    }
-
-    await offer.save();
-
-    res.json({ success: true, offer });
+    res
+      .status(403)
+      .json({ message: "You do not have permission to update this offer" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

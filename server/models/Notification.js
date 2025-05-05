@@ -8,6 +8,7 @@ const NotificationSchema = new mongoose.Schema({
       "new_offer",
       "offer_accepted",
       "offer_rejected",
+      "offer_cancelled",
       "new_order",
       "order_update",
       "promotion",
@@ -16,7 +17,6 @@ const NotificationSchema = new mongoose.Schema({
       "ORDER_PLACED",
       "ORDER_REJECTED",
       "ORDER_ACCEPTED",
-
     ],
     required: true,
   },
