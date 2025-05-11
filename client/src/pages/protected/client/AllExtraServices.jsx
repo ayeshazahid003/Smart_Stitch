@@ -115,7 +115,9 @@ export default function AllExtraServices() {
 
     toast.success("Extra service updated successfully!");
     const updated = { ...res.extraService, _id: getId(res.extraService) || id };
-    setExtraServices((prev) => prev.map((s) => (getId(s) === id ? updated : s)));
+    setExtraServices((prev) =>
+      prev.map((s) => (getId(s) === id ? updated : s))
+    );
     closeEditModal();
   };
 
@@ -151,7 +153,12 @@ export default function AllExtraServices() {
   /* ------------------------------------------------------------------ */
   const openAddModal = () => setModalAddOpen(true);
   const closeAddModal = () => {
-    setNewService({ serviceName: "", description: "", minPrice: "", maxPrice: "" });
+    setNewService({
+      serviceName: "",
+      description: "",
+      minPrice: "",
+      maxPrice: "",
+    });
     setModalAddOpen(false);
   };
   const handleNewServiceChange = (field, value) =>
@@ -250,7 +257,7 @@ export default function AllExtraServices() {
                     : service.description}
                 </p>
                 <p className="text-gray-500 mb-4">
-                  Price Range: ${service.minPrice} - ${service.maxPrice}
+                  Price Range: Rs {service.minPrice} - Rs {service.maxPrice}
                 </p>
                 <div className="flex justify-end space-x-4">
                   <button
@@ -311,7 +318,7 @@ export default function AllExtraServices() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-lg font-semibold text-gray-700">
-                    Minimum Price ($)
+                    Minimum Price (Rs)
                   </label>
                   <input
                     type="number"
@@ -322,7 +329,7 @@ export default function AllExtraServices() {
                 </div>
                 <div>
                   <label className="block text-lg font-semibold text-gray-700">
-                    Maximum Price ($)
+                    Maximum Price (Rs)
                   </label>
                   <input
                     type="number"
@@ -427,7 +434,7 @@ export default function AllExtraServices() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-lg font-semibold text-gray-700">
-                  Minimum Price ($)
+                  Minimum Price (Rs)
                 </label>
                 <input
                   type="number"
@@ -441,7 +448,7 @@ export default function AllExtraServices() {
               </div>
               <div>
                 <label className="block text-lg font-semibold text-gray-700">
-                  Maximum Price ($)
+                  Maximum Price (Rs)
                 </label>
                 <input
                   type="number"

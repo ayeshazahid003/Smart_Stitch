@@ -161,9 +161,7 @@ export const negotiateOffer = async (req, res) => {
     if (accept) {
       if (userRole === "tailor") {
         offer.status =
-          offer.status === "accepted_by_customer"
-            ? "accepted"
-            : "accepted_by_tailor";
+          offer.status === "accepted_by_customer" ? "accepted" : "accepted";
 
         // Send real-time notification to customer about tailor's acceptance
         await createAndSendNotification({
@@ -177,9 +175,7 @@ export const negotiateOffer = async (req, res) => {
         });
       } else {
         offer.status =
-          offer.status === "accepted_by_tailor"
-            ? "accepted"
-            : "accepted_by_customer";
+          offer.status === "accepted_by_tailor" ? "accepted" : "accepted";
 
         // Send real-time notification to tailor about customer's acceptance
         await createAndSendNotification({
@@ -335,7 +331,11 @@ export const updateOfferStatus = async (req, res) => {
       }
 
       // Send real-time notification about offer rejection/cancellation
-      if (status === "rejected" || status === "cancelled") {
+      if (
+        status === "rejected" ||
+        status === "cancelled" ||
+        status === "negotiating"
+      ) {
         const recipientId =
           userId === offer.tailor._id ? offer.customer._id : offer.tailor._id;
         const senderName =

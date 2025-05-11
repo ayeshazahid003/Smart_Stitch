@@ -196,7 +196,7 @@ const AddServices = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="minPrice" className="block text-lg font-semibold">
-                Minimum Price ($)
+                Minimum Price (Rs)
               </label>
               <input
                 type="number"
@@ -209,7 +209,7 @@ const AddServices = () => {
             </div>
             <div>
               <label htmlFor="maxPrice" className="block text-lg font-semibold">
-                Maximum Price ($)
+                Maximum Price (Rs)
               </label>
               <input
                 type="number"

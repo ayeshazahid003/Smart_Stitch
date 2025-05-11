@@ -37,14 +37,11 @@ const AddExtraService = () => {
       } else {
         setMessage(response.message);
       }
-    }
-    catch (error) {
+    } catch (error) {
       setMessage("Failed to add extra service");
     } finally {
       setLoading(false);
     }
-
-    
   };
 
   return (
@@ -97,7 +94,7 @@ const AddExtraService = () => {
                 htmlFor="minPrice"
                 className="block text-xl font-semibold text-gray-700 mb-2"
               >
-                Minimum Price ($)
+                Minimum Price (RS)
               </label>
               <input
                 type="number"
@@ -113,7 +110,7 @@ const AddExtraService = () => {
                 htmlFor="maxPrice"
                 className="block text-xl font-semibold text-gray-700 mb-2"
               >
-                Maximum Price ($)
+                Maximum Price (RS)
               </label>
               <input
                 type="number"

@@ -3,7 +3,13 @@ import Modal from "react-modal";
 
 Modal.setAppElement("#root");
 
-export default function EditServiceModal({ isOpen, service, onClose, onChange, onUpdate }) {
+export default function EditServiceModal({
+  isOpen,
+  service,
+  onClose,
+  onChange,
+  onUpdate,
+}) {
   // Helper to get a preview URL from the image field (either a URL string or a File)
   const getImagePreview = () => {
     if (!service.image) return null;
@@ -21,7 +27,9 @@ export default function EditServiceModal({ isOpen, service, onClose, onChange, o
     >
       {service && (
         <div>
-          <h2 className="text-2xl font-bold mb-4 text-gray-800">Edit Service</h2>
+          <h2 className="text-2xl font-bold mb-4 text-gray-800">
+            Edit Service
+          </h2>
           <div className="space-y-4">
             <div>
               <label className="block text-lg font-semibold text-gray-700">
@@ -48,7 +56,7 @@ export default function EditServiceModal({ isOpen, service, onClose, onChange, o
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-lg font-semibold text-gray-700">
-                  Minimum Price ($)
+                  Minimum Price (RS)
                 </label>
                 <input
                   type="number"
@@ -59,7 +67,7 @@ export default function EditServiceModal({ isOpen, service, onClose, onChange, o
               </div>
               <div>
                 <label className="block text-lg font-semibold text-gray-700">
-                  Maximum Price ($)
+                  Maximum Price (RS)
                 </label>
                 <input
                   type="number"

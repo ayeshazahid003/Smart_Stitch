@@ -255,7 +255,6 @@ export default function Offers() {
                   </div>
                 )}
 
-                {/* Total Items */}
                 <div className="mt-4 py-2 border-t border-gray-100">
                   <div className="flex justify-between items-center">
                     <span className="font-medium text-gray-700">
@@ -272,14 +271,33 @@ export default function Offers() {
                 </p>
               </div>
 
-              {/* Action buttons */}
+              {offer.status.includes("cancelled") && (
+                <div className="mt-4 p-4 bg-yellow-50 border border-yellow-100 rounded-lg">
+                  <h4 className="font-semibold text-yellow-800">
+                    {user.role === "customer"
+                      ? "You have canceled the request."
+                      : "Customer has canceled the request."}
+                  </h4>
+                </div>
+              )}
+
+              {offer.status.includes("rejected") && (
+                <div className="mt-4 p-4 bg-red-50 border border-red-100 rounded-lg">
+                  <h4 className="font-semibold text-red-800">
+                    {user.role === "customer"
+                      ? "Tailor has rejected the request."
+                      : "You have rejected the request."}
+                  </h4>
+                </div>
+              )}
               {offer.status !== "accepted" && (
                 <div className="space-x-2 ml-4">
                   {user?.role === "tailor" ? (
                     <>
                       {!offer.status.includes("accepted_by_tailor") &&
                         !offer.status.includes("cancelled") &&
-                        !offer.status.includes("rejected") && (
+                        !offer.status.includes("rejected") &&
+                        offer.negotiationHistory.length % 2 !== 0 && (
                           <button
                             onClick={() =>
                               handleAcceptOffer(
@@ -295,7 +313,8 @@ export default function Offers() {
                         )}
                       {!offer.status.includes("accepted") &&
                         !offer.status.includes("cancelled") &&
-                        !offer.status.includes("rejected") && (
+                        !offer.status.includes("rejected") &&
+                        offer.negotiationHistory.length % 2 !== 0 && (
                           <>
                             <button
                               onClick={() => setSelectedOffer(offer)}
@@ -320,7 +339,8 @@ export default function Offers() {
                     </>
                   ) : (
                     <>
-                      {offer.status == "accepted_by_tailor" && (
+                      {(offer.status == "accepted_by_tailor" ||
+                        offer.negotiationHistory.length % 2 == 0) && (
                         <button
                           onClick={() =>
                             handleAcceptOffer(
@@ -335,27 +355,28 @@ export default function Offers() {
                         </button>
                       )}
 
-                      <>
+                      {offer.negotiationHistory.length % 2 === 0 && (
+                        <>
+                          <button
+                            onClick={() => setSelectedOffer(offer)}
+                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                            disabled={isSubmitting}
+                          >
+                            Counter Offer
+                          </button>
+                        </>
+                      )}
+                      {!offer.status.includes("cancelled") && (
                         <button
-                          onClick={() => setSelectedOffer(offer)}
-                          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                          onClick={() =>
+                            handleStatusUpdate(offer._id, "cancelled")
+                          }
+                          className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
                           disabled={isSubmitting}
                         >
-                          Counter Offer
+                          Cancel
                         </button>
-                        {!offer.status.includes("rejected") ||
-                          (!offer.status.includes("cancelled") && (
-                            <button
-                              onClick={() =>
-                                handleStatusUpdate(offer._id, "cancelled")
-                              }
-                              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-                              disabled={isSubmitting}
-                            >
-                              Cancel
-                            </button>
-                          ))}
-                      </>
+                      )}
                     </>
                   )}
                 </div>

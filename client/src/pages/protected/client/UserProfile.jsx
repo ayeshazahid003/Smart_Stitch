@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { getUserProfile, updateUserProfile } from "../../../hooks/userHooks";
 import { useLoadScript, Autocomplete } from "@react-google-maps/api";
+import { toast } from "react-toastify";
 
 export default function UserProfile() {
   /* --------------------------------------------------------------------- */
@@ -58,22 +59,21 @@ export default function UserProfile() {
 
   const validateInputs = () => {
     if (!user.name.trim()) {
-      setMessage("Name is required.");
+      toast.error("Name is required.");
       return false;
     }
     if (!emailRegex.test(user.email)) {
-      setMessage("Please enter a valid email address.");
+      toast.error("Please enter a valid email address.");
       return false;
     }
     if (!phoneRegex.test(user.contactInfo.phone)) {
-      setMessage("Phone must start with +92 and contain 10 digits after it.");
+      toast.error("Phone must start with +92 and contain 10 digits after it.");
       return false;
     }
     if (!user.contactInfo.address.line1.trim()) {
-      setMessage("Address Line 1 is required (select from search field).");
+      toast.error("Address Line 1 is required (select from search field).");
       return false;
     }
-    setMessage("");
     return true;
   };
 

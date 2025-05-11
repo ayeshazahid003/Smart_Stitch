@@ -229,7 +229,7 @@ const PlaceOrderModal = ({
 
       const result = await createOffer(offerData);
       if (result.success) {
-        toast.success("Offer placed successfully!");
+        toast.success("Request Sent successfully!");
         onClose();
       } else {
         setError(result.message || "Failed to place offer");
