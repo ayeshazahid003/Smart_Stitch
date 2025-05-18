@@ -32,6 +32,8 @@ function CheckoutPage() {
   // Address state
   const [addresses, setAddresses] = useState([]);
 
+  console.log("addesses", addresses);
+
   // Order & flow state
   const [orderData, setOrderData] = useState(null);
   const [loading, setLoading] = useState(true);

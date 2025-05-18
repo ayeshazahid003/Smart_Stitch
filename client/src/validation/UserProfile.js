@@ -12,60 +12,60 @@ export const AddressSchema = z.object({
 export const MeasurementDataSchema = z.object({
   height: z.preprocess(
     (val) => (val === "" ? undefined : Number(val)),
-    z.number().optional()
+    z.number({ required_error: "Height is required" })
   ),
   chest: z.preprocess(
     (val) => (val === "" ? undefined : Number(val)),
-    z.number().optional()
+    z.number({ required_error: "Chest measurement is required" })
   ),
   waist: z.preprocess(
     (val) => (val === "" ? undefined : Number(val)),
-    z.number().optional()
+    z.number({ required_error: "Waist measurement is required" })
   ),
   hips: z.preprocess(
     (val) => (val === "" ? undefined : Number(val)),
-    z.number().optional()
+    z.number({ required_error: "Hips measurement is required" })
   ),
   shoulder: z.preprocess(
     (val) => (val === "" ? undefined : Number(val)),
-    z.number().optional()
+    z.number({ required_error: "Shoulder measurement is required" })
   ),
   wrist: z.preprocess(
     (val) => (val === "" ? undefined : Number(val)),
-    z.number().optional()
+    z.number({ required_error: "Wrist measurement is required" })
   ),
   sleeves: z.preprocess(
     (val) => (val === "" ? undefined : Number(val)),
-    z.number().optional()
+    z.number({ required_error: "Sleeve measurement is required" })
   ),
   neck: z.preprocess(
     (val) => (val === "" ? undefined : Number(val)),
-    z.number().optional()
+    z.number({ required_error: "Neck measurement is required" })
   ),
   lowerBody: z
     .object({
       length: z.preprocess(
         (val) => (val === "" ? undefined : Number(val)),
-        z.number().optional()
+        z.number({ required_error: "Length measurement is required" })
       ),
       waist: z.preprocess(
         (val) => (val === "" ? undefined : Number(val)),
-        z.number().optional()
+        z.number({ required_error: "Lower body waist measurement is required" })
       ),
       inseam: z.preprocess(
         (val) => (val === "" ? undefined : Number(val)),
-        z.number().optional()
+        z.number({ required_error: "Inseam measurement is required" })
       ),
       thigh: z.preprocess(
         (val) => (val === "" ? undefined : Number(val)),
-        z.number().optional()
+        z.number({ required_error: "Thigh measurement is required" })
       ),
       ankle: z.preprocess(
         (val) => (val === "" ? undefined : Number(val)),
-        z.number().optional()
+        z.number({ required_error: "Ankle measurement is required" })
       ),
     })
-    .optional(),
+    .required({ message: "Lower body measurements are required" }),
 });
 
 export const MeasurementSchema = z.object({

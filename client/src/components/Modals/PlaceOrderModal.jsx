@@ -295,21 +295,26 @@ const PlaceOrderModal = ({
                       {service.discount ? (
                         <div>
                           <span className="line-through text-gray-400">
-                            ₨{service.minPrice}
+                            ₨{service.minPrice} - ₨{service.maxPrice}
                           </span>
                           <span className="text-green-600 ml-2">
-                            ₨{calculateDiscountedPrice(service)}
+                            ₨{calculateDiscountedPrice(service)} - ₨
+                            {calculateDiscountedPrice({
+                              ...service,
+                              minPrice: service.maxPrice,
+                            })}
                           </span>
                           <div className="text-xs text-red-500">
                             {service.discount.value}% Off
                           </div>
                           <div className="text-xs text-gray-500">
-                            (Negotiable from ₨{service.minPrice})
+                            (Negotiable from ₨{service.minPrice} - ₨
+                            {service.maxPrice})
                           </div>
                         </div>
                       ) : (
                         <span className="text-gray-600">
-                          ₨{service.minPrice}
+                          ₨{service.minPrice} - ₨{service.maxPrice}
                         </span>
                       )}
                     </div>

@@ -203,7 +203,7 @@ router.get(
   orderController.getOrdersByCustomer
 );
 
-router.put("/orders/:id/status", protect, orderController.updateOrderStatus);
+router.put("/orders/:id/status", orderController.updateOrderStatus);
 router.post(
   "/orders/:id/invoice",
   protect,

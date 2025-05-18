@@ -341,7 +341,7 @@ export const updateOrderStatus = async (req, res) => {
     if (shippingAddress) {
       shippingAddress._id = new mongoose.Types.ObjectId();
     }
-    console.log(measurement, "--------");
+    // console.log(measurement, "--------");
 
     // console.log("orderId", orderId);
     // console.log("status", status);
@@ -365,7 +365,15 @@ export const updateOrderStatus = async (req, res) => {
     // Update order status
     order.status = status;
     order.design = design || order.design;
-    order.shippingAddress = shippingAddress || order.shippingAddress;
+    order.shippingAddress = {
+      line1: shippingAddress.addressLine1 || order.shippingAddress?.line1,
+      line2: shippingAddress.addressLine2 || order.shippingAddress?.line2,
+      city: shippingAddress.city || order.shippingAddress?.city,
+      state: shippingAddress.state || order.shippingAddress?.state,
+      postalCode:
+        shippingAddress.postalCode || order.shippingAddress?.postalCode,
+      country: shippingAddress.country || order.shippingAddress?.country,
+    };
     order.measurement = measurement?.data || measurement || order.measurement;
     order.paymentMethod = paymentMethod || order.paymentMethod;
     order.paymentStatus = paymentStatus || order.paymentStatus;

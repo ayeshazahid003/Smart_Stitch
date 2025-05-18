@@ -33,7 +33,7 @@ const standardSizes = {
     waist: 73,
     hips: 94,
     shoulder: 42,
-    wrist: 16.5,
+    wrist: 16,
     sleeves: 58,
     neck: 37,
     lowerBody: {
@@ -67,7 +67,7 @@ const standardSizes = {
     waist: 88,
     hips: 106,
     shoulder: 46,
-    wrist: 17.5,
+    wrist: 17,
     sleeves: 62,
     neck: 39,
     lowerBody: {
@@ -101,7 +101,7 @@ const standardSizes = {
     waist: 104,
     hips: 118,
     shoulder: 50,
-    wrist: 18.5,
+    wrist: 18,
     sleeves: 66,
     neck: 41,
     lowerBody: {
@@ -209,6 +209,12 @@ export default function MeasurementForm() {
   // Function to apply a standard size to a measurement
   const applyStandardSize = (size, index) => {
     const sizeData = standardSizes[size];
+    console.log(
+      "Applying standard size:",
+      size,
+      "to measurement index:",
+      index
+    );
 
     // Set each measurement field
     Object.entries(sizeData).forEach(([key, value]) => {
@@ -224,9 +230,9 @@ export default function MeasurementForm() {
 
     // If the title is empty, suggest a standard size name
     const currentTitle = getValues(`measurements.${index}.title`);
-    if (!currentTitle) {
-      setValue(`measurements.${index}.title`, `Standard ${size}`);
-    }
+    console.log("current title:", currentTitle);
+
+    setValue(`measurements.${index}.title`, `Standard ${size}`);
 
     // Hide the standard sizes panel
     setShowStandardSizes(false);
@@ -309,13 +315,20 @@ export default function MeasurementForm() {
                   htmlFor={`measurements.${index}.title`}
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Title
+                  Title <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id={`measurements.${index}.title`}
                   {...register(`measurements.${index}.title`)}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+                  className={`mt-1 block w-full border-gray-300 rounded-md shadow-sm ${
+                    errors.measurements?.[index]?.title ? "border-red-500" : ""
+                  }`}
                 />
+                {errors.measurements?.[index]?.title && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.measurements[index].title.message}
+                  </p>
+                )}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 {[
@@ -333,7 +346,8 @@ export default function MeasurementForm() {
                       htmlFor={`measurements.${index}.data.${part}`}
                       className="block text-sm font-medium text-gray-700"
                     >
-                      {part.charAt(0).toUpperCase() + part.slice(1)}
+                      {part.charAt(0).toUpperCase() + part.slice(1)}{" "}
+                      <span className="text-red-500">*</span>
                     </Label>
                     <Input
                       id={`measurements.${index}.data.${part}`}
@@ -342,7 +356,11 @@ export default function MeasurementForm() {
                       {...register(`measurements.${index}.data.${part}`, {
                         valueAsNumber: true,
                       })}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+                      className={`mt-1 block w-full border-gray-300 rounded-md shadow-sm ${
+                        errors.measurements?.[index]?.data?.[part]
+                          ? "border-red-500"
+                          : ""
+                      }`}
                     />
                     {errors.measurements?.[index]?.data?.[part] && (
                       <p className="text-red-500 text-xs mt-1">
@@ -362,7 +380,8 @@ export default function MeasurementForm() {
                           htmlFor={`measurements.${index}.data.lowerBody.${part}`}
                           className="block text-sm font-medium text-gray-700"
                         >
-                          {part.charAt(0).toUpperCase() + part.slice(1)}
+                          {part.charAt(0).toUpperCase() + part.slice(1)}{" "}
+                          <span className="text-red-500">*</span>
                         </Label>
                         <Input
                           id={`measurements.${index}.data.lowerBody.${part}`}
@@ -372,7 +391,13 @@ export default function MeasurementForm() {
                             `measurements.${index}.data.lowerBody.${part}`,
                             { valueAsNumber: true }
                           )}
-                          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+                          className={`mt-1 block w-full border-gray-300 rounded-md shadow-sm ${
+                            errors.measurements?.[index]?.data?.lowerBody?.[
+                              part
+                            ]
+                              ? "border-red-500"
+                              : ""
+                          }`}
                         />
                         {errors.measurements?.[index]?.data?.lowerBody?.[
                           part
