@@ -395,7 +395,9 @@ const PlaceOrderModal = ({
                           {service.serviceName}
                         </span>
                       </div>
-                      <span className="text-gray-600">₨{service.minPrice}</span>
+                      <span className="text-gray-600">
+                        ₨{service.minPrice} - ₨{service.maxPrice}
+                      </span>
                     </div>
                     {selectedExtraServices.some(
                       (s) => s.serviceId === service._id

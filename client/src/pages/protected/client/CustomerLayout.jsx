@@ -48,7 +48,7 @@ const getNavigation = (role) => {
     { name: "Extra Services", href: "/all-extra-services", icon: SparklesIcon },
     { name: "Portfolio", href: "/all-portfolio", icon: PhotoIcon },
     { name: "Orders", href: "/tailor/orders", icon: ClipboardDocumentListIcon },
-    { name: "Offers", href: "/offers", icon: GiftIcon },
+    { name: "Requests", href: "/offers", icon: GiftIcon },
     { name: "Chats", href: "/chats", icon: ChatBubbleLeftRightIcon },
     { name: "Campaigns", href: "/campaigns", icon: TagIcon },
     { name: "Vouchers", href: "/vouchers", icon: GiftIcon },

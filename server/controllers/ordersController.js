@@ -366,13 +366,13 @@ export const updateOrderStatus = async (req, res) => {
     order.status = status;
     order.design = design || order.design;
     order.shippingAddress = {
-      line1: shippingAddress.addressLine1 || order.shippingAddress?.line1,
-      line2: shippingAddress.addressLine2 || order.shippingAddress?.line2,
-      city: shippingAddress.city || order.shippingAddress?.city,
-      state: shippingAddress.state || order.shippingAddress?.state,
+      line1: shippingAddress?.addressLine1 || order.shippingAddress?.line1,
+      line2: shippingAddress?.addressLine2 || order.shippingAddress?.line2,
+      city: shippingAddress?.city || order.shippingAddress?.city,
+      state: shippingAddress?.state || order.shippingAddress?.state,
       postalCode:
-        shippingAddress.postalCode || order.shippingAddress?.postalCode,
-      country: shippingAddress.country || order.shippingAddress?.country,
+        shippingAddress?.postalCode || order.shippingAddress?.postalCode,
+      country: shippingAddress?.country || order.shippingAddress?.country,
     };
     order.measurement = measurement?.data || measurement || order.measurement;
     order.paymentMethod = paymentMethod || order.paymentMethod;
