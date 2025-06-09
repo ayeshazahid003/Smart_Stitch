@@ -12,7 +12,7 @@ export default function NotificationBell() {
   const { user } = useUser();
   const navigate = useNavigate();
 
-  // Handle socket events
+  // Handle socket events with connection state tracking
   useEffect(() => {
     if (!user?._id) return;
 
@@ -24,8 +24,17 @@ export default function NotificationBell() {
 
     console.log("[NotificationBell] Setting up socket listeners");
 
-    // Request initial notifications
-    socket.emit("getUnreadNotifications", user._id);
+    // Function to request initial notifications (only when connected)
+    const requestInitialNotifications = () => {
+      if (socket.connected) {
+        console.log("[NotificationBell] Requesting initial notifications");
+        socket.emit("getUnreadNotifications", user._id);
+      } else {
+        console.log(
+          "[NotificationBell] Socket not connected, waiting for connection"
+        );
+      }
+    };
 
     // Handle new notifications
     const handleNewNotification = (data) => {
@@ -58,10 +67,35 @@ export default function NotificationBell() {
       setUnreadCount(initialNotifications.filter((n) => !n.isRead).length);
     };
 
+    // Handle socket connection events
+    const handleConnect = () => {
+      console.log(
+        "[NotificationBell] Socket connected, requesting notifications"
+      );
+      requestInitialNotifications();
+    };
+
+    const handleReconnect = () => {
+      console.log(
+        "[NotificationBell] Socket reconnected, requesting notifications"
+      );
+      requestInitialNotifications();
+    };
+
+    const handleDisconnect = (reason) => {
+      console.log("[NotificationBell] Socket disconnected:", reason);
+    };
+
     // Set up event listeners
     socket.on("receiveNotification", handleNewNotification);
     socket.on("notificationRead", handleNotificationRead);
     socket.on("unreadNotifications", handleUnreadNotifications);
+    socket.on("connect", handleConnect);
+    socket.on("reconnect", handleReconnect);
+    socket.on("disconnect", handleDisconnect);
+
+    // Request initial notifications if already connected
+    requestInitialNotifications();
 
     // Cleanup listeners
     return () => {
@@ -69,6 +103,9 @@ export default function NotificationBell() {
       socket.off("receiveNotification", handleNewNotification);
       socket.off("notificationRead", handleNotificationRead);
       socket.off("unreadNotifications", handleUnreadNotifications);
+      socket.off("connect", handleConnect);
+      socket.off("reconnect", handleReconnect);
+      socket.off("disconnect", handleDisconnect);
     };
   }, [user?._id, socketContext]);
 

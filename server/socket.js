@@ -76,6 +76,6 @@ export function getSocket() {
 // Helper function to broadcast to specific user
 export function emitToUser(userId, event, data) {
   if (!io) return;
-  const namespace = io.of("/notifications");
+  const namespace = io.of("/");
   namespace.to(`user_${userId}`).emit(event, data);
 }

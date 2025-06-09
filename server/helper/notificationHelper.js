@@ -7,7 +7,7 @@ const getNamespaceAndEmit = async (notification) => {
     throw new Error("[Notification Helper] Socket.io instance not found");
   }
 
-  const notificationNamespace = io.of("/notifications");
+  const notificationNamespace = io.of("/");
   const userRoom = `user_${notification.userId}`;
 
   // Check if the user's room exists and has connections
@@ -42,6 +42,11 @@ export const sendNotification = async ({
       onModel,
     });
 
+    // Validate required fields
+    if (!userId || !type || !message) {
+      throw new Error("Missing required notification fields: userId, type, or message");
+    }
+
     // Create and save notification
     const notification = new Notification({
       userId,
@@ -64,7 +69,7 @@ export const sendNotification = async ({
     } catch (socketError) {
       console.error(
         "[Notification Helper] Socket emission error:",
-        socketError
+        socketError.message
       );
       // Don't throw here - notification is saved even if emission fails
     }

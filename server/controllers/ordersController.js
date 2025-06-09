@@ -478,12 +478,12 @@ export const updateOrderStatus = async (req, res) => {
         <p>Best regards,<br>Smart Stitch Team</p>
       `;
 
-      // await sendEmail(
-      //   "no-reply@smartstitch.com",
-      //   order.customerId.email,
-      //   "Payment Confirmation and Invoice - Smart Stitch",
-      //   emailBody
-      // );
+      await sendEmail(
+        "no-reply@smartstitch.com",
+        order.customerId.email,
+        "Payment Confirmation and Invoice - Smart Stitch",
+        emailBody
+      );
     } else if (status === "stitched") {
       // Send email to customer when order is stitched
       const stitchedEmailBody = `
@@ -494,12 +494,12 @@ export const updateOrderStatus = async (req, res) => {
         <p>Thank you for choosing Smart Stitch!</p>
         <p>Best regards,<br>Smart Stitch Team</p>
       `;
-      // await sendEmail(
-      //   "no-reply@smartstitch.com",
-      //   order.customerId.email,
-      //   "Your Order is Ready for Pickup - Smart Stitch",
-      //   stitchedEmailBody
-      // );
+      await sendEmail(
+        "no-reply@smartstitch.com",
+        order.customerId.email,
+        "Your Order is Ready for Pickup - Smart Stitch",
+        stitchedEmailBody
+      );
     }
 
     // Create notification based on status

@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import generateToken from "../helper/generateToken.js";
 import { sendEmail } from "../helper/mail.js";
+import { sendNotification } from "../helper/notificationHelper.js";
 
 export const createUser = async (req, res) => {
   try {
@@ -53,6 +54,82 @@ export const createUser = async (req, res) => {
 
     // Save the user to the database
     const user = await newUser.save();
+
+    // Send welcome email
+    const welcomeEmailBody = `
+      <h1>Welcome to Smart Stitch!</h1>
+      <p>Dear ${user.name},</p>
+      <p>Thank you for joining Smart Stitch! We're excited to have you as part of our community.</p>
+      
+      ${
+        role === "customer"
+          ? `
+        <h2>As a Customer, you can:</h2>
+        <ul>
+          <li>Browse through our talented tailors</li>
+          <li>Place custom orders with detailed measurements</li>
+          <li>Track your order progress in real-time</li>
+          <li>Rate and review your tailoring experience</li>
+        </ul>
+      `
+          : role === "tailor"
+          ? `
+        <h2>As a Tailor, you can:</h2>
+        <ul>
+          <li>Create your professional profile and showcase your work</li>
+          <li>Receive custom orders from customers</li>
+          <li>Manage your services and pricing</li>
+          <li>Build your reputation through customer reviews</li>
+        </ul>
+        <p><strong>Next Steps:</strong> Please complete your tailor profile to start receiving orders!</p>
+      `
+          : `
+        <h2>Welcome, Platform Administrator!</h2>
+        <p>You now have access to manage the Smart Stitch platform.</p>
+      `
+      }
+      
+      <p>To get started, please log in to your account and explore all the features we have to offer.</p>
+      
+      <p>If you have any questions or need assistance, our support team is here to help.</p>
+      
+      <p>Welcome aboard!</p>
+      <p>Best regards,<br>The Smart Stitch Team</p>
+    `;
+
+    try {
+      await sendEmail(
+        "noreply@smartstitch.com",
+        user.email,
+        "Welcome to Smart Stitch - Let's Get Started!",
+        welcomeEmailBody
+      );
+      console.log(`Welcome email sent to: ${user.email}`);
+    } catch (emailError) {
+      console.error("Error sending welcome email:", emailError);
+      // Don't fail the signup process if email fails
+    }
+
+    // Send welcome notification
+    try {
+      await sendNotification({
+        userId: user._id,
+        type: "promotion",
+        message: `Welcome to Smart Stitch, ${user.name}! ${
+          role === "customer"
+            ? "Start exploring our talented tailors and place your first order."
+            : role === "tailor"
+            ? "Complete your profile to start receiving orders from customers."
+            : "You now have access to manage the Smart Stitch platform."
+        }`,
+        relatedId: user._id,
+        onModel: "User",
+      });
+      console.log(`Welcome notification sent to user: ${user._id}`);
+    } catch (notificationError) {
+      console.error("Error sending welcome notification:", notificationError);
+      // Don't fail the signup process if notification fails
+    }
 
     // Generate a JWT token
     generateToken(res, user._id);
